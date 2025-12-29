@@ -1,24 +1,11 @@
 "use client";
 
-import Link from "next/link";
-
 export default function LandingPage() {
   return (
-    <main className="flex min-h-screen flex-col bg-[#0a0f0a] font-pixel text-white">
-      {/* Navbar */}
-      <nav className="z-10 flex items-center justify-between border-b-4 border-black bg-[#1a2e1a] p-4">
-        <div className="flex items-center gap-3">
-          <Link href="/" className="text-xl font-bold tracking-tighter">CODEBOG</Link>
-        </div>
-        <div className="flex items-center gap-4">
-          <Link href="/login" className="font-mono text-lg hover:text-[#2ecc71]">Login</Link>
-          <Link href="/register" className="font-mono text-lg hover:text-[#2ecc71]">Register</Link>
-        </div>
-      </nav>
-
+    <main className="flex flex-col bg-[#0a0f0a] font-pixel text-white">
       {/* Hero Section */}
       <section
-        className="relative flex flex-grow flex-col items-center justify-center overflow-hidden bg-cover bg-center bg-no-repeat [image-rendering:pixelated] md:bg-[url('/bg-bog-desktop-02.png')] bg-[url('/bg-bog-mobile.webp')]"
+        className="relative flex flex-grow flex-col items-center justify-center overflow-hidden bg-cover bg-center bg-no-repeat [image-rendering:pixelated] md:bg-[url('/bg-bog-desktop-02.png')] bg-[url('/bg-bog-mobile.webp')] min-h-screen"
       >
         <div className="pointer-events-none absolute inset-0 bg-black/20"></div>
 

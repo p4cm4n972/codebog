@@ -217,3 +217,24 @@ Caused by:
     2: Unable to open static sorted file 00000260.sst
     3: No such file or directory (os error 2)
 Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+
+thread 'tokio-runtime-worker' (26985) panicked at /build/turbopack/crates/turbo-tasks-backend/src/backend/operation/mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for ResolveOptions::with_extended_fallback_import_map (TaskId 1159))
+
+Caused by:
+    0: Looking up data for TaskId 1159 from database failed
+    1: Unable to open static sorted file referenced from 00000271.meta
+    2: Unable to open static sorted file 00000265.sst
+    3: No such file or directory (os error 2)
+
+thread 'tokio-runtime-worker' (23285) panicked at /build/turbopack/crates/turbo-tasks-backend/src/backend/operation/mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for ResolveOptions::with_extended_fallback_import_map (TaskId 1159))
+
+Caused by:
+    0: Looking up data for TaskId 1159 from database failed
+    1: Unable to open static sorted file referenced from 00000271.meta
+    2: Unable to open static sorted file 00000265.sst
+    3: No such file or directory (os error 2)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
