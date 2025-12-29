@@ -28,7 +28,7 @@ export default function LandingPage() {
         <div className="pointer-events-none absolute inset-0 bg-black/20"></div>
 
         <h1 className="drop-shadow-[6px_6px_0px_rgba(0,0,0,1)] z-10 mb-12 text-center text-5xl font-black md:text-8xl">
-          CODEBOG.DEV
+          CODEBOG
         </h1>
 
         <div className="z-10 flex flex-col gap-8 md:flex-row">
