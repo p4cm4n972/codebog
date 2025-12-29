@@ -1,65 +1,69 @@
-import Image from "next/image";
+"use client";
+import Image from 'next/image'
 
-export default function Home() {
+export default function LandingPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="min-h-screen bg-[#0a0f0a] text-white flex flex-col font-mono">
+      {/* Styles injectés pour le responsive background */}
+      <style dangerouslySetInnerHTML={{__html: `
+        .hero {
+          min-height: calc(100vh - 72px);
+          background-size: cover;
+          background-position: center;
+          background-repeat: no-repeat;
+          image-rendering: pixelated;
+        }
+
+        @media (min-width: 768px) {
+          .hero {
+            background-image: url("/bg-bog-desktop-02.png");
+          }
+        }
+
+        @media (max-width: 767px) {
+          .hero {
+            background-image: url("/bg-bog-mobile.webp");
+          }
+        }
+      `}} />
+
+      {/* Navbar */}
+      <nav className="p-4 border-b-4 border-black bg-[#1a2e1a] flex justify-between items-center z-10">
+        <div className="flex items-center gap-3">
+          {/* Ton icône de profil Manicou */}
+          <img 
+            src="/icon_manicou.png" 
+            alt="Logo Manicou" 
+            className="w-10 h-10" 
+            style={{ imageRendering: 'pixelated' }}
+          />
+          <span className="text-xl font-bold tracking-tighter">CODEBOG</span>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div className="hidden md:block text-sm opacity-80 uppercase tracking-widest">
+          ITMADE SASU
         </div>
-      </main>
-    </div>
-  );
+      </nav>
+
+      {/* Hero Section */}
+      <section className="hero flex flex-col items-center justify-center relative overflow-hidden">
+        
+        {/* Overlay pour améliorer la lisibilité si le background est trop clair */}
+        <div className="absolute inset-0 bg-black/20 pointer-events-none"></div>
+
+        <h1 className="text-5xl md:text-8xl font-black mb-12 text-center z-10 drop-shadow-[6px_6px_0px_rgba(0,0,0,1)]">
+          CODEBOG.DEV
+        </h1>
+
+        {/* Boutons Centraux */}
+        <div className="flex flex-col md:flex-row gap-8 z-10">
+          <button className="bg-[#ffcc00] text-black px-10 py-5 text-3xl font-bold border-b-8 border-r-8 border-black hover:translate-y-1 hover:translate-x-1 hover:border-b-4 hover:border-r-4 active:translate-y-2 active:translate-x-2 active:border-b-0 active:border-r-0 transition-all uppercase">
+            JSBOG
+          </button>
+          <button className="bg-[#2ecc71] text-black px-10 py-5 text-3xl font-bold border-b-8 border-r-8 border-black hover:translate-y-1 hover:translate-x-1 hover:border-b-4 hover:border-r-4 active:translate-y-2 active:translate-x-2 active:border-b-0 active:border-r-0 transition-all uppercase">
+            CBOG
+          </button>
+        </div>
+      </section>
+    </main>
+  )
 }
