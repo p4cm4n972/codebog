@@ -264,3 +264,8 @@ Caused by:
     2: Unable to open static sorted file 00000260.sst
     3: No such file or directory (os error 2)
 Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+○ Compiling / ...
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)

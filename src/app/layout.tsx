@@ -34,7 +34,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${pressStart2P.variable}`}
+        className={`${geistSans.variable} ${geistMono.variable} ${pressStart2P.variable} font-mono`}
       >
         <AuthProvider>
           <Navbar />

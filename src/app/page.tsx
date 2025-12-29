@@ -1,6 +1,9 @@
 "use client";
 
 export default function LandingPage() {
+  const yellowButtonClasses = "px-10 py-5 bg-[#ffcc00] text-black text-3xl font-bold uppercase border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] active:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] transition-all duration-150 rounded-none";
+  const greenButtonClasses = "px-10 py-5 bg-[#2ecc71] text-black text-3xl font-bold uppercase border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] active:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] transition-all duration-150 rounded-none";
+
   return (
     <main className="flex flex-col bg-[#0a0f0a] font-pixel text-white">
       {/* Hero Section */}
@@ -14,10 +17,10 @@ export default function LandingPage() {
         </h1>
 
         <div className="z-10 flex flex-col gap-8 md:flex-row">
-          <button className="border-r-8 border-b-8 border-black bg-[#ffcc00] px-10 py-5 text-3xl font-bold uppercase text-black active:translate-x-2 active:translate-y-2 active:border-b-0 active:border-r-0 hover:translate-x-1 hover:translate-y-1 hover:border-b-4 hover:border-r-4">
+          <button className={yellowButtonClasses}>
             JSBOG
           </button>
-          <button className="border-r-8 border-b-8 border-black bg-[#2ecc71] px-10 py-5 text-3xl font-bold uppercase text-black active:translate-x-2 active:translate-y-2 active:border-b-0 active:border-r-0 hover:translate-x-1 hover:translate-y-1 hover:border-b-4 hover:border-r-4">
+          <button className={greenButtonClasses}>
             CBOG
           </button>
         </div>

@@ -14,7 +14,7 @@ export default function LoginPage() {
         setError('');
         try {
             await account.createEmailPasswordSession(email, password);
-            router.push('/'); // Redirect to home page after successful login
+            router.push('/');
         } catch (err) {
             if (err instanceof Error) {
                 setError(err.message);
@@ -26,7 +26,7 @@ export default function LoginPage() {
 
     return (
         <main className="flex min-h-screen flex-col items-center justify-center bg-[#0a0f0a] font-mono text-white p-4">
-            <div className="w-full max-w-md bg-[#0a0f0a] border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+            <div className="w-full max-w-md bg-[#0a0f0a] border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] rounded-none">
                 <h1 className="text-3xl font-bold text-center text-[#2ecc71] mb-8"> &gt; LOGIN_</h1>
                 <form onSubmit={handleLogin} className="flex flex-col gap-6">
                     <div>
@@ -37,7 +37,7 @@ export default function LoginPage() {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
-                            className="w-full bg-black text-[#2ecc71] border-2 border-[#2ecc71] p-3 focus:outline-none focus:border-[#2ecc71] focus:ring-2 focus:ring-[#2ecc71]"
+                            className="w-full bg-black text-[#2ecc71] border-2 border-[#2ecc71] p-3 focus:outline-none focus:border-[#2ecc71] focus:ring-2 focus:ring-[#2ecc71] rounded-none"
                         />
                     </div>
                     <div>
@@ -48,12 +48,12 @@ export default function LoginPage() {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
-                            className="w-full bg-black text-[#2ecc71] border-2 border-[#2ecc71] p-3 focus:outline-none focus:border-[#2ecc71] focus:ring-2 focus:ring-[#2ecc71]"
+                            className="w-full bg-black text-[#2ecc71] border-2 border-[#2ecc71] p-3 focus:outline-none focus:border-[#2ecc71] focus:ring-2 focus:ring-[#2ecc71] rounded-none"
                         />
                     </div>
                     <button
                         type="submit"
-                        className="border-r-8 border-b-8 border-black bg-[#2ecc71] px-10 py-5 text-2xl font-bold uppercase text-black active:translate-x-2 active:translate-y-2 active:border-b-0 active:border-r-0 hover:translate-x-1 hover:translate-y-1 hover:border-b-4 hover:border-r-4 mt-4"
+                        className="mt-4 px-10 py-5 bg-[#2ecc71] text-black text-2xl font-bold uppercase border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] active:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] transition-all duration-150 rounded-none"
                     >
                         ACCESS_BOG
                     </button>
