@@ -157,3 +157,44 @@ Persisting failed: Another write batch or compaction is already active (Only a s
   Reload env: .env.local
 Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
   Reload env: .env.local
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+
+thread 'tokio-runtime-worker' (17408) panicked at /build/turbopack/crates/turbo-tasks-backend/src/backend/operation/mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for realpath_with_links (TaskId 93))
+
+Caused by:
+    0: Looking up data for TaskId 93 from database failed
+    1: Unable to open static sorted file referenced from 00000297.meta
+    2: Unable to open static sorted file 00000291.sst
+    3: No such file or directory (os error 2)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'tokio-runtime-worker' (17408) panicked at /build/turbopack/crates/turbo-tasks-backend/src/backend/operation/mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for get_side_effect_free_declaration (TaskId 78128))
+
+Caused by:
+    0: Looking up data for TaskId 78128 from database failed
+    1: Unable to open static sorted file referenced from 00000289.meta
+    2: Unable to open static sorted file 00000286.sst
+    3: No such file or directory (os error 2)
+
+thread 'tokio-runtime-worker' (17408) panicked at /build/turbopack/crates/turbo-tasks-backend/src/backend/operation/mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for find_package (TaskId 1668))
+
+Caused by:
+    0: Looking up data for TaskId 1668 from database failed
+    1: Unable to open static sorted file referenced from 00000263.meta
+    2: Unable to open static sorted file 00000260.sst
+    3: No such file or directory (os error 2)
+
+thread 'tokio-runtime-worker' (21767) panicked at /build/turbopack/crates/turbo-tasks-backend/src/backend/operation/mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for exports_field (TaskId 97))
+
+Caused by:
+    0: Looking up data for TaskId 97 from database failed
+    1: Unable to open static sorted file referenced from 00000297.meta
+    2: Unable to open static sorted file 00000291.sst
+    3: No such file or directory (os error 2)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)

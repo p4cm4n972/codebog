@@ -1,6 +1,6 @@
 "use client";
 
-import Auth from "@/components/Auth";
+import Link from "next/link";
 
 export default function LandingPage() {
   return (
@@ -8,9 +8,12 @@ export default function LandingPage() {
       {/* Navbar */}
       <nav className="z-10 flex items-center justify-between border-b-4 border-black bg-[#1a2e1a] p-4">
         <div className="flex items-center gap-3">
-          <span className="text-xl font-bold tracking-tighter">CODEBOG</span>
+          <Link href="/" className="text-xl font-bold tracking-tighter">CODEBOG</Link>
         </div>
-        <Auth />
+        <div className="flex items-center gap-4">
+          <Link href="/login" className="font-mono text-lg hover:text-[#2ecc71]">Login</Link>
+          <Link href="/register" className="font-mono text-lg hover:text-[#2ecc71]">Register</Link>
+        </div>
       </nav>
 
       {/* Hero Section */}
