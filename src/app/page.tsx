@@ -1,5 +1,5 @@
 "use client";
-import Image from "next/image";
+import Auth from "@/components/Auth";
 
 export default function LandingPage() {
   return (
@@ -7,18 +7,9 @@ export default function LandingPage() {
       {/* Navbar */}
       <nav className="z-10 flex items-center justify-between border-b-4 border-black bg-[#1a2e1a] p-4">
         <div className="flex items-center gap-3">
-          <Image
-            src="/icon_manicou.png"
-            alt="Logo Manicou"
-            width={40}
-            height={40}
-            style={{ imageRendering: "pixelated" }}
-          />
           <span className="text-xl font-bold tracking-tighter">CODEBOG</span>
         </div>
-        <div className="hidden text-sm uppercase tracking-widest opacity-80 md:block">
-          ITMADE SASU
-        </div>
+        <Auth />
       </nav>
 
       {/* Hero Section */}
@@ -28,7 +19,7 @@ export default function LandingPage() {
         <div className="pointer-events-none absolute inset-0 bg-black/20"></div>
 
         <h1 className="drop-shadow-[6px_6px_0px_rgba(0,0,0,1)] z-10 mb-12 text-center text-5xl font-black md:text-8xl">
-          CODEBOG
+          CODEBOG.DEV
         </h1>
 
         <div className="z-10 flex flex-col gap-8 md:flex-row">
