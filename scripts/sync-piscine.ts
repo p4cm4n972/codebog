@@ -15,7 +15,7 @@ const LOCAL_REPO_PATH = path.join(__dirname, 'piscine-js-expert');
 const EXERCISES_DIR = LOCAL_REPO_PATH;
 
 const APPWRITE_ENDPOINT = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT;
-const APPWRITE_PROJECT_ID = process.env.NEXT_PUBLIC_APPWRITE_PROJECT;
+const APPWRITE_PROJECT_ID = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID;
 const APPWRITE_API_KEY = process.env.NEXT_APPWRITE_KEY;
 const APPWRITE_DATABASE_ID = 'codebog-db';
 const APPWRITE_DATABASE_NAME = 'Codebog Exercises';

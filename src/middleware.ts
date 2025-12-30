@@ -1,28 +1,10 @@
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { AppwriteServerClient } from './lib/appwrite-server';
 
-// This function can be marked `async` if using `await` inside
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+// DISABLED: Server-side authentication via middleware doesn't work with cross-domain Appwrite setup
+// The session cookie is created by appwrite.itmade.fr and cannot be read by localhost:3000
+// Protection is handled client-side in the page components instead
 
-  // Define protected routes
-  const protectedRoutes = ['/profile', '/jsbog'];
-
-  if (protectedRoutes.some(path => pathname.startsWith(path))) {
-    try {
-      const { account } = await AppwriteServerClient(request.cookies);
-      await account.get();
-      // If the user is authenticated, continue to the requested page
-      return NextResponse.next();
-    } catch {
-      // If the user is not authenticated, redirect to the login page
-      const loginUrl = new URL('/login', request.url);
-      return NextResponse.redirect(loginUrl);
-    }
-  }
-
-  // Allow the request to continue for public routes
+export async function middleware() {
   return NextResponse.next();
 }
 

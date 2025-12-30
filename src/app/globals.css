@@ -45,3 +45,26 @@ body {
 .animate-pulse {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
+
+/* Scrolling text effect */
+.scrolling-text {
+  display: inline-block;
+  transition: transform 0.3s ease;
+  will-change: transform;
+}
+
+.group:hover .scrolling-text {
+  animation: scroll-left-right 10s ease-in-out infinite;
+}
+
+@keyframes scroll-left-right {
+  0%, 15% {
+    transform: translateX(0);
+  }
+  50%, 65% {
+    transform: translateX(calc(-100% + 280px));
+  }
+  100% {
+    transform: translateX(0);
+  }
+}

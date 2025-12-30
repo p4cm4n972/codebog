@@ -61,8 +61,11 @@ export default function LoginPage() {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
+                            minLength={8}
+                            maxLength={256}
                             className="w-full bg-black text-[#2ecc71] border-2 border-[#2ecc71] p-3 focus:outline-none focus:border-[#2ecc71] focus:ring-2 focus:ring-[#2ecc71] rounded-none"
                         />
+                        <p className="text-xs text-[#2ecc71] opacity-70 mt-1">Min. 8 characters</p>
                     </div>
                     <button
                         type="submit"
