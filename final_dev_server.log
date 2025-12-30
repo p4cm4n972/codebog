@@ -1,0 +1,15 @@
+
+> codebog-web@0.1.0 dev
+> next dev --port 3004
+
+▲ Next.js 16.1.1 (Turbopack)
+- Local:         http://localhost:3004
+- Network:       http://192.168.0.2:3004
+- Environments: .env
+
+✓ Starting...
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+✓ Ready in 1312ms
+ GET /login 200 in 3.2s (compile: 2.9s, render: 328ms)
+ GET /login 200 in 105ms (compile: 5ms, render: 100ms)
+✓ Compiled in 448ms

@@ -1,28 +1,39 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { account } from '@/lib/appwrite/client';
+import { useAuth } from '@/context/AuthContext';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
     const router = useRouter();
+    const { login, user, error, setError } = useAuth();
+
+    useEffect(() => {
+        // Clear any previous errors when the component mounts
+        setError('');
+    }, [setError]);
+
+    // If user is already logged in, redirect to profile
+    useEffect(() => {
+        if (user) {
+            router.push('/profile');
+        }
+    }, [user, router]);
 
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        setError('');
-        try {
-            await account.createEmailPasswordSession(email, password);
-            router.push('/');
-        } catch (err) {
-            if (err instanceof Error) {
-                setError(err.message);
-            } else {
-                setError('An unexpected error occurred');
-            }
-        }
+        await login(email, password);
     };
+
+    // Prevent rendering the form if the user is already logged in
+    if (user) {
+        return (
+            <main className="flex min-h-screen flex-col items-center justify-center bg-[#0a0f0a] font-mono text-white p-4">
+                <p className="text-[#2ecc71]">Already logged in. Redirecting to profile...</p>
+            </main>
+        );
+    }
 
     return (
         <main className="flex min-h-screen flex-col items-center justify-center bg-[#0a0f0a] font-mono text-white p-4">
@@ -34,6 +45,7 @@ export default function LoginPage() {
                         <input
                             type="email"
                             id="email"
+                            name="email" // Added name attribute for Playwright selector
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
@@ -45,6 +57,7 @@ export default function LoginPage() {
                         <input
                             type="password"
                             id="password"
+                            name="password" // Added name attribute for Playwright selector
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
@@ -57,7 +70,7 @@ export default function LoginPage() {
                     >
                         ACCESS_BOG
                     </button>
-                    {error && <p className="text-red-500 mt-4 text-center">{error}</p>}
+                    {error && <p className="text-red-500 mt-4 text-center font-bold">{error}</p>}
                 </form>
             </div>
         </main>
