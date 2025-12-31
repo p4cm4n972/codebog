@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { databases } from '@/lib/appwrite/client';
 import { Query } from 'appwrite';
 import ReactMarkdown from 'react-markdown';
+import { ExerciseDocument } from '@/lib/appwrite/types';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
@@ -72,10 +73,21 @@ export default function ExerciseDetailPage() {
           return;
         }
 
-        setExercise(response.documents[0] as Exercise);
-      } catch (err: any) {
+        const document = response.documents[0] as unknown as ExerciseDocument;
+        setExercise({
+          $id: document.$id,
+          title: document.title,
+          slug: document.slug,
+          statement: document.statement,
+          starterCode: document.starterCode,
+        });
+      } catch (err) {
         console.error('Failed to fetch exercise:', err);
-        setError(err.message || 'Failed to load exercise');
+        if (err instanceof Error) {
+            setError(err.message);
+        } else {
+            setError('Failed to load exercise');
+        }
       } finally {
         setLoading(false);
       }
