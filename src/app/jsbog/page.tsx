@@ -76,12 +76,16 @@ export default function JsbogMissionSelection() {
         setLoading(true);
         setError('');
         const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID);
-        const rawExercises = response.documents as Exercise[];
+        const rawExercises = response.documents as unknown as Exercise[];
         const parsedExercises = rawExercises.map(parseExercise);
         setExercises(parsedExercises);
-      } catch (err: any) {
+      } catch (err) {
         console.error('Failed to fetch exercises:', err);
-        setError(err.message || 'Failed to load exercises');
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError('Failed to load exercises');
+        }
       } finally {
         setLoading(false);
       }

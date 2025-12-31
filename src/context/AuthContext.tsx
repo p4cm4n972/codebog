@@ -51,18 +51,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             const currentUser = await account.get();
             setUser(currentUser);
             router.push('/profile');
-        } catch (err: any) {
+        } catch (err) {
             console.error('Login failed:', err);
 
-            // Provide more specific error messages
-            if (err.message?.includes('password')) {
-                setError('Password must be between 8 and 256 characters long.');
-            } else if (err.message?.includes('Invalid credentials')) {
-                setError('Invalid email or password.');
-            } else if (err.message?.includes('user')) {
-                setError('User not found. Please check your email.');
-            } else {
-                setError('Login failed. Please try again.');
+            if (err instanceof Error) {
+                if (err.message?.includes('password')) {
+                    setError('Password must be between 8 and 256 characters long.');
+                } else if (err.message?.includes('Invalid credentials')) {
+                    setError('Invalid email or password.');
+                } else if (err.message?.includes('user')) {
+                    setError('User not found. Please check your email.');
+                } else {
+                    setError('Login failed. Please try again.');
+                }
             }
         }
     };
