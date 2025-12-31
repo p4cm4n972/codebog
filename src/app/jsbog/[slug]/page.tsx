@@ -4,11 +4,9 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { databases } from '@/lib/appwrite/client';
-import { Query } from 'appwrite';
+import { Query, ID } from 'appwrite';
 import ReactMarkdown from 'react-markdown';
-import { ExerciseDocument } from '@/lib/appwrite/types';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import Editor from '@monaco-editor/react';
 
 interface Exercise {
   $id: string;
@@ -16,6 +14,7 @@ interface Exercise {
   slug: string;
   statement: string;
   starterCode?: string;
+  testCode?: string;
 }
 
 const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
@@ -48,6 +47,20 @@ export default function ExerciseDetailPage() {
   const [exercise, setExercise] = useState<Exercise | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [userCode, setUserCode] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [submitResult, setSubmitResult] = useState<{
+    success: boolean;
+    message: string;
+    results?: {
+      passed: boolean;
+      totalTests: number;
+      passedTests: number;
+      failedTests: number;
+      output?: string;
+      error?: string;
+    };
+  } | null>(null);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -73,15 +86,10 @@ export default function ExerciseDetailPage() {
           return;
         }
 
-        const document = response.documents[0] as unknown as ExerciseDocument;
-        setExercise({
-          $id: document.$id,
-          title: document.title,
-          slug: document.slug,
-          statement: document.statement,
-          starterCode: document.starterCode,
-        });
-      } catch (err) {
+        const exerciseData = response.documents[0] as unknown as Exercise;
+        setExercise(exerciseData);
+        setUserCode(exerciseData.starterCode || '// Write your code here');
+      } catch (err: any) {
         console.error('Failed to fetch exercise:', err);
         if (err instanceof Error) {
             setError(err.message);
@@ -95,6 +103,67 @@ export default function ExerciseDetailPage() {
 
     fetchExercise();
   }, [user, slug]);
+
+  const handleSubmit = async () => {
+    if (!user || !exercise) return;
+
+    setSubmitting(true);
+    setSubmitResult(null);
+
+    try {
+      // Execute code and run tests
+      const executeResponse = await fetch('/api/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: userCode,
+          exerciseSlug: exercise.slug,
+          testCode: exercise.testCode,
+        }),
+      });
+
+      const executeData = await executeResponse.json();
+
+      if (!executeData.success) {
+        setSubmitResult({
+          success: false,
+          message: 'Échec des tests',
+          results: executeData.results,
+        });
+        return;
+      }
+
+      // Save submission to Appwrite with test results
+      await databases.createDocument(
+        DATABASE_ID,
+        'submissions',
+        ID.unique(),
+        {
+          userId: user.$id,
+          exerciseId: exercise.$id,
+          exerciseSlug: exercise.slug,
+          code: userCode,
+          submittedAt: new Date().toISOString(),
+          passed: executeData.results.passed,
+          testResults: JSON.stringify(executeData.results),
+        }
+      );
+
+      setSubmitResult({
+        success: true,
+        message: executeData.results.passed ? '✅ Tous les tests sont passés !' : '❌ Certains tests ont échoué',
+        results: executeData.results,
+      });
+    } catch (err: any) {
+      console.error('Submission failed:', err);
+      setSubmitResult({
+        success: false,
+        message: err.message || 'Erreur lors de la soumission',
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   if (isLoading || !user) {
     return (
@@ -193,7 +262,7 @@ export default function ExerciseDetailPage() {
           </div>
 
           {/* Code Editor Section - Right */}
-          <div className="lg:col-span-8 bg-black border-4 border-yellow-400 p-6 md:p-8 overflow-hidden max-h-[calc(100vh-200px)]">
+          <div className="lg:col-span-8 bg-black border-4 border-yellow-400 p-6 md:p-8 flex flex-col max-h-[calc(100vh-200px)]">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-xl font-bold text-yellow-400 font-mono">CODE_EDITOR</h2>
               <div className="flex gap-2">
@@ -202,22 +271,76 @@ export default function ExerciseDetailPage() {
                 <div className="w-3 h-3 rounded-full bg-green-500"></div>
               </div>
             </div>
-            <div className="overflow-y-auto max-h-[calc(100vh-300px)] border-2 border-green-700 rounded">
-              <SyntaxHighlighter
-                language="javascript"
-                style={tomorrow}
-                customStyle={{
-                  margin: 0,
-                  padding: '1.5rem',
-                  background: '#1a1a1a',
-                  fontSize: '0.875rem',
-                  lineHeight: '1.5',
+
+            {/* Monaco Editor */}
+            <div className="flex-grow border-2 border-green-700 rounded overflow-hidden">
+              <Editor
+                height="100%"
+                defaultLanguage="javascript"
+                value={userCode}
+                onChange={(value) => setUserCode(value || '')}
+                theme="vs-dark"
+                options={{
+                  minimap: { enabled: false },
+                  fontSize: 14,
+                  lineNumbers: 'on',
+                  scrollBeyondLastLine: false,
+                  automaticLayout: true,
+                  tabSize: 2,
                 }}
-                showLineNumbers={true}
-                wrapLines={true}
+              />
+            </div>
+
+            {/* Submit Button and Results */}
+            <div className="mt-4 space-y-3">
+              <button
+                onClick={handleSubmit}
+                disabled={submitting}
+                className="w-full px-6 py-4 bg-[#2ecc71] text-black text-xl font-bold uppercase border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] active:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] transition-all duration-150 rounded-none disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {exercise.starterCode || '// No starter code available'}
-              </SyntaxHighlighter>
+                {submitting ? 'SOUMISSION...' : 'SOUMETTRE'}
+              </button>
+
+              {submitResult && (
+                <div className={`p-4 border-4 ${submitResult.results?.passed ? 'border-green-500 bg-green-900/20' : 'border-red-500 bg-red-900/20'} rounded space-y-3`}>
+                  <p className={`font-bold text-lg ${submitResult.results?.passed ? 'text-green-400' : 'text-red-400'}`}>
+                    {submitResult.message}
+                  </p>
+
+                  {submitResult.results && (
+                    <>
+                      <div className="flex gap-4 text-sm font-mono">
+                        <span className="text-green-400">
+                          ✓ Tests réussis: {submitResult.results.passedTests}/{submitResult.results.totalTests}
+                        </span>
+                        {submitResult.results.failedTests > 0 && (
+                          <span className="text-red-400">
+                            ✗ Tests échoués: {submitResult.results.failedTests}
+                          </span>
+                        )}
+                      </div>
+
+                      {submitResult.results.output && (
+                        <div className="mt-3 p-3 bg-black/50 border border-gray-700 rounded">
+                          <p className="text-xs text-gray-400 mb-1">Sortie:</p>
+                          <pre className="text-sm text-green-300 whitespace-pre-wrap">
+                            {submitResult.results.output}
+                          </pre>
+                        </div>
+                      )}
+
+                      {submitResult.results.error && (
+                        <div className="mt-3 p-3 bg-red-900/20 border border-red-700 rounded">
+                          <p className="text-xs text-red-400 mb-1">Erreur:</p>
+                          <pre className="text-sm text-red-300 whitespace-pre-wrap">
+                            {submitResult.results.error}
+                          </pre>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -79,6 +79,7 @@ async function setupCollection() {
                 await databases.createStringAttribute(APPWRITE_DATABASE_ID, APPWRITE_COLLECTION_ID, 'title', 255, true);
                 await databases.createStringAttribute(APPWRITE_DATABASE_ID, APPWRITE_COLLECTION_ID, 'statement', 1000000, true);
                 await databases.createStringAttribute(APPWRITE_DATABASE_ID, APPWRITE_COLLECTION_ID, 'starterCode', 1000000, false);
+                await databases.createStringAttribute(APPWRITE_DATABASE_ID, APPWRITE_COLLECTION_ID, 'testCode', 1000000, false);
 
                 // Création de l'index sur le slug
                 await new Promise(resolve => setTimeout(resolve, 1000)); // Attendre que les attributs soient prêts
@@ -133,12 +134,33 @@ async function syncExercises() {
         const slug = path.basename(dirPath);
         const readmePath = path.join(dirPath, 'README.md');
         const indexPath = path.join(dirPath, 'index.js');
+        const testPath = path.join(dirPath, 'test.js');
 
         try {
             const statement = await fs.readFile(readmePath, 'utf-8');
             const starterCode = await fs.readFile(indexPath, 'utf-8');
+
+            // Try to read test file, if it doesn't exist, use empty string
+            let testCode = '';
+            try {
+                console.log(`Recherche du fichier test: ${testPath}`);
+                testCode = await fs.readFile(testPath, 'utf-8');
+                console.log(`✓ Fichier test.js trouvé pour '${slug}' (${testCode.length} caractères)`);
+            } catch (err: any) {
+                console.warn(`⚠ Pas de fichier test.js pour '${slug}': ${err.message}`);
+            }
+
             const title = `Exercice ${slug.replace('ex', '')}`;
-            const data = { slug, title, statement, starterCode };
+            const data = { slug, title, statement, starterCode, testCode };
+
+            console.log(`Données pour ${slug}:`, {
+                slug,
+                title,
+                hasStatement: !!statement,
+                hasStarterCode: !!starterCode,
+                hasTestCode: !!testCode,
+                testCodeLength: testCode.length
+            });
 
             const existingDocs = await databases.listDocuments(
                 APPWRITE_DATABASE_ID,

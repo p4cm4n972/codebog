@@ -18,6 +18,17 @@ export default function Navbar() {
             <div className="flex items-center gap-3">
                 <Link href="/" className="text-2xl font-bold tracking-tighter text-white hover:text-[#ffcc00]">CODEBOG</Link>
             </div>
+
+            {/* Center Navigation Links */}
+            <div className="hidden md:flex items-center gap-6">
+                <Link href="/" className={textLinkClasses}>
+                    Accueil
+                </Link>
+                <Link href="/a-propos" className={textLinkClasses}>
+                    À propos
+                </Link>
+            </div>
+
             <div className="flex items-center gap-4 text-lg">
                 {isLoading ? (
                     <div className="px-4 py-2">Loading...</div>

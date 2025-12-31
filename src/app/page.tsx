@@ -14,8 +14,9 @@ export default function LandingPage() {
       >
         <div className="pointer-events-none absolute inset-0 bg-black/20"></div>
 
-        <h1 className="drop-shadow-[6px_6px_0px_rgba(0,0,0,1)] z-10 mb-12 text-center text-5xl font-black md:text-8xl">
-          CODEBOG.DEV
+        {/* Vertical Title on Left */}
+        <h1 className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 z-10 text-5xl md:text-7xl font-black drop-shadow-[6px_6px_0px_rgba(0,0,0,1)] [writing-mode:vertical-rl] text-[#2ecc71]">
+          CODEBOG
         </h1>
 
         <div className="z-10 flex flex-col gap-8 md:flex-row">
