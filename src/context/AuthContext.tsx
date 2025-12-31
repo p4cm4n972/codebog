@@ -55,6 +55,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             console.error('Login failed:', err);
 
             if (err instanceof Error) {
+                // Provide more specific error messages
                 if (err.message?.includes('password')) {
                     setError('Password must be between 8 and 256 characters long.');
                 } else if (err.message?.includes('Invalid credentials')) {

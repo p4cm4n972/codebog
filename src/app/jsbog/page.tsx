@@ -82,9 +82,9 @@ export default function JsbogMissionSelection() {
       } catch (err) {
         console.error('Failed to fetch exercises:', err);
         if (err instanceof Error) {
-          setError(err.message);
+            setError(err.message);
         } else {
-          setError('Failed to load exercises');
+            setError('Failed to load exercises');
         }
       } finally {
         setLoading(false);
