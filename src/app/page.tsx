@@ -10,7 +10,7 @@ export default function LandingPage() {
     <main className="flex flex-col bg-[#0a0f0a] font-pixel text-white">
       {/* Hero Section */}
       <section
-        className="relative flex flex-grow flex-col items-center justify-center overflow-hidden bg-cover bg-center bg-no-repeat [image-rendering:pixelated] md:bg-[url('/bg-bog-desktop-02.png')] bg-[url('/bg-bog-mobile.webp')] min-h-screen"
+        className="relative flex flex-grow flex-col items-center justify-center overflow-hidden bg-cover bg-center bg-no-repeat [image-rendering:pixelated] md:bg-[url('/bg-bog-desktop-02.webp')] bg-[url('/bg-bog-mobile.webp')] min-h-screen"
       >
         <div className="pointer-events-none absolute inset-0 bg-black/20"></div>
 

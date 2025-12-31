@@ -1,15 +1,15 @@
 
 > codebog-web@0.1.0 dev
-> next dev --port 3004
+> next dev
 
+⚠ Port 3000 is in use by an unknown process, using available port 3001 instead.
 ▲ Next.js 16.1.1 (Turbopack)
-- Local:         http://localhost:3004
-- Network:       http://192.168.0.2:3004
-- Environments: .env
+- Local:         http://localhost:3001
+- Network:       http://192.168.0.2:3001
 
 ✓ Starting...
 ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
-✓ Ready in 1312ms
- GET /login 200 in 3.2s (compile: 2.9s, render: 328ms)
- GET /login 200 in 105ms (compile: 5ms, render: 100ms)
-✓ Compiled in 448ms
+✓ Ready in 1150ms
+○ Compiling / ...
+ GET / 200 in 4.1s (compile: 3.7s, render: 421ms)
+ GET / 200 in 68ms (compile: 6ms, render: 62ms)
