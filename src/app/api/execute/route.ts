@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { VM } from 'vm2';
+import * as ivm from 'isolated-vm';
 
 export async function POST(request: NextRequest) {
+  let isolate: ivm.Isolate | undefined;
+
   try {
     const { code, exerciseSlug, testCode } = await request.json();
 
@@ -19,71 +21,79 @@ export async function POST(request: NextRequest) {
     const testMessages: string[] = [];
 
     // Create a sandboxed VM
-    const vm = new VM({
-      timeout: 5000, // 5 seconds timeout
-      sandbox: {
-        console: {
-          log: (...args: any[]) => {
-            testMessages.push(args.join(' '));
-          },
-        },
-        // Simple assertion library
-        assert: {
-          equal: (actual: any, expected: any, message?: string) => {
-            totalTests++;
-            if (actual === expected) {
-              passedTests++;
-              testMessages.push(`✓ ${message || 'Test passed'}`);
-            } else {
-              failedTests++;
-              testMessages.push(`✗ ${message || 'Test failed'}: expected ${expected}, got ${actual}`);
-            }
-          },
-          deepEqual: (actual: any, expected: any, message?: string) => {
-            totalTests++;
-            if (JSON.stringify(actual) === JSON.stringify(expected)) {
-              passedTests++;
-              testMessages.push(`✓ ${message || 'Test passed'}`);
-            } else {
-              failedTests++;
-              testMessages.push(`✗ ${message || 'Test failed'}: expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
-            }
-          },
-          strictEqual: (actual: any, expected: any, message?: string) => {
-            totalTests++;
-            if (actual === expected) {
-              passedTests++;
-              testMessages.push(`✓ ${message || 'Test passed'}`);
-            } else {
-              failedTests++;
-              testMessages.push(`✗ ${message || 'Test failed'}: expected ${expected}, got ${actual}`);
-            }
-          },
-          ok: (value: any, message?: string) => {
-            totalTests++;
-            if (value) {
-              passedTests++;
-              testMessages.push(`✓ ${message || 'Test passed'}`);
-            } else {
-              failedTests++;
-              testMessages.push(`✗ ${message || 'Test failed'}: value was falsy`);
-            }
-          },
-        },
-      },
+    isolate = new ivm.Isolate({ memoryLimit: 128 }); // 128MB memory limit
+    const context = await isolate.createContext();
+    const jail = context.global;
+
+    // Set 'global' reference
+    await jail.set('global', jail.derefInto());
+
+    // Set up console.log
+    await jail.set('console', new ivm.Reference({
+      log: new ivm.Callback((...args: unknown[]) => {
+        testMessages.push(args.map(arg => String(arg)).join(' '));
+      }),
+    }));
+
+    // Set up assertion library
+    const assertReference = new ivm.Reference({
+      equal: new ivm.Callback((actual: unknown, expected: unknown, message?: string) => {
+        totalTests++;
+        if (actual === expected) {
+          passedTests++;
+          testMessages.push(`✓ ${message || 'Test passed'}`);
+        } else {
+          failedTests++;
+          testMessages.push(`✗ ${message || 'Test failed'}: expected ${expected}, got ${actual}`);
+        }
+      }),
+      deepEqual: new ivm.Callback((actual: unknown, expected: unknown, message?: string) => {
+        totalTests++;
+        if (JSON.stringify(actual) === JSON.stringify(expected)) {
+          passedTests++;
+          testMessages.push(`✓ ${message || 'Test passed'}`);
+        } else {
+          failedTests++;
+          testMessages.push(`✗ ${message || 'Test failed'}: expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+        }
+      }),
+      strictEqual: new ivm.Callback((actual: unknown, expected: unknown, message?: string) => {
+        totalTests++;
+        if (actual === expected) {
+          passedTests++;
+          testMessages.push(`✓ ${message || 'Test passed'}`);
+        } else {
+          failedTests++;
+          testMessages.push(`✗ ${message || 'Test failed'}: expected ${expected}, got ${actual}`);
+        }
+      }),
+      ok: new ivm.Callback((value: unknown, message?: string) => {
+        totalTests++;
+        if (value) {
+          passedTests++;
+          testMessages.push(`✓ ${message || 'Test passed'}`);
+        } else {
+          failedTests++;
+          testMessages.push(`✗ ${message || 'Test failed'}: value was falsy`);
+        }
+      }),
     });
+    await jail.set('assert', assertReference);
+
 
     try {
       // First, execute the user's code to define functions
-      vm.run(code);
+      const userCodeScript = await isolate.compileScript(code);
+      await userCodeScript.run(context, { timeout: 5000 });
 
       // Then, if testCode exists, run the tests
       if (testCode && testCode.trim()) {
         try {
-          vm.run(testCode);
-        } catch (testError: any) {
+          const testCodeScript = await isolate.compileScript(testCode);
+          await testCodeScript.run(context, { timeout: 5000 });
+        } catch (testError: unknown) {
           failedTests++;
-          testMessages.push(`✗ Erreur dans les tests: ${testError.message}`);
+          testMessages.push(`✗ Erreur dans les tests: ${(testError as Error).message}`);
         }
       } else {
         // No test file, just execute and check for syntax errors
@@ -105,7 +115,7 @@ export async function POST(request: NextRequest) {
         success: true,
         results: testResults,
       });
-    } catch (execError: any) {
+    } catch (execError: unknown) {
       return NextResponse.json({
         success: false,
         results: {
@@ -114,15 +124,19 @@ export async function POST(request: NextRequest) {
           passedTests: 0,
           failedTests: 1,
           message: `Erreur d'exécution`,
-          error: execError.message,
+          error: (execError as Error).message,
         },
       });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Execute API error:', error);
     return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
+      { error: 'Internal server error', details: (error as Error).message },
       { status: 500 }
     );
+  } finally {
+      if (isolate) {
+          isolate.dispose();
+      }
   }
 }
