@@ -6,7 +6,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto flex flex-col items-center gap-3">
         <div className="flex flex-col md:flex-row items-center justify-between w-full gap-2">
           <p className="text-green-400 text-sm">
-            © {new Date().getFullYear()} ITMade Studio - Tous droits réservés
+            © 2025 - {new Date().getFullYear()} ITMade Studio - Tous droits réservés
           </p>
           <p className="text-yellow-400 text-sm font-bold">
             VERSION BÊTA
