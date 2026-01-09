@@ -13,18 +13,26 @@ interface Submission {
   exerciseSlug: string;
   passed: boolean;
   submittedAt: string;
+  type: 'js' | 'c';
 }
 
-interface Stats {
+interface PiscineStats {
   totalExercises: number;
   completedExercises: number;
   totalSubmissions: number;
+}
+
+interface Stats {
+  jsbog: PiscineStats;
+  cbog: PiscineStats;
   recentSubmissions: Submission[];
 }
 
-// Rank system based on progress
-function getRank(completed: number, total: number): { name: string; color: string; emoji: string } {
-  const percentage = (completed / total) * 100;
+// Rank system based on combined progress
+function getRank(jsCompleted: number, jsTotal: number, cCompleted: number, cTotal: number): { name: string; color: string; emoji: string } {
+  const totalCompleted = jsCompleted + cCompleted;
+  const total = jsTotal + cTotal;
+  const percentage = total > 0 ? (totalCompleted / total) * 100 : 0;
 
   if (percentage === 100) return { name: 'Maître du Bog', color: 'text-yellow-400', emoji: '👑' };
   if (percentage >= 80) return { name: 'Sorcier du Code', color: 'text-purple-400', emoji: '🧙' };
@@ -54,27 +62,54 @@ export default function ProfilePage() {
       try {
         setLoadingStats(true);
 
-        // Fetch exercises count and user submissions in parallel
-        const [exercisesResponse, submissionsResponse] = await Promise.all([
+        // Fetch all data in parallel
+        const [
+          jsExercisesResponse,
+          jsSubmissionsResponse,
+          cExercisesResponse,
+          cSubmissionsResponse,
+        ] = await Promise.all([
           databases.listDocuments(DATABASE_ID, 'exercises'),
           databases.listDocuments(DATABASE_ID, 'submissions', [
             Query.equal('userId', user.$id),
             Query.orderDesc('submittedAt'),
           ]),
+          databases.listDocuments(DATABASE_ID, 'c-exercises'),
+          databases.listDocuments(DATABASE_ID, 'c-submissions', [
+            Query.equal('userId', user.$id),
+            Query.orderDesc('submittedAt'),
+          ]),
         ]);
 
-        const submissions = submissionsResponse.documents as unknown as Submission[];
+        const jsSubmissions = jsSubmissionsResponse.documents as unknown as Omit<Submission, 'type'>[];
+        const cSubmissions = cSubmissionsResponse.documents as unknown as Omit<Submission, 'type'>[];
 
-        // Get unique completed exercise slugs
-        const completedSlugs = new Set(
-          submissions.filter(s => s.passed).map(s => s.exerciseSlug)
+        // Get unique completed exercise slugs for each piscine
+        const jsCompletedSlugs = new Set(
+          jsSubmissions.filter(s => s.passed).map(s => s.exerciseSlug)
+        );
+        const cCompletedSlugs = new Set(
+          cSubmissions.filter(s => s.passed).map(s => s.exerciseSlug)
         );
 
+        // Combine recent submissions with type
+        const allSubmissions: Submission[] = [
+          ...jsSubmissions.map(s => ({ ...s, type: 'js' as const })),
+          ...cSubmissions.map(s => ({ ...s, type: 'c' as const })),
+        ].sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
+
         setStats({
-          totalExercises: exercisesResponse.total,
-          completedExercises: completedSlugs.size,
-          totalSubmissions: submissions.length,
-          recentSubmissions: submissions.slice(0, 5),
+          jsbog: {
+            totalExercises: jsExercisesResponse.total,
+            completedExercises: jsCompletedSlugs.size,
+            totalSubmissions: jsSubmissions.length,
+          },
+          cbog: {
+            totalExercises: cExercisesResponse.total,
+            completedExercises: cCompletedSlugs.size,
+            totalSubmissions: cSubmissions.length,
+          },
+          recentSubmissions: allSubmissions.slice(0, 8),
         });
       } catch (err) {
         console.error('Failed to fetch stats:', err);
@@ -98,19 +133,34 @@ export default function ProfilePage() {
     return null;
   }
 
-  const rank = stats ? getRank(stats.completedExercises, stats.totalExercises) : null;
-  const progressPercentage = stats ? (stats.completedExercises / stats.totalExercises) * 100 : 0;
+  const rank = stats ? getRank(
+    stats.jsbog.completedExercises,
+    stats.jsbog.totalExercises,
+    stats.cbog.completedExercises,
+    stats.cbog.totalExercises
+  ) : null;
+
+  const totalCompleted = stats ? stats.jsbog.completedExercises + stats.cbog.completedExercises : 0;
+  const totalExercises = stats ? stats.jsbog.totalExercises + stats.cbog.totalExercises : 0;
+  const totalProgress = totalExercises > 0 ? (totalCompleted / totalExercises) * 100 : 0;
 
   return (
     <main className="min-h-screen bg-[#0a0f0a] font-mono text-white p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <Link href="/jsbog">
-            <button className="mb-4 px-4 py-2 bg-green-500 text-black font-mono font-bold border-4 border-black hover:bg-green-400 transition-colors">
-              ← RETOUR AUX MISSIONS
-            </button>
-          </Link>
+          <div className="flex gap-2 mb-4">
+            <Link href="/jsbog">
+              <button className="px-4 py-2 bg-green-500 text-black font-mono font-bold border-4 border-black hover:bg-green-400 transition-colors">
+                JSBOG
+              </button>
+            </Link>
+            <Link href="/cbog">
+              <button className="px-4 py-2 bg-blue-500 text-black font-mono font-bold border-4 border-black hover:bg-blue-400 transition-colors">
+                CBOG
+              </button>
+            </Link>
+          </div>
           <h1 className="text-4xl font-bold text-[#2ecc71]">&gt; USER_PROFILE_</h1>
         </div>
 
@@ -131,41 +181,43 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Stats Card */}
+          {/* Global Stats Card */}
           <div className="bg-black border-4 border-yellow-400 p-6">
-            <h2 className="text-xl font-bold text-yellow-400 mb-6">STATISTIQUES</h2>
+            <h2 className="text-xl font-bold text-yellow-400 mb-6">PROGRESSION GLOBALE</h2>
             {loadingStats ? (
               <p className="text-green-400">Chargement...</p>
             ) : stats ? (
-              <div className="space-y-6">
-                {/* Progress Bar */}
+              <div className="space-y-4">
+                {/* Global Progress Bar */}
                 <div>
                   <div className="flex justify-between mb-2">
-                    <span className="text-green-400">PROGRESSION</span>
-                    <span className="text-2xl font-bold text-green-400">
-                      {stats.completedExercises}/{stats.totalExercises}
+                    <span className="text-gray-400">TOTAL</span>
+                    <span className="text-2xl font-bold text-white">
+                      {totalCompleted}/{totalExercises}
                     </span>
                   </div>
-                  <div className="w-full bg-gray-800 h-6 border-2 border-green-700">
+                  <div className="w-full bg-gray-800 h-4 border border-gray-700">
                     <div
-                      className="h-full bg-green-500 transition-all duration-500"
-                      style={{ width: `${progressPercentage}%` }}
+                      className="h-full bg-gradient-to-r from-green-500 to-blue-500 transition-all duration-500"
+                      style={{ width: `${totalProgress}%` }}
                     />
                   </div>
-                  <p className="text-sm text-green-300 mt-2">
-                    {progressPercentage.toFixed(0)}% complété
+                  <p className="text-sm text-gray-400 mt-1">
+                    {totalProgress.toFixed(0)}% complété
                   </p>
                 </div>
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-4 border border-green-700 rounded">
-                    <div className="text-3xl font-bold text-green-400">{stats.completedExercises}</div>
-                    <div className="text-xs text-green-300 uppercase">Missions réussies</div>
+                  <div className="text-center p-3 border border-gray-700 rounded">
+                    <div className="text-2xl font-bold text-white">{totalCompleted}</div>
+                    <div className="text-xs text-gray-400 uppercase">Missions réussies</div>
                   </div>
-                  <div className="text-center p-4 border border-green-700 rounded">
-                    <div className="text-3xl font-bold text-yellow-400">{stats.totalSubmissions}</div>
-                    <div className="text-xs text-green-300 uppercase">Soumissions</div>
+                  <div className="text-center p-3 border border-gray-700 rounded">
+                    <div className="text-2xl font-bold text-yellow-400">
+                      {stats.jsbog.totalSubmissions + stats.cbog.totalSubmissions}
+                    </div>
+                    <div className="text-xs text-gray-400 uppercase">Soumissions</div>
                   </div>
                 </div>
               </div>
@@ -175,19 +227,86 @@ export default function ProfilePage() {
           </div>
         </div>
 
+        {/* Piscine Stats */}
+        {stats && (
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* JSBOG Stats */}
+            <div className="bg-black border-4 border-green-500 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-green-400">JSBOG</h2>
+                <span className="text-sm text-green-300">JavaScript</span>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <div className="flex justify-between mb-1">
+                    <span className="text-sm text-green-300">Progression</span>
+                    <span className="font-bold text-green-400">
+                      {stats.jsbog.completedExercises}/{stats.jsbog.totalExercises}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-800 h-3 border border-green-700">
+                    <div
+                      className="h-full bg-green-500 transition-all duration-500"
+                      style={{ width: `${stats.jsbog.totalExercises > 0 ? (stats.jsbog.completedExercises / stats.jsbog.totalExercises) * 100 : 0}%` }}
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Soumissions:</span>
+                  <span className="text-green-400">{stats.jsbog.totalSubmissions}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* CBOG Stats */}
+            <div className="bg-black border-4 border-blue-500 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-blue-400">CBOG</h2>
+                <span className="text-sm text-blue-300">C Language</span>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <div className="flex justify-between mb-1">
+                    <span className="text-sm text-blue-300">Progression</span>
+                    <span className="font-bold text-blue-400">
+                      {stats.cbog.completedExercises}/{stats.cbog.totalExercises}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-800 h-3 border border-blue-700">
+                    <div
+                      className="h-full bg-blue-500 transition-all duration-500"
+                      style={{ width: `${stats.cbog.totalExercises > 0 ? (stats.cbog.completedExercises / stats.cbog.totalExercises) * 100 : 0}%` }}
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Soumissions:</span>
+                  <span className="text-blue-400">{stats.cbog.totalSubmissions}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Recent Activity */}
-        <div className="mt-6 bg-black border-4 border-green-500 p-6">
+        <div className="mt-6 bg-black border-4 border-gray-700 p-6">
           <h2 className="text-xl font-bold text-yellow-400 mb-6">ACTIVITÉ RÉCENTE</h2>
           {loadingStats ? (
-            <p className="text-green-400">Chargement...</p>
+            <p className="text-gray-400">Chargement...</p>
           ) : stats && stats.recentSubmissions.length > 0 ? (
             <div className="space-y-3">
               {stats.recentSubmissions.map((submission, index) => (
-                <Link href={`/jsbog/${submission.exerciseSlug}`} key={index}>
-                  <div className="flex items-center justify-between p-3 border border-gray-700 rounded hover:border-green-500 transition-colors cursor-pointer">
+                <Link
+                  href={submission.type === 'js' ? `/jsbog/${submission.exerciseSlug}` : `/cbog/${submission.exerciseSlug}`}
+                  key={index}
+                >
+                  <div className="flex items-center justify-between p-3 border border-gray-700 rounded hover:border-gray-500 transition-colors cursor-pointer">
                     <div className="flex items-center gap-3">
-                      <span className={submission.passed ? 'text-green-400' : 'text-red-400'}>
+                      <span className={submission.passed ? (submission.type === 'js' ? 'text-green-400' : 'text-blue-400') : 'text-red-400'}>
                         {submission.passed ? '✓' : '✗'}
+                      </span>
+                      <span className={`text-xs px-2 py-0.5 rounded ${submission.type === 'js' ? 'bg-green-900/50 text-green-400' : 'bg-blue-900/50 text-blue-400'}`}>
+                        {submission.type === 'js' ? 'JS' : 'C'}
                       </span>
                       <span className="text-yellow-400">/{submission.exerciseSlug}</span>
                     </div>
