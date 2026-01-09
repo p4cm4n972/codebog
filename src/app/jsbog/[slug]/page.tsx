@@ -19,6 +19,13 @@ interface Exercise {
 
 const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
 const COLLECTION_ID = 'exercises';
+const SUBMISSIONS_COLLECTION_ID = 'submissions';
+
+interface Submission {
+  code: string;
+  passed: boolean;
+  submittedAt: string;
+}
 
 function extractInstructions(statement: string): string {
   // Extract from "## Instructions" to before "## Tests"
@@ -48,6 +55,8 @@ export default function ExerciseDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [userCode, setUserCode] = useState('');
+  const [hasExistingSubmission, setHasExistingSubmission] = useState(false);
+  const [lastSubmissionPassed, setLastSubmissionPassed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitResult, setSubmitResult] = useState<{
     success: boolean;
@@ -69,26 +78,43 @@ export default function ExerciseDetailPage() {
   }, [isLoading, user, router]);
 
   useEffect(() => {
-    const fetchExercise = async () => {
+    const fetchExerciseAndSubmission = async () => {
       if (!user) return;
 
       try {
         setLoading(true);
         setError('');
-        const response = await databases.listDocuments(
-          DATABASE_ID,
-          COLLECTION_ID,
-          [Query.equal('slug', slug)]
-        );
 
-        if (response.documents.length === 0) {
+        // Fetch exercise and user's last submission in parallel
+        const [exerciseResponse, submissionsResponse] = await Promise.all([
+          databases.listDocuments(DATABASE_ID, COLLECTION_ID, [Query.equal('slug', slug)]),
+          databases.listDocuments(DATABASE_ID, SUBMISSIONS_COLLECTION_ID, [
+            Query.equal('userId', user.$id),
+            Query.equal('exerciseSlug', slug),
+            Query.orderDesc('submittedAt'),
+            Query.limit(1),
+          ]),
+        ]);
+
+        if (exerciseResponse.documents.length === 0) {
           setError('Exercise not found');
           return;
         }
 
-        const exerciseData = response.documents[0] as unknown as Exercise;
+        const exerciseData = exerciseResponse.documents[0] as unknown as Exercise;
         setExercise(exerciseData);
-        setUserCode(exerciseData.starterCode || '// Write your code here');
+
+        // Check if user has a previous submission
+        if (submissionsResponse.documents.length > 0) {
+          const lastSubmission = submissionsResponse.documents[0] as unknown as Submission;
+          setUserCode(lastSubmission.code);
+          setHasExistingSubmission(true);
+          setLastSubmissionPassed(lastSubmission.passed);
+        } else {
+          setUserCode(exerciseData.starterCode || '// Write your code here');
+          setHasExistingSubmission(false);
+          setLastSubmissionPassed(false);
+        }
       } catch (err: any) {
         console.error('Failed to fetch exercise:', err);
         if (err instanceof Error) {
@@ -101,7 +127,7 @@ export default function ExerciseDetailPage() {
       }
     };
 
-    fetchExercise();
+    fetchExerciseAndSubmission();
   }, [user, slug]);
 
   const handleSubmit = async () => {
@@ -271,6 +297,34 @@ export default function ExerciseDetailPage() {
                 <div className="w-3 h-3 rounded-full bg-green-500"></div>
               </div>
             </div>
+
+            {/* Submission Status Banner */}
+            {hasExistingSubmission && (
+              <div className={`mb-4 p-3 border-2 rounded flex items-center justify-between ${lastSubmissionPassed ? 'border-green-500 bg-green-900/20' : 'border-yellow-500 bg-yellow-900/20'}`}>
+                <div className="flex items-center gap-2">
+                  {lastSubmissionPassed ? (
+                    <>
+                      <span className="text-green-400 text-lg">✓</span>
+                      <span className="text-green-400 text-sm font-mono">Dernière solution validée</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-yellow-400 text-lg">⏳</span>
+                      <span className="text-yellow-400 text-sm font-mono">Dernière tentative chargée</span>
+                    </>
+                  )}
+                </div>
+                <button
+                  onClick={() => {
+                    setUserCode(exercise?.starterCode || '// Write your code here');
+                    setHasExistingSubmission(false);
+                  }}
+                  className="px-3 py-1 text-xs font-mono text-gray-400 hover:text-white border border-gray-600 hover:border-gray-400 rounded transition-colors"
+                >
+                  RESET
+                </button>
+              </div>
+            )}
 
             {/* Monaco Editor */}
             <div className="flex-grow border-2 border-green-700 rounded overflow-hidden">

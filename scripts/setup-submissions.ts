@@ -20,8 +20,23 @@ const databases = new Databases(appwriteClient);
 
 async function setupSubmissionsCollection() {
     try {
-        await databases.getCollection(APPWRITE_DATABASE_ID, SUBMISSIONS_COLLECTION_ID);
+        const collection = await databases.getCollection(APPWRITE_DATABASE_ID, SUBMISSIONS_COLLECTION_ID);
         console.log(`La collection '${SUBMISSIONS_COLLECTION_ID}' existe déjà.`);
+
+        // Update permissions if needed
+        console.log('Mise à jour des permissions...');
+        await databases.updateCollection(
+            APPWRITE_DATABASE_ID,
+            SUBMISSIONS_COLLECTION_ID,
+            collection.name,
+            [
+                Permission.read(Role.users()),
+                Permission.create(Role.users()),
+                Permission.update(Role.users()),
+                Permission.delete(Role.users()),
+            ]
+        );
+        console.log('Permissions mises à jour.');
     } catch (error: unknown) {
         const isAppwriteError = (e: unknown): e is { code: number } => typeof e === 'object' && e !== null && 'code' in e;
         if (isAppwriteError(error) && error.code === 404) {
@@ -32,7 +47,7 @@ async function setupSubmissionsCollection() {
                     SUBMISSIONS_COLLECTION_ID,
                     SUBMISSIONS_COLLECTION_ID,
                     [
-                        Permission.read(Role.user('ID')), // Users can read their own submissions
+                        Permission.read(Role.users()), // Authenticated users can read submissions
                         Permission.create(Role.users()),
                         Permission.update(Role.users()),
                         Permission.delete(Role.users()),
