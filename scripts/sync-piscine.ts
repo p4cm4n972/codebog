@@ -38,6 +38,19 @@ const git = simpleGit();
 
 // --- Fonctions ---
 
+/**
+ * Retire la ligne module.exports du code starter
+ * Cette ligne casse les tests de vérification côté utilisateur
+ */
+function removeModuleExports(code: string): string {
+    // Retire les lignes module.exports = ... (avec ou sans point-virgule)
+    // Gère aussi les exports sur plusieurs lignes
+    return code
+        .replace(/\n?module\.exports\s*=\s*[^;]+;?\s*$/gm, '')
+        .replace(/\n?module\.exports\s*=\s*\{[^}]*\};?\s*$/gm, '')
+        .trim();
+}
+
 async function setupDatabase() {
     try {
         await databases.get(APPWRITE_DATABASE_ID);
@@ -138,7 +151,8 @@ async function syncExercises() {
 
         try {
             const statement = await fs.readFile(readmePath, 'utf-8');
-            const starterCode = await fs.readFile(indexPath, 'utf-8');
+            const rawStarterCode = await fs.readFile(indexPath, 'utf-8');
+            const starterCode = removeModuleExports(rawStarterCode);
 
             // Try to read test file, if it doesn't exist, use empty string
             let testCode = '';

@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="96" height="96">
+  <!-- Logo Codebog - Manicou minimaliste pixel art -->
+
+  <!-- Oreille gauche -->
+  <rect x="5" y="2" width="2" height="2" fill="#2d2d2d"/>
+  <rect x="6" y="3" width="1" height="1" fill="#4a4a4a"/>
+
+  <!-- Oreille droite -->
+  <rect x="11" y="2" width="2" height="2" fill="#2d2d2d"/>
+  <rect x="11" y="3" width="1" height="1" fill="#4a4a4a"/>
+
+  <!-- Tête -->
+  <rect x="6" y="4" width="6" height="1" fill="#d4ccc4"/>
+  <rect x="5" y="5" width="8" height="1" fill="#d4ccc4"/>
+  <rect x="5" y="6" width="9" height="1" fill="#d4ccc4"/>
+  <rect x="5" y="7" width="9" height="1" fill="#d4ccc4"/>
+  <rect x="6" y="8" width="8" height="1" fill="#d4ccc4"/>
+
+  <!-- Museau pointu -->
+  <rect x="8" y="9" width="6" height="1" fill="#d4ccc4"/>
+  <rect x="10" y="10" width="4" height="1" fill="#e8ddd4"/>
+  <rect x="12" y="11" width="2" height="1" fill="#e8ddd4"/>
+
+  <!-- Nez -->
+  <rect x="13" y="10" width="1" height="1" fill="#1a1a1a"/>
+
+  <!-- Masque facial (bande sombre caractéristique) -->
+  <rect x="6" y="5" width="3" height="1" fill="#6b5344"/>
+  <rect x="5" y="6" width="3" height="2" fill="#6b5344"/>
+
+  <!-- Œil -->
+  <rect x="7" y="6" width="2" height="2" fill="#1a1a1a"/>
+  <rect x="7" y="6" width="1" height="1" fill="#ffffff"/>
+
+  <!-- Torche - manche -->
+  <rect x="2" y="10" width="2" height="6" fill="#5c4033"/>
+  <rect x="3" y="11" width="1" height="5" fill="#3d2817"/>
+
+  <!-- Patte tenant la torche -->
+  <rect x="4" y="12" width="2" height="1" fill="#d4ccc4"/>
+  <rect x="4" y="13" width="1" height="1" fill="#d4ccc4"/>
+
+  <!-- Flamme -->
+  <rect x="2" y="5" width="2" height="1" fill="#ff4500"/>
+  <rect x="1" y="6" width="4" height="1" fill="#ff6b35"/>
+  <rect x="1" y="7" width="4" height="1" fill="#ff8c42"/>
+  <rect x="2" y="8" width="2" height="1" fill="#ffdc5e"/>
+  <rect x="2" y="9" width="2" height="1" fill="#ffdc5e"/>
+
+</svg>

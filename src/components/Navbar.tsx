@@ -35,7 +35,7 @@ export default function Navbar() {
                 ) : user ? (
                     <div className="flex items-center gap-4">
                         <Link href="/profile" className="flex items-center gap-2 group">
-                            <Image src="/icon_manicou.png" alt="Manicou Icon" width={32} height={32} className="pixelated group-hover:scale-110 transition-transform" />
+                            <Image src="/icon_manicou.svg" alt="Manicou Icon" width={32} height={32} className="pixelated group-hover:scale-110 transition-transform" />
                             <span className={textLinkClasses}>{user.name}</span>
                         </Link>
                         <button onClick={logout} className={redButtonClasses}>
