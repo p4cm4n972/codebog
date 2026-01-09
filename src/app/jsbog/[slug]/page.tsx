@@ -302,8 +302,15 @@ export default function ExerciseDetailPage() {
               </button>
 
               {submitResult && (
-                <div className={`p-4 border-4 ${submitResult.results?.passed ? 'border-green-500 bg-green-900/20' : 'border-red-500 bg-red-900/20'} rounded space-y-3`}>
-                  <p className={`font-bold text-lg ${submitResult.results?.passed ? 'text-green-400' : 'text-red-400'}`}>
+                <div className={`p-4 border-4 ${submitResult.results?.passed ? 'border-green-500 bg-green-900/20' : 'border-red-500 bg-red-900/20'} rounded space-y-3 relative`}>
+                  <button
+                    onClick={() => setSubmitResult(null)}
+                    className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 rounded transition-colors"
+                    title="Fermer"
+                  >
+                    ✕
+                  </button>
+                  <p className={`font-bold text-lg ${submitResult.results?.passed ? 'text-green-400' : 'text-red-400'} pr-8`}>
                     {submitResult.message}
                   </p>
 
@@ -322,10 +329,23 @@ export default function ExerciseDetailPage() {
 
                       {submitResult.results.output && (
                         <div className="mt-3 p-3 bg-black/50 border border-gray-700 rounded">
-                          <p className="text-xs text-gray-400 mb-1">Sortie:</p>
-                          <pre className="text-sm text-green-300 whitespace-pre-wrap">
-                            {submitResult.results.output}
-                          </pre>
+                          <p className="text-xs text-gray-400 mb-2">Sortie:</p>
+                          <div className="text-sm font-mono space-y-1 max-h-64 overflow-y-auto">
+                            {submitResult.results.output.split('\n').map((line, index) => {
+                              const isPass = line.includes('✓');
+                              const isFail = line.includes('✗');
+                              const colorClass = isPass
+                                ? 'text-green-400'
+                                : isFail
+                                  ? 'text-red-400'
+                                  : 'text-gray-300';
+                              return (
+                                <div key={index} className={colorClass}>
+                                  {line}
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
                       )}
 

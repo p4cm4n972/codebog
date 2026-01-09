@@ -51,6 +51,21 @@ function removeModuleExports(code: string): string {
         .trim();
 }
 
+/**
+ * Nettoie le code de test pour le rendre compatible avec le sandbox isolé
+ * - Retire les require('./index.js') car les fonctions sont déjà définies
+ * - Retire process.exit() car non disponible dans le sandbox
+ */
+function cleanTestCode(code: string): string {
+    return code
+        // Retire les lignes require('./index.js') ou require("./index.js")
+        .replace(/^const\s*\{[^}]*\}\s*=\s*require\s*\(\s*['"]\.\/index\.js['"]\s*\)\s*;?\s*$/gm, '')
+        .replace(/^const\s+\w+\s*=\s*require\s*\(\s*['"]\.\/index\.js['"]\s*\)\s*;?\s*$/gm, '')
+        // Retire process.exit()
+        .replace(/^process\.exit\s*\([^)]*\)\s*;?\s*$/gm, '')
+        .trim();
+}
+
 async function setupDatabase() {
     try {
         await databases.get(APPWRITE_DATABASE_ID);
@@ -158,7 +173,8 @@ async function syncExercises() {
             let testCode = '';
             try {
                 console.log(`Recherche du fichier test: ${testPath}`);
-                testCode = await fs.readFile(testPath, 'utf-8');
+                const rawTestCode = await fs.readFile(testPath, 'utf-8');
+                testCode = cleanTestCode(rawTestCode);
                 console.log(`✓ Fichier test.js trouvé pour '${slug}' (${testCode.length} caractères)`);
             } catch (err: any) {
                 console.warn(`⚠ Pas de fichier test.js pour '${slug}': ${err.message}`);

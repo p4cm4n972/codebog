@@ -28,12 +28,22 @@ export async function POST(request: NextRequest) {
     // Set 'global' reference
     await jail.set('global', jail.derefInto());
 
-    // Set up console.log
-    await jail.set('console', new ivm.Reference({
-      log: new ivm.Callback((...args: unknown[]) => {
-        testMessages.push(args.map(arg => String(arg)).join(' '));
-      }),
-    }));
+    // Set up console.log - inject the callback function
+    const logCallback = new ivm.Reference((...args: unknown[]) => {
+      testMessages.push(args.map(arg => String(arg)).join(' '));
+    });
+    await jail.set('_log', logCallback);
+
+    // Create console object in the isolate using compileScript (isolated-vm's safe eval)
+    const consoleSetup = await isolate.compileScript(`
+      const console = {
+        log: (...args) => _log.applySync(undefined, args),
+        error: (...args) => _log.applySync(undefined, args),
+        warn: (...args) => _log.applySync(undefined, args),
+        info: (...args) => _log.applySync(undefined, args)
+      };
+    `);
+    await consoleSetup.run(context);
 
     // Set up assertion library
     const assertReference = new ivm.Reference({
@@ -91,8 +101,20 @@ export async function POST(request: NextRequest) {
         try {
           const testCodeScript = await isolate.compileScript(testCode);
           await testCodeScript.run(context, { timeout: 5000 });
+
+          // Parse test results from console output (tests use their own assert with ✓/✗)
+          for (const msg of testMessages) {
+            if (msg.startsWith('✓') || msg.includes('✓ ')) {
+              passedTests++;
+              totalTests++;
+            } else if (msg.startsWith('✗') || msg.includes('✗ ')) {
+              failedTests++;
+              totalTests++;
+            }
+          }
         } catch (testError: unknown) {
           failedTests++;
+          totalTests++;
           testMessages.push(`✗ Erreur dans les tests: ${(testError as Error).message}`);
         }
       } else {
