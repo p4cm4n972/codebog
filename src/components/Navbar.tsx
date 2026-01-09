@@ -30,25 +30,40 @@ export default function Navbar() {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // Fetch user progress
+    // Fetch user progress (combined JSBOG + CBOG)
     useEffect(() => {
         const fetchProgress = async () => {
             if (!user) return;
 
             try {
-                const [exercisesResponse, submissionsResponse] = await Promise.all([
+                const [
+                    jsExercisesResponse,
+                    jsSubmissionsResponse,
+                    cExercisesResponse,
+                    cSubmissionsResponse,
+                ] = await Promise.all([
                     databases.listDocuments(DATABASE_ID, 'exercises'),
                     databases.listDocuments(DATABASE_ID, 'submissions', [
                         Query.equal('userId', user.$id),
                         Query.equal('passed', true),
                     ]),
+                    databases.listDocuments(DATABASE_ID, 'c-exercises'),
+                    databases.listDocuments(DATABASE_ID, 'c-submissions', [
+                        Query.equal('userId', user.$id),
+                        Query.equal('passed', true),
+                    ]),
                 ]);
 
-                const completedSlugs = new Set(
-                    (submissionsResponse.documents as any[]).map(s => s.exerciseSlug)
+                const jsCompletedSlugs = new Set(
+                    (jsSubmissionsResponse.documents as any[]).map(s => s.exerciseSlug)
+                );
+                const cCompletedSlugs = new Set(
+                    (cSubmissionsResponse.documents as any[]).map(s => s.exerciseSlug)
                 );
 
-                const percentage = Math.round((completedSlugs.size / exercisesResponse.total) * 100);
+                const totalCompleted = jsCompletedSlugs.size + cCompletedSlugs.size;
+                const totalExercises = jsExercisesResponse.total + cExercisesResponse.total;
+                const percentage = totalExercises > 0 ? Math.round((totalCompleted / totalExercises) * 100) : 0;
                 setProgress(percentage);
             } catch (err) {
                 console.error('Failed to fetch progress:', err);
@@ -154,10 +169,20 @@ export default function Navbar() {
                                         className="flex items-center gap-2 px-4 py-3 text-white hover:bg-green-900/50 hover:text-[#ffcc00] transition-colors"
                                         onClick={() => setUserMenuOpen(false)}
                                     >
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                                         </svg>
-                                        Mes Missions
+                                        JSBOG
+                                    </Link>
+                                    <Link
+                                        href="/cbog"
+                                        className="flex items-center gap-2 px-4 py-3 text-white hover:bg-green-900/50 hover:text-[#ffcc00] transition-colors"
+                                        onClick={() => setUserMenuOpen(false)}
+                                    >
+                                        <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                        CBOG
                                     </Link>
                                     <div className="border-t border-green-900/50" />
                                     <button
