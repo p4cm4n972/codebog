@@ -137,7 +137,7 @@ export default function Navbar() {
 
                             {/* Dropdown Content */}
                             {userMenuOpen && (
-                                <div className="absolute right-0 mt-2 w-48 bg-[#1a2e1a] border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] z-50">
+                                <div className="absolute right-0 mt-2 w-56 bg-[#1a2e1a] border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] z-50">
                                     <Link
                                         href="/profile"
                                         className="flex items-center gap-2 px-4 py-3 text-white hover:bg-green-900/50 hover:text-[#ffcc00] transition-colors"
