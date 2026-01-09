@@ -291,77 +291,85 @@ export default function ExerciseDetailPage() {
               />
             </div>
 
-            {/* Submit Button and Results */}
-            <div className="mt-4 space-y-3">
+            {/* Submit Button */}
+            <div className="mt-4">
               <button
                 onClick={handleSubmit}
                 disabled={submitting}
-                className="w-full px-6 py-4 bg-[#2ecc71] text-black text-xl font-bold uppercase border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] active:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] transition-all duration-150 rounded-none disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-6 py-4 bg-[#2ecc71] text-black text-xl font-bold uppercase border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] active:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] transition-all duration-150 rounded-none disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
               >
-                {submitting ? 'SOUMISSION...' : 'SOUMETTRE'}
+                {submitting ? (
+                  <>
+                    <svg className="animate-spin h-6 w-6" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    ANALYSE EN COURS...
+                  </>
+                ) : 'SOUMETTRE'}
               </button>
+            </div>
 
-              {submitResult && (
-                <div className={`p-4 border-4 ${submitResult.results?.passed ? 'border-green-500 bg-green-900/20' : 'border-red-500 bg-red-900/20'} rounded space-y-3 relative`}>
+            {/* Results - Inside Editor Section */}
+            {submitResult && (
+              <div className={`mt-4 p-4 border-2 ${submitResult.results?.passed ? 'border-green-500 bg-green-900/20' : 'border-red-500 bg-red-900/20'} rounded`}>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className={`text-lg font-bold font-mono ${submitResult.results?.passed ? 'text-green-400' : 'text-red-400'}`}>
+                    {submitResult.results?.passed ? '✅ MISSION RÉUSSIE' : '❌ MISSION ÉCHOUÉE'}
+                  </h3>
                   <button
                     onClick={() => setSubmitResult(null)}
-                    className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 rounded transition-colors"
-                    title="Fermer"
+                    className="w-6 h-6 flex items-center justify-center text-lg text-gray-400 hover:text-white hover:bg-white/10 rounded transition-colors"
                   >
                     ✕
                   </button>
-                  <p className={`font-bold text-lg ${submitResult.results?.passed ? 'text-green-400' : 'text-red-400'} pr-8`}>
-                    {submitResult.message}
-                  </p>
-
-                  {submitResult.results && (
-                    <>
-                      <div className="flex gap-4 text-sm font-mono">
-                        <span className="text-green-400">
-                          ✓ Tests réussis: {submitResult.results.passedTests}/{submitResult.results.totalTests}
-                        </span>
-                        {submitResult.results.failedTests > 0 && (
-                          <span className="text-red-400">
-                            ✗ Tests échoués: {submitResult.results.failedTests}
-                          </span>
-                        )}
-                      </div>
-
-                      {submitResult.results.output && (
-                        <div className="mt-3 p-3 bg-black/50 border border-gray-700 rounded">
-                          <p className="text-xs text-gray-400 mb-2">Sortie:</p>
-                          <div className="text-sm font-mono space-y-1 max-h-64 overflow-y-auto">
-                            {submitResult.results.output.split('\n').map((line, index) => {
-                              const isPass = line.includes('✓');
-                              const isFail = line.includes('✗');
-                              const colorClass = isPass
-                                ? 'text-green-400'
-                                : isFail
-                                  ? 'text-red-400'
-                                  : 'text-gray-300';
-                              return (
-                                <div key={index} className={colorClass}>
-                                  {line}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-
-                      {submitResult.results.error && (
-                        <div className="mt-3 p-3 bg-red-900/20 border border-red-700 rounded">
-                          <p className="text-xs text-red-400 mb-1">Erreur:</p>
-                          <pre className="text-sm text-red-300 whitespace-pre-wrap">
-                            {submitResult.results.error}
-                          </pre>
-                        </div>
-                      )}
-                    </>
-                  )}
                 </div>
-              )}
-            </div>
+
+                {submitResult.results && (
+                  <>
+                    <div className="flex gap-4 text-sm font-mono mb-3">
+                      <span className="text-green-400">
+                        ✓ Réussis: {submitResult.results.passedTests}/{submitResult.results.totalTests}
+                      </span>
+                      {submitResult.results.failedTests > 0 && (
+                        <span className="text-red-400">
+                          ✗ Échoués: {submitResult.results.failedTests}
+                        </span>
+                      )}
+                    </div>
+
+                    {submitResult.results.output && (
+                      <div className="max-h-48 overflow-y-auto p-3 bg-black/50 border border-gray-700 rounded">
+                        <div className="text-xs font-mono space-y-1">
+                          {submitResult.results.output.split('\n').map((line, index) => {
+                            const isPass = line.includes('✓');
+                            const isFail = line.includes('✗');
+                            const colorClass = isPass
+                              ? 'text-green-400'
+                              : isFail
+                                ? 'text-red-400'
+                                : 'text-gray-400';
+                            return (
+                              <div key={index} className={colorClass}>
+                                {line}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {submitResult.results.error && (
+                      <div className="mt-3 p-3 bg-red-900/30 border border-red-700 rounded">
+                        <p className="text-red-400 font-mono text-xs whitespace-pre-wrap">
+                          {submitResult.results.error}
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
