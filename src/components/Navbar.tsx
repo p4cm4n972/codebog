@@ -74,6 +74,7 @@ export default function Navbar() {
     const navLinks = [
         { href: '/', label: 'Accueil' },
         { href: '/jsbog', label: 'JSBOG' },
+        { href: '/cbog', label: 'CBOG' },
         { href: '/a-propos', label: 'À propos' },
     ];
 
