@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# cloned repos for sync scripts
+/scripts/piscine-js-expert
+/scripts/piscine-C
