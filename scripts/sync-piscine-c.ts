@@ -55,7 +55,11 @@ function extractTitle(content: string): string {
     // Cherche la ligne "Exercice : xxx"
     const match = content.match(/Exercice\s*:\s*(.+)/);
     if (match) {
-        return match[1].trim();
+        // Nettoie les marqueurs de commentaires et espaces
+        return match[1]
+            .replace(/\*+\/?/g, '')  // Retire */ ou ** ou *
+            .replace(/\/\*/g, '')     // Retire /*
+            .trim();
     }
     return 'Exercice C';
 }
