@@ -169,9 +169,7 @@ export default function Navbar() {
                                         className="flex items-center gap-2 px-4 py-3 text-white hover:bg-green-900/50 hover:text-[#ffcc00] transition-colors"
                                         onClick={() => setUserMenuOpen(false)}
                                     >
-                                        <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                                        </svg>
+                                        <span className="w-5 h-5 flex items-center justify-center text-xs font-bold bg-green-600 rounded">JS</span>
                                         JSBOG
                                     </Link>
                                     <Link
@@ -179,9 +177,7 @@ export default function Navbar() {
                                         className="flex items-center gap-2 px-4 py-3 text-white hover:bg-green-900/50 hover:text-[#ffcc00] transition-colors"
                                         onClick={() => setUserMenuOpen(false)}
                                     >
-                                        <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
+                                        <span className="w-5 h-5 flex items-center justify-center text-xs font-bold bg-blue-600 rounded">C</span>
                                         CBOG
                                     </Link>
                                     <div className="border-t border-green-900/50" />
