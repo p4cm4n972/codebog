@@ -1,21 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyUserFromJWT, isCExerciseUnlocked } from '@/lib/access-control';
 
-// Judge0 API configuration - read at runtime, not build time
-function getJudge0Config() {
-  return {
-    apiUrl: process.env.JUDGE0_API_URL || 'https://judge0-ce.p.rapidapi.com',
-    apiKey: process.env.JUDGE0_API_KEY,
-    apiHost: process.env.JUDGE0_API_HOST || 'judge0-ce.p.rapidapi.com',
-  };
-}
-
-// C language ID in Judge0 (GCC 9.2.0)
-const C_LANGUAGE_ID = 50;
-
-// Timeout for polling (max 30 seconds)
-const MAX_POLL_ATTEMPTS = 15;
-const POLL_INTERVAL = 2000; // 2 seconds
+// Piston API - free code execution service (no API key required)
+const PISTON_API_URL = 'https://emkc.org/api/v2/piston/execute';
 
 interface TestResult {
   compiled: boolean;
@@ -28,18 +15,24 @@ interface TestResult {
   error?: string;
 }
 
-interface Judge0Response {
-  token?: string;
-  stdout?: string | null;
-  stderr?: string | null;
-  compile_output?: string | null;
-  message?: string | null;
-  status?: {
-    id: number;
-    description: string;
+interface PistonResponse {
+  language: string;
+  version: string;
+  run: {
+    stdout: string;
+    stderr: string;
+    code: number;
+    signal: string | null;
+    output: string;
   };
-  time?: string;
-  memory?: number;
+  compile?: {
+    stdout: string;
+    stderr: string;
+    code: number;
+    signal: string | null;
+    output: string;
+  };
+  message?: string;
 }
 
 /**
@@ -93,94 +86,31 @@ function parseTestOutput(output: string): { passed: number; failed: number; tota
 }
 
 /**
- * Submit code to Judge0 API
+ * Execute C code using Piston API
  */
-async function submitToJudge0(sourceCode: string): Promise<string> {
-  const config = getJudge0Config();
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-
-  // Add RapidAPI headers if API key is configured
-  if (config.apiKey) {
-    headers['X-RapidAPI-Key'] = config.apiKey;
-    headers['X-RapidAPI-Host'] = config.apiHost;
-  }
-
-  const response = await fetch(`${config.apiUrl}/submissions?base64_encoded=true&wait=false`, {
+async function executeWithPiston(sourceCode: string): Promise<PistonResponse> {
+  const response = await fetch(PISTON_API_URL, {
     method: 'POST',
-    headers,
+    headers: {
+      'Content-Type': 'application/json',
+    },
     body: JSON.stringify({
-      source_code: Buffer.from(sourceCode).toString('base64'),
-      language_id: C_LANGUAGE_ID,
-      cpu_time_limit: 5,
-      cpu_extra_time: 1,
-      wall_time_limit: 10,
-      memory_limit: 128000, // 128 MB
-      compiler_options: '-Wall -Wextra -Werror',
+      language: 'c',
+      version: '*',
+      files: [{ content: sourceCode }],
+      compile_timeout: 10000,
+      run_timeout: 5000,
+      compile_memory_limit: -1,
+      run_memory_limit: -1,
     }),
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Judge0 submission failed: ${response.status} - ${errorText}`);
+    throw new Error(`Piston API error: ${response.status} - ${errorText}`);
   }
 
-  const data: Judge0Response = await response.json();
-  if (!data.token) {
-    throw new Error('No token received from Judge0');
-  }
-
-  return data.token;
-}
-
-/**
- * Poll Judge0 for submission result
- */
-async function pollJudge0Result(token: string): Promise<Judge0Response> {
-  const config = getJudge0Config();
-  const headers: Record<string, string> = {};
-
-  if (config.apiKey) {
-    headers['X-RapidAPI-Key'] = config.apiKey;
-    headers['X-RapidAPI-Host'] = config.apiHost;
-  }
-
-  for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt++) {
-    const response = await fetch(
-      `${config.apiUrl}/submissions/${token}?base64_encoded=true&fields=stdout,stderr,compile_output,message,status,time,memory`,
-      { headers }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Judge0 polling failed: ${response.status}`);
-    }
-
-    const data: Judge0Response = await response.json();
-
-    // Status IDs: 1=In Queue, 2=Processing, 3=Accepted, 4=Wrong Answer, 5=Time Limit, etc.
-    // If status > 2, execution is complete
-    if (data.status && data.status.id > 2) {
-      return data;
-    }
-
-    // Wait before next poll
-    await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
-  }
-
-  throw new Error('Timeout waiting for Judge0 result');
-}
-
-/**
- * Decode base64 string safely
- */
-function decodeBase64(encoded: string | null | undefined): string {
-  if (!encoded) return '';
-  try {
-    return Buffer.from(encoded, 'base64').toString('utf-8');
-  } catch {
-    return encoded;
-  }
+  return response.json();
 }
 
 export async function POST(request: NextRequest) {
@@ -223,18 +153,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if Judge0 API is configured
-    const config = getJudge0Config();
-    if (!config.apiKey && config.apiUrl.includes('rapidapi')) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Le service de compilation C n\'est pas configuré. Contactez l\'administrateur.'
-        },
-        { status: 503 }
-      );
-    }
-
     // Generate the complete source code with tests
     const completeCode = generateTestWrapper(code, testCode || '');
 
@@ -248,45 +166,45 @@ export async function POST(request: NextRequest) {
     };
 
     try {
-      // Submit code to Judge0
-      const token = await submitToJudge0(completeCode);
+      // Execute code with Piston
+      const pistonResult = await executeWithPiston(completeCode);
 
-      // Poll for result
-      const judge0Result = await pollJudge0Result(token);
-
-      // Process result based on status
-      const statusId = judge0Result.status?.id || 0;
-      const stdout = decodeBase64(judge0Result.stdout);
-      const stderr = decodeBase64(judge0Result.stderr);
-      const compileOutput = decodeBase64(judge0Result.compile_output);
-
-      // Status 6 = Compilation Error
-      if (statusId === 6) {
+      // Check for compilation errors
+      if (pistonResult.compile && pistonResult.compile.code !== 0) {
         result.compiled = false;
-        result.compileError = compileOutput || 'Erreur de compilation';
+        result.compileError = pistonResult.compile.stderr || pistonResult.compile.output || 'Erreur de compilation';
         return NextResponse.json({
           success: false,
           results: result,
         });
       }
 
-      // Status 3 = Accepted (successful execution)
-      // Status 4 = Wrong Answer
-      // Status 5 = Time Limit Exceeded
-      // Status 7-12 = Various runtime errors
+      // Check for error message from Piston
+      if (pistonResult.message) {
+        result.compiled = false;
+        result.compileError = pistonResult.message;
+        return NextResponse.json({
+          success: false,
+          results: result,
+        });
+      }
+
+      // Compilation successful
       result.compiled = true;
 
-      if (statusId === 5) {
-        result.error = 'Timeout - votre code a pris trop de temps';
-        result.passed = false;
-      } else if (statusId >= 7 && statusId <= 12) {
-        result.error = `Erreur d'exécution: ${judge0Result.status?.description || 'Runtime Error'}`;
-        if (stderr) {
-          result.error += `\n${stderr}`;
+      // Check runtime errors
+      if (pistonResult.run.code !== 0 || pistonResult.run.signal) {
+        result.error = pistonResult.run.stderr || `Exit code: ${pistonResult.run.code}`;
+        if (pistonResult.run.signal) {
+          result.error = `Signal: ${pistonResult.run.signal} (possible timeout ou erreur mémoire)`;
         }
         result.passed = false;
       } else {
-        result.output = stdout + (stderr ? `\nStderr: ${stderr}` : '');
+        // Execution successful
+        result.output = pistonResult.run.stdout;
+        if (pistonResult.run.stderr) {
+          result.output += `\nStderr: ${pistonResult.run.stderr}`;
+        }
 
         // Parse test results
         const testResults = parseTestOutput(result.output);
@@ -301,11 +219,11 @@ export async function POST(request: NextRequest) {
         results: result,
       });
 
-    } catch (judge0Error: unknown) {
-      console.error('Judge0 error:', judge0Error);
+    } catch (pistonError: unknown) {
+      console.error('Piston error:', pistonError);
       return NextResponse.json({
         success: false,
-        error: judge0Error instanceof Error ? judge0Error.message : 'Erreur du service de compilation',
+        error: pistonError instanceof Error ? pistonError.message : 'Erreur du service de compilation',
       }, { status: 500 });
     }
 
