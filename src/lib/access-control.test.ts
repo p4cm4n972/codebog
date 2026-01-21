@@ -406,8 +406,16 @@ describe('access-control', () => {
         });
 
         it('should return hasAccess=true for first exercise in week', async () => {
+            // Get exercise info
             mockListDocuments.mockResolvedValueOnce({
                 documents: [{ slug: 'exercise-1', week: 'week-1', order: 1 }],
+            });
+            // Get all exercises in week (exercise-1 is first)
+            mockListDocuments.mockResolvedValueOnce({
+                documents: [
+                    { slug: 'exercise-1', title: 'Exercise 1', order: 1 },
+                    { slug: 'exercise-2', title: 'Exercise 2', order: 2 },
+                ],
             });
 
             const result = await isCExerciseUnlocked('user123', 'exercise-1', false);

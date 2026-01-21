@@ -281,12 +281,6 @@ export async function isCExerciseUnlocked(
 
         const exercise = exerciseResponse.documents[0];
         const week = exercise.week as string;
-        const exerciseOrder = exercise.order as number;
-
-        // First exercise in a week is always accessible
-        if (exerciseOrder === 1) {
-            return { hasAccess: true };
-        }
 
         // Get all exercises in this week ordered
         const allExercisesResponse = await databases.listDocuments(DATABASE_ID, C_EXERCISES_COLLECTION, [
@@ -298,6 +292,7 @@ export async function isCExerciseUnlocked(
         const exercises = allExercisesResponse.documents;
         const currentIndex = exercises.findIndex((e) => e.slug === exerciseSlug);
 
+        // First exercise in a week is always accessible
         if (currentIndex <= 0) {
             return { hasAccess: true };
         }
