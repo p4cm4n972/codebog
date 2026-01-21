@@ -202,18 +202,23 @@ export default function WeekDetailPage() {
                                 return (
                                     <div
                                         key={exercise.$id}
-                                        className={`relative group ${isLocked ? 'opacity-50' : ''}`}
+                                        className="relative group"
                                     >
                                         {isLocked ? (
-                                            <div className="bg-gray-800 border-4 border-gray-600 rounded-lg p-4 flex items-center gap-4">
-                                                <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center">
-                                                    <span className="text-2xl">🔒</span>
+                                            <Link href={`/cbog/${exercise.slug}`}>
+                                                <div className="bg-gray-800 border-4 border-purple-500/50 rounded-lg p-4 flex items-center gap-4 hover:border-purple-400 hover:bg-gray-700 transition-all duration-150 cursor-pointer">
+                                                    <div className="w-12 h-12 bg-purple-900/50 rounded-full flex items-center justify-center">
+                                                        <span className="text-2xl">🔒</span>
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <div className="text-gray-500 font-mono text-sm">Exercice {index + 1}</div>
+                                                        <div className="text-gray-400 font-bold">{exercise.title}</div>
+                                                    </div>
+                                                    <div className="text-purple-400 text-sm font-bold">
+                                                        💎 Débloquer
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <div className="text-gray-500 font-mono text-sm">Exercice {index + 1}</div>
-                                                    <div className="text-gray-400 font-bold">{exercise.title}</div>
-                                                </div>
-                                            </div>
+                                            </Link>
                                         ) : (
                                             <Link href={`/cbog/${exercise.slug}`}>
                                                 <div className={`
