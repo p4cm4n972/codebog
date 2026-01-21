@@ -52,15 +52,24 @@ interface ParsedExercise {
  * Extrait le titre de l'exercice depuis le header du fichier C
  */
 function extractTitle(content: string): string {
-    // Cherche la ligne "Exercice : xxx"
-    const match = content.match(/Exercice\s*:\s*(.+)/);
-    if (match) {
-        // Nettoie les marqueurs de commentaires et espaces
-        return match[1]
-            .replace(/\*+\/?/g, '')  // Retire */ ou ** ou *
-            .replace(/\/\*/g, '')     // Retire /*
+    // Cherche la ligne "Exercice : xxx" ou "CHALLENGE : xxx"
+    const exerciseMatch = content.match(/Exercice\s*:\s*(.+)/);
+    if (exerciseMatch) {
+        return exerciseMatch[1]
+            .replace(/\*+\/?/g, '')
+            .replace(/\/\*/g, '')
             .trim();
     }
+
+    // Format CHALLENGE
+    const challengeMatch = content.match(/CHALLENGE\s*:\s*(.+)/);
+    if (challengeMatch) {
+        return challengeMatch[1]
+            .replace(/\*+\/?/g, '')
+            .replace(/\/\*/g, '')
+            .trim();
+    }
+
     return 'Exercice C';
 }
 
@@ -73,18 +82,31 @@ function extractStatement(content: string): string {
     let statement: string[] = [];
 
     for (const line of lines) {
-        // Début de l'énoncé
+        // Début de l'énoncé - format classique
         if (line.includes('ÉNONCÉ') || line.includes('ENONCE')) {
             inStatement = true;
             statement.push('## Objectif\n');
             continue;
         }
 
-        // Détection de la fin de l'énoncé (début du code réel)
+        // Début de l'énoncé - format CHALLENGE (après "🏆 CHALLENGE")
+        if (line.includes('🏆 CHALLENGE') || (line.includes('CHALLENGE') && line.includes('**'))) {
+            inStatement = true;
+            statement.push('## Objectif\n');
+            continue;
+        }
+
+        // Détection de la fin de l'énoncé (début du code réel ou sections non pertinentes)
         if (inStatement) {
+            // Arrêter avant certaines sections
+            if (line.includes('ALGORITHME') || line.includes('EXPLICATION') ||
+                line.includes('VERSION ALTERNATIVE') || line.includes('LIEN AVEC JAVASCRIPT') ||
+                line.includes('💼 PATTERN') || line.includes('🔗 LIEN')) {
+                break;
+            }
+
             // Arrêter avant le code de fonction (non commenté)
             if (!line.trim().startsWith('**') && !line.trim().startsWith('/*') && !line.trim().startsWith('*')) {
-                // Ligne de code réel (pas un commentaire)
                 if (line.match(/^(int|void|char|long|short|unsigned|float|double|static)\s+\w+/)) {
                     break;
                 }
