@@ -11,7 +11,7 @@ import { Query } from 'appwrite';
 const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
 
 export default function Navbar() {
-    const { user, isLoading, logout } = useAuth();
+    const { user, isLoading, isAdmin, logout } = useAuth();
     const pathname = usePathname();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -88,22 +88,20 @@ export default function Navbar() {
         `transition-colors duration-150 ${isActive(href) ? 'text-[#ffcc00] border-b-2 border-[#ffcc00]' : 'text-white hover:text-[#ffcc00]'}`;
 
     const navLinks = [
-        { href: '/', label: 'Accueil' },
         { href: '/jsbog', label: 'JSBOG' },
         { href: '/cbog', label: 'CBOG' },
-        { href: '/a-propos', label: 'À propos' },
     ];
 
     return (
-        <nav className="z-10 flex items-center justify-between border-b-4 border-black bg-[#1a2e1a] p-4 font-mono text-white relative">
+        <nav className="z-10 flex items-center justify-between border-b-4 border-black bg-[#1a2e1a] px-4 py-1 font-mono text-white relative">
             {/* Logo */}
             <div className="flex items-center gap-2">
                 <Link href="/" className="flex items-center">
                     <Image
                         src="/logo.png"
                         alt="CODEBOG"
-                        width={48}
-                        height={48}
+                        width={80}
+                        height={80}
                         className="hover:scale-105 transition-transform"
                     />
                 </Link>
@@ -133,14 +131,7 @@ export default function Navbar() {
                                 onClick={() => setUserMenuOpen(!userMenuOpen)}
                                 className="flex items-center gap-2 group cursor-pointer hover:bg-green-900/30 p-2 rounded transition-colors"
                             >
-                                <Image
-                                    src="/icon_manicou.svg"
-                                    alt="Manicou Icon"
-                                    width={32}
-                                    height={32}
-                                    className="pixelated group-hover:scale-110 transition-transform"
-                                />
-                                <div className="hidden sm:flex flex-col items-start">
+                                <div className="flex flex-col items-start">
                                     <span className="text-white group-hover:text-[#ffcc00] transition-colors text-sm">
                                         {user.name}
                                     </span>
@@ -188,6 +179,19 @@ export default function Navbar() {
                                         <span className="w-5 h-5 flex items-center justify-center text-xs font-bold bg-blue-600 rounded">C</span>
                                         CBOG
                                     </Link>
+                                    {isAdmin && (
+                                        <>
+                                            <div className="border-t border-green-900/50" />
+                                            <Link
+                                                href="/admin"
+                                                className="flex items-center gap-2 px-4 py-3 text-white hover:bg-red-900/30 hover:text-red-400 transition-colors"
+                                                onClick={() => setUserMenuOpen(false)}
+                                            >
+                                                <span className="w-5 h-5 flex items-center justify-center text-xs font-bold bg-red-600 rounded">A</span>
+                                                Admin
+                                            </Link>
+                                        </>
+                                    )}
                                     <div className="border-t border-green-900/50" />
                                     <button
                                         onClick={() => {

@@ -73,7 +73,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${pressStart2P.variable} flex flex-col min-h-screen`}
+        className={`${geistSans.variable} ${geistMono.variable} ${pressStart2P.variable} flex flex-col min-h-screen bg-[#0a0f0a]`}
       >
         <AuthProvider>
           <Navbar />

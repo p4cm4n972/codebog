@@ -52,7 +52,8 @@ const COLOR_CLASSES: Record<string, { bg: string; border: string; text: string; 
 };
 
 export default function WorldLevelsPage() {
-    const { user, isLoading } = useAuth();
+    const { user, isLoading, isAdmin, isModerator } = useAuth();
+    const unlockAll = isAdmin || isModerator;
     const router = useRouter();
     const params = useParams();
     const worldSlug = params.slug as string;
@@ -196,7 +197,8 @@ export default function WorldLevelsPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {levels.map((level, index) => {
                                 const isCompleted = completedSlugs.has(level.slug);
-                                const isLocked = index > 0 && !completedSlugs.has(levels[index - 1].slug) && !isCompleted;
+                                // Admins and moderators have all levels unlocked
+                                const isLocked = !unlockAll && index > 0 && !completedSlugs.has(levels[index - 1].slug) && !isCompleted;
 
                                 return (
                                     <div

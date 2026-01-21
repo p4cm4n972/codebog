@@ -46,7 +46,7 @@ const JS_LEVELS_COLLECTION = 'js-levels';
 const JS_SUBMISSIONS_COLLECTION = 'js-submissions';
 
 export default function JsbogWorldMap() {
-    const { user, isLoading } = useAuth();
+    const { user, isLoading, isAdmin, isModerator } = useAuth();
     const router = useRouter();
     const [worlds, setWorlds] = useState<World[]>([]);
     const [userProgress, setUserProgress] = useState<WorldProgress[]>([]);
@@ -217,7 +217,7 @@ export default function JsbogWorldMap() {
                 ) : worlds.length > 0 ? (
                     <>
                         {/* World Map */}
-                        <WorldMap worlds={worlds} userProgress={userProgress} />
+                        <WorldMap worlds={worlds} userProgress={userProgress} unlockAll={isAdmin || isModerator} />
 
                         {/* Legend / Help */}
                         <div className="mt-8 text-center text-green-400/60 font-mono text-sm">

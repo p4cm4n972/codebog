@@ -4,10 +4,17 @@ import { createContext, useState, useEffect, useContext, ReactNode } from 'react
 import { useRouter } from 'next/navigation';
 import { account } from '@/lib/appwrite/client';
 import { Models } from 'appwrite';
+import { UserRole, UserPreferences } from '@/lib/appwrite/types';
+
+// Fallback admin email (for initial setup before roles are assigned)
+const FALLBACK_ADMIN_EMAIL = 'manuel.adele@gmail.com';
 
 interface AuthContextType {
-    user: Models.User<Models.Preferences> | null;
+    user: Models.User<UserPreferences> | null;
     isLoading: boolean;
+    role: UserRole;
+    isAdmin: boolean;
+    isModerator: boolean;
     error: string;
     login: (email: string, password: string) => Promise<void>;
     logout: () => Promise<void>;
@@ -17,15 +24,29 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-    const [user, setUser] = useState<Models.User<Models.Preferences> | null>(null);
+    const [user, setUser] = useState<Models.User<UserPreferences> | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
     const router = useRouter();
 
+    // Get user role from preferences, with fallback for initial admin
+    const getUserRole = (u: Models.User<UserPreferences> | null): UserRole => {
+        if (!u) return 'user';
+        // Check prefs.role first
+        if (u.prefs?.role) return u.prefs.role;
+        // Fallback: check if user is the initial admin
+        if (u.email === FALLBACK_ADMIN_EMAIL) return 'admin';
+        return 'user';
+    };
+
+    const role = getUserRole(user);
+    const isAdmin = role === 'admin';
+    const isModerator = role === 'moderator' || role === 'admin';
+
     useEffect(() => {
         const checkUser = async () => {
             try {
-                const currentUser = await account.get();
+                const currentUser = await account.get() as Models.User<UserPreferences>;
                 setUser(currentUser);
             } catch (error) {
                 console.error('Failed to fetch user:', error);
@@ -48,7 +69,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
 
             await account.createEmailPasswordSession(email, password);
-            const currentUser = await account.get();
+            const currentUser = await account.get() as Models.User<UserPreferences>;
             setUser(currentUser);
             router.push('/profile');
         } catch (err) {
@@ -79,7 +100,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, isLoading, error, login, logout, setError }}>
+        <AuthContext.Provider value={{ user, isLoading, role, isAdmin, isModerator, error, login, logout, setError }}>
             {children}
         </AuthContext.Provider>
     );

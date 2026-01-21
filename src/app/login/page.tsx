@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 
 export default function LoginPage() {
@@ -75,6 +76,19 @@ export default function LoginPage() {
                     </button>
                     {error && <p className="text-red-500 mt-4 text-center font-bold">{error}</p>}
                 </form>
+
+                {/* Register link */}
+                <div className="mt-6 text-center">
+                    <p className="text-gray-400">
+                        Pas encore de compte ?{' '}
+                        <Link
+                            href="/register"
+                            className="text-[#ffcc00] hover:text-yellow-300 underline transition-colors"
+                        >
+                            Creer un compte
+                        </Link>
+                    </p>
+                </div>
             </div>
         </main>
     );

@@ -42,6 +42,7 @@ interface WorldProgress {
 interface WorldMapProps {
     worlds: World[];
     userProgress: WorldProgress[];
+    unlockAll?: boolean; // True for admins and moderators
 }
 
 // Path connections between worlds
@@ -114,7 +115,10 @@ const COLOR_CLASSES: Record<string, { bg: string; border: string; text: string; 
     }
 };
 
-function isWorldUnlocked(world: World, userProgress: WorldProgress[]): boolean {
+function isWorldUnlocked(world: World, userProgress: WorldProgress[], unlockAll?: boolean): boolean {
+    // Admins and moderators have all worlds unlocked
+    if (unlockAll) return true;
+
     if (!world.unlockRequirement) return true;
 
     try {
@@ -137,7 +141,7 @@ function getWorldProgress(worldSlug: string, userProgress: WorldProgress[]): num
     return Math.round((progress.completedLevels / progress.totalLevels) * 100);
 }
 
-export default function WorldMap({ worlds, userProgress }: WorldMapProps) {
+export default function WorldMap({ worlds, userProgress, unlockAll }: WorldMapProps) {
     const [hoveredWorld, setHoveredWorld] = useState<string | null>(null);
     const [selectedWorld, setSelectedWorld] = useState<World | null>(null);
 
@@ -180,8 +184,8 @@ export default function WorldMap({ worlds, userProgress }: WorldMapProps) {
                     const toWorld = worldBySlug.get(conn.to);
                     if (!fromWorld || !toWorld) return null;
 
-                    const fromUnlocked = isWorldUnlocked(fromWorld, userProgress);
-                    const toUnlocked = isWorldUnlocked(toWorld, userProgress);
+                    const fromUnlocked = isWorldUnlocked(fromWorld, userProgress, unlockAll);
+                    const toUnlocked = isWorldUnlocked(toWorld, userProgress, unlockAll);
                     const pathUnlocked = fromUnlocked && toUnlocked;
 
                     return (
@@ -203,7 +207,7 @@ export default function WorldMap({ worlds, userProgress }: WorldMapProps) {
 
             {/* World nodes */}
             {sortedWorlds.map(world => {
-                const unlocked = isWorldUnlocked(world, userProgress);
+                const unlocked = isWorldUnlocked(world, userProgress, unlockAll);
                 const progress = getWorldProgress(world.slug, userProgress);
                 const colors = COLOR_CLASSES[world.color] || COLOR_CLASSES.green;
                 const isHovered = hoveredWorld === world.slug;
