@@ -96,10 +96,13 @@ export default function Navbar() {
     return (
         <nav className="z-10 flex items-center justify-between border-b-4 border-black bg-[#1a2e1a] p-4 font-mono text-white relative">
             {/* Logo */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
                 <Link href="/" className="text-2xl font-bold tracking-tighter text-white hover:text-[#ffcc00]">
                     CODEBOG
                 </Link>
+                <span className="text-[10px] px-1.5 py-0.5 bg-yellow-400 text-black font-bold rounded">
+                    BÊTA
+                </span>
             </div>
 
             {/* Center Navigation Links - Desktop */}
