@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import fs from 'fs/promises';
-import path from 'path';
-import os from 'os';
-import crypto from 'crypto';
 import { verifyUserFromJWT, isCExerciseUnlocked } from '@/lib/access-control';
 
-const execAsync = promisify(exec);
+// Judge0 API configuration
+const JUDGE0_API_URL = process.env.JUDGE0_API_URL || 'https://judge0-ce.p.rapidapi.com';
+const JUDGE0_API_KEY = process.env.JUDGE0_API_KEY;
+const JUDGE0_API_HOST = process.env.JUDGE0_API_HOST || 'judge0-ce.p.rapidapi.com';
 
-// Timeout for compilation and execution (in ms)
-const COMPILE_TIMEOUT = 10000; // 10 seconds
-const EXEC_TIMEOUT = 5000; // 5 seconds
+// C language ID in Judge0 (GCC 9.2.0)
+const C_LANGUAGE_ID = 50;
+
+// Timeout for polling (max 30 seconds)
+const MAX_POLL_ATTEMPTS = 15;
+const POLL_INTERVAL = 2000; // 2 seconds
 
 interface TestResult {
   compiled: boolean;
@@ -22,6 +22,20 @@ interface TestResult {
   output: string;
   compileError?: string;
   error?: string;
+}
+
+interface Judge0Response {
+  token?: string;
+  stdout?: string | null;
+  stderr?: string | null;
+  compile_output?: string | null;
+  message?: string | null;
+  status?: {
+    id: number;
+    description: string;
+  };
+  time?: string;
+  memory?: number;
 }
 
 /**
@@ -74,13 +88,96 @@ function parseTestOutput(output: string): { passed: number; failed: number; tota
   return { passed, failed, total: passed + failed || 1 };
 }
 
-export async function POST(request: NextRequest) {
-  const tmpDir = os.tmpdir();
-  const uniqueId = crypto.randomBytes(8).toString('hex');
-  const workDir = path.join(tmpDir, `cbog-${uniqueId}`);
-  const sourceFile = path.join(workDir, 'solution.c');
-  const executableFile = path.join(workDir, 'solution');
+/**
+ * Submit code to Judge0 API
+ */
+async function submitToJudge0(sourceCode: string): Promise<string> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
 
+  // Add RapidAPI headers if API key is configured
+  if (JUDGE0_API_KEY) {
+    headers['X-RapidAPI-Key'] = JUDGE0_API_KEY;
+    headers['X-RapidAPI-Host'] = JUDGE0_API_HOST;
+  }
+
+  const response = await fetch(`${JUDGE0_API_URL}/submissions?base64_encoded=true&wait=false`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      source_code: Buffer.from(sourceCode).toString('base64'),
+      language_id: C_LANGUAGE_ID,
+      cpu_time_limit: 5,
+      cpu_extra_time: 1,
+      wall_time_limit: 10,
+      memory_limit: 128000, // 128 MB
+      compiler_options: '-Wall -Wextra -Werror',
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Judge0 submission failed: ${response.status} - ${errorText}`);
+  }
+
+  const data: Judge0Response = await response.json();
+  if (!data.token) {
+    throw new Error('No token received from Judge0');
+  }
+
+  return data.token;
+}
+
+/**
+ * Poll Judge0 for submission result
+ */
+async function pollJudge0Result(token: string): Promise<Judge0Response> {
+  const headers: Record<string, string> = {};
+
+  if (JUDGE0_API_KEY) {
+    headers['X-RapidAPI-Key'] = JUDGE0_API_KEY;
+    headers['X-RapidAPI-Host'] = JUDGE0_API_HOST;
+  }
+
+  for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt++) {
+    const response = await fetch(
+      `${JUDGE0_API_URL}/submissions/${token}?base64_encoded=true&fields=stdout,stderr,compile_output,message,status,time,memory`,
+      { headers }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Judge0 polling failed: ${response.status}`);
+    }
+
+    const data: Judge0Response = await response.json();
+
+    // Status IDs: 1=In Queue, 2=Processing, 3=Accepted, 4=Wrong Answer, 5=Time Limit, etc.
+    // If status > 2, execution is complete
+    if (data.status && data.status.id > 2) {
+      return data;
+    }
+
+    // Wait before next poll
+    await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
+  }
+
+  throw new Error('Timeout waiting for Judge0 result');
+}
+
+/**
+ * Decode base64 string safely
+ */
+function decodeBase64(encoded: string | null | undefined): string {
+  if (!encoded) return '';
+  try {
+    return Buffer.from(encoded, 'base64').toString('utf-8');
+  } catch {
+    return encoded;
+  }
+}
+
+export async function POST(request: NextRequest) {
   try {
     const { code, exerciseSlug, testCode } = await request.json();
 
@@ -120,14 +217,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create temporary directory
-    await fs.mkdir(workDir, { recursive: true });
+    // Check if Judge0 API is configured
+    if (!JUDGE0_API_KEY && JUDGE0_API_URL.includes('rapidapi')) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Le service de compilation C n\'est pas configuré. Contactez l\'administrateur.'
+        },
+        { status: 503 }
+      );
+    }
 
     // Generate the complete source code with tests
     const completeCode = generateTestWrapper(code, testCode || '');
-
-    // Write source file
-    await fs.writeFile(sourceFile, completeCode);
 
     let result: TestResult = {
       compiled: false,
@@ -138,58 +240,67 @@ export async function POST(request: NextRequest) {
       output: '',
     };
 
-    // Compile the code
     try {
-      await execAsync(
-        `gcc -Wall -Wextra -Werror -o "${executableFile}" "${sourceFile}" 2>&1`,
-        { timeout: COMPILE_TIMEOUT }
-      );
+      // Submit code to Judge0
+      const token = await submitToJudge0(completeCode);
+
+      // Poll for result
+      const judge0Result = await pollJudge0Result(token);
+
+      // Process result based on status
+      const statusId = judge0Result.status?.id || 0;
+      const stdout = decodeBase64(judge0Result.stdout);
+      const stderr = decodeBase64(judge0Result.stderr);
+      const compileOutput = decodeBase64(judge0Result.compile_output);
+
+      // Status 6 = Compilation Error
+      if (statusId === 6) {
+        result.compiled = false;
+        result.compileError = compileOutput || 'Erreur de compilation';
+        return NextResponse.json({
+          success: false,
+          results: result,
+        });
+      }
+
+      // Status 3 = Accepted (successful execution)
+      // Status 4 = Wrong Answer
+      // Status 5 = Time Limit Exceeded
+      // Status 7-12 = Various runtime errors
       result.compiled = true;
-    } catch (compileError: unknown) {
-      const error = compileError as { stderr?: string; stdout?: string; message?: string };
-      result.compiled = false;
-      result.compileError = error.stderr || error.stdout || error.message || 'Compilation failed';
+
+      if (statusId === 5) {
+        result.error = 'Timeout - votre code a pris trop de temps';
+        result.passed = false;
+      } else if (statusId >= 7 && statusId <= 12) {
+        result.error = `Erreur d'exécution: ${judge0Result.status?.description || 'Runtime Error'}`;
+        if (stderr) {
+          result.error += `\n${stderr}`;
+        }
+        result.passed = false;
+      } else {
+        result.output = stdout + (stderr ? `\nStderr: ${stderr}` : '');
+
+        // Parse test results
+        const testResults = parseTestOutput(result.output);
+        result.passedTests = testResults.passed;
+        result.failedTests = testResults.failed;
+        result.totalTests = testResults.total;
+        result.passed = testResults.failed === 0 && testResults.passed > 0;
+      }
 
       return NextResponse.json({
-        success: false,
+        success: result.passed,
         results: result,
       });
+
+    } catch (judge0Error: unknown) {
+      console.error('Judge0 error:', judge0Error);
+      return NextResponse.json({
+        success: false,
+        error: judge0Error instanceof Error ? judge0Error.message : 'Erreur du service de compilation',
+      }, { status: 500 });
     }
-
-    // Execute the code
-    try {
-      const { stdout, stderr } = await execAsync(
-        `"${executableFile}" 2>&1`,
-        {
-          timeout: EXEC_TIMEOUT,
-          maxBuffer: 1024 * 1024, // 1MB buffer
-        }
-      );
-
-      result.output = stdout + (stderr ? `\nStderr: ${stderr}` : '');
-
-      // Parse test results
-      const testResults = parseTestOutput(result.output);
-      result.passedTests = testResults.passed;
-      result.failedTests = testResults.failed;
-      result.totalTests = testResults.total;
-      result.passed = testResults.failed === 0 && testResults.passed > 0;
-
-    } catch (execError: unknown) {
-      const error = execError as { stderr?: string; stdout?: string; message?: string; killed?: boolean; signal?: string };
-
-      if (error.killed || error.signal === 'SIGTERM') {
-        result.error = 'Execution timeout - votre code a pris trop de temps';
-      } else {
-        result.error = error.stderr || error.stdout || error.message || 'Execution failed';
-      }
-      result.passed = false;
-    }
-
-    return NextResponse.json({
-      success: result.passed,
-      results: result,
-    });
 
   } catch (err: unknown) {
     console.error('Execute-C error:', err);
@@ -200,12 +311,5 @@ export async function POST(request: NextRequest) {
       },
       { status: 500 }
     );
-  } finally {
-    // Cleanup temporary files
-    try {
-      await fs.rm(workDir, { recursive: true, force: true });
-    } catch {
-      // Ignore cleanup errors
-    }
   }
 }
