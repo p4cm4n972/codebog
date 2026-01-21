@@ -25,6 +25,7 @@ const appwriteClient = new Client()
 const databases = new Databases(appwriteClient);
 
 // World definitions with positions for the map
+// Structure: 26 exercises (ex00-ex25) + module-0 + module-leetcode
 const WORLDS_CONFIG = [
     {
         slug: 'fondations',
@@ -44,12 +45,12 @@ const WORLDS_CONFIG = [
     {
         slug: 'fp-valley',
         name: 'FP Valley',
-        description: 'Programmation fonctionnelle : compose, curry, memoization, monads...',
+        description: 'Programmation fonctionnelle : compose, curry, memoization, monads, transducers...',
         icon: '🌿',
         color: 'purple',
         bgGradient: 'from-purple-600 to-purple-800',
         posX: 25,
-        posY: 60,
+        posY: 65,
         order: 2,
         difficulty: 'intermediate',
         tags: JSON.stringify(['functional', 'compose', 'curry', 'monad', 'lazy']),
@@ -59,77 +60,92 @@ const WORLDS_CONFIG = [
     {
         slug: 'async-forest',
         name: 'Async Forest',
-        description: 'Maîtrise de l\'asynchronisme : Promises, async/await, generators...',
+        description: 'Maîtrise de l\'asynchronisme : Promises, async/await, generators, event loop...',
         icon: '🌲',
         color: 'orange',
         bgGradient: 'from-orange-600 to-orange-800',
         posX: 75,
-        posY: 60,
+        posY: 65,
         order: 3,
         difficulty: 'intermediate',
-        tags: JSON.stringify(['async', 'promise', 'generator', 'control-flow']),
-        sourceExercises: ['ex05', 'ex06', 'ex07'],
+        tags: JSON.stringify(['async', 'promise', 'generator', 'event-loop', 'retry']),
+        sourceExercises: ['ex05', 'ex06', 'ex07', 'ex08', 'ex09'],
         unlockRequirement: JSON.stringify({ worldSlug: 'fondations', minPercent: 100 })
     },
     {
         slug: 'closures-cave',
         name: 'Closures Cave',
-        description: 'Les closures en profondeur : module pattern, encapsulation, scope...',
+        description: 'Les closures en profondeur : module pattern, scope chain, factory functions...',
         icon: '🕳️',
         color: 'cyan',
         bgGradient: 'from-cyan-600 to-cyan-800',
         posX: 20,
-        posY: 40,
+        posY: 45,
         order: 4,
         difficulty: 'advanced',
-        tags: JSON.stringify(['closures', 'scope', 'module-pattern', 'encapsulation']),
-        sourceExercises: ['ex08', 'ex09'],
+        tags: JSON.stringify(['closures', 'scope', 'module-pattern', 'factory', 'encapsulation']),
+        sourceExercises: ['ex10', 'ex11', 'ex12', 'ex13'],
         unlockRequirement: JSON.stringify({ worldSlug: 'fp-valley', minPercent: 60 })
     },
     {
         slug: 'oop-temple',
         name: 'OOP Temple',
-        description: 'Prototypes, classes ES6+, héritage, private fields...',
+        description: 'Prototypes, classes ES6+, héritage, design patterns, mixins...',
         icon: '🏛️',
         color: 'yellow',
         bgGradient: 'from-yellow-600 to-yellow-800',
         posX: 80,
-        posY: 40,
+        posY: 45,
         order: 5,
         difficulty: 'advanced',
-        tags: JSON.stringify(['oop', 'prototype', 'class', 'inheritance', 'private-fields']),
-        sourceExercises: ['ex10', 'ex11'],
+        tags: JSON.stringify(['oop', 'prototype', 'class', 'patterns', 'mixins']),
+        sourceExercises: ['ex14', 'ex15', 'ex16', 'ex17'],
         unlockRequirement: JSON.stringify({ worldSlug: 'async-forest', minPercent: 60 })
     },
     {
         slug: 'meta-tower',
         name: 'Meta Tower',
-        description: 'Métaprogrammation et performance : Proxy, Reflect, optimisation V8...',
+        description: 'Métaprogrammation : Proxy, Reflect, Symbols, Generators, Decorators...',
         icon: '🗼',
         color: 'pink',
         bgGradient: 'from-pink-600 to-pink-800',
         posX: 35,
-        posY: 25,
+        posY: 28,
         order: 6,
         difficulty: 'expert',
-        tags: JSON.stringify(['proxy', 'reflect', 'metaprogramming', 'performance']),
-        sourceExercises: ['ex12', 'ex13'],
+        tags: JSON.stringify(['proxy', 'reflect', 'symbol', 'metaprogramming', 'decorator']),
+        sourceExercises: ['ex18', 'ex19', 'ex20', 'ex21'],
         unlockRequirement: JSON.stringify({ worldSlug: 'closures-cave', minPercent: 100 })
+    },
+    {
+        slug: 'perf-peak',
+        name: 'Perf Peak',
+        description: 'Performance & Optimisation : V8 internals, memory management, Web Workers...',
+        icon: '⚡',
+        color: 'red',
+        bgGradient: 'from-red-600 to-red-800',
+        posX: 65,
+        posY: 28,
+        order: 7,
+        difficulty: 'expert',
+        tags: JSON.stringify(['performance', 'memory', 'workers', 'optimization', 'v8']),
+        sourceExercises: ['ex22', 'ex23', 'ex24'],
+        unlockRequirement: JSON.stringify({ worldSlug: 'oop-temple', minPercent: 100 })
     },
     {
         slug: 'itmade-arena',
         name: 'Itmade Arena',
         description: 'Défis algorithmiques : Two Pointers, Binary Search, DFS/BFS, Dynamic Programming...',
         icon: '⚔️',
-        color: 'red',
-        bgGradient: 'from-red-600 to-red-800',
+        color: 'slate',
+        bgGradient: 'from-slate-600 to-slate-800',
         posX: 50,
-        posY: 35,
-        order: 7,
+        posY: 50,
+        order: 8,
         difficulty: 'advanced',
         tags: JSON.stringify(['algorithms', 'leetcode', 'patterns', 'data-structures']),
         sourcePath: 'module-leetcode/easy',
-        unlockRequirement: JSON.stringify({ worldSlug: 'oop-temple', minPercent: 50 })
+        unlockRequirement: JSON.stringify({ worldSlug: 'fondations', minPercent: 80 })
     },
     {
         slug: 'summit',
@@ -140,11 +156,11 @@ const WORLDS_CONFIG = [
         bgGradient: 'from-amber-500 to-yellow-600',
         posX: 50,
         posY: 10,
-        order: 8,
+        order: 9,
         difficulty: 'expert',
         tags: JSON.stringify(['project', 'framework', 'reactive', 'final']),
-        sourceExercises: ['ex14'],
-        unlockRequirement: JSON.stringify({ worldSlug: 'meta-tower', minPercent: 100 })
+        sourceExercises: ['ex25'],
+        unlockRequirement: JSON.stringify({ worldSlug: 'meta-tower', minPercent: 100, worldSlug2: 'perf-peak', minPercent2: 100 })
     }
 ];
 
@@ -194,6 +210,7 @@ function parseExercise(exercisePath: string, worldSlug: string, order: number): 
         'closures-cave': 'advanced',
         'oop-temple': 'advanced',
         'meta-tower': 'expert',
+        'perf-peak': 'expert',
         'itmade-arena': 'advanced',
         'summit': 'expert'
     };

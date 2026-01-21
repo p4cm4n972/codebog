@@ -63,14 +63,15 @@ export default function ProfilePage() {
         setLoadingStats(true);
 
         // Fetch all data in parallel
+        // Note: JSBOG uses 'js-levels' and 'js-submissions' collections (world map)
         const [
           jsExercisesResponse,
           jsSubmissionsResponse,
           cExercisesResponse,
           cSubmissionsResponse,
         ] = await Promise.all([
-          databases.listDocuments(DATABASE_ID, 'exercises'),
-          databases.listDocuments(DATABASE_ID, 'submissions', [
+          databases.listDocuments(DATABASE_ID, 'js-levels'),
+          databases.listDocuments(DATABASE_ID, 'js-submissions', [
             Query.equal('userId', user.$id),
             Query.orderDesc('submittedAt'),
           ]),

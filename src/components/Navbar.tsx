@@ -36,14 +36,15 @@ export default function Navbar() {
             if (!user) return;
 
             try {
+                // JSBOG uses 'js-levels' and 'js-submissions' (world map)
                 const [
                     jsExercisesResponse,
                     jsSubmissionsResponse,
                     cExercisesResponse,
                     cSubmissionsResponse,
                 ] = await Promise.all([
-                    databases.listDocuments(DATABASE_ID, 'exercises'),
-                    databases.listDocuments(DATABASE_ID, 'submissions', [
+                    databases.listDocuments(DATABASE_ID, 'js-levels'),
+                    databases.listDocuments(DATABASE_ID, 'js-submissions', [
                         Query.equal('userId', user.$id),
                         Query.equal('passed', true),
                     ]),
