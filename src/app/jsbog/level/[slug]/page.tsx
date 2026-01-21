@@ -8,6 +8,7 @@ import { databases } from '@/lib/appwrite/client';
 import { Query, ID } from 'appwrite';
 import ReactMarkdown from 'react-markdown';
 import Editor from '@monaco-editor/react';
+import UnlockModal from '@/components/UnlockModal';
 
 interface Level {
     $id: string;
@@ -64,6 +65,8 @@ export default function LevelDetailPage() {
     const [error, setError] = useState('');
     const [accessDenied, setAccessDenied] = useState(false);
     const [accessReason, setAccessReason] = useState('');
+    const [showUnlockModal, setShowUnlockModal] = useState(false);
+    const [levelTitle, setLevelTitle] = useState('');
     const [userCode, setUserCode] = useState('');
     const [hasExistingSubmission, setHasExistingSubmission] = useState(false);
     const [lastSubmissionPassed, setLastSubmissionPassed] = useState(false);
@@ -111,6 +114,19 @@ export default function LevelDetailPage() {
                     const accessData = await accessResponse.json();
 
                     if (!accessData.hasAccess) {
+                        // Fetch level title for the unlock modal
+                        try {
+                            const levelInfoResponse = await databases.listDocuments(DATABASE_ID, JS_LEVELS_COLLECTION, [
+                                Query.equal('slug', slug),
+                                Query.limit(1)
+                            ]);
+                            if (levelInfoResponse.documents.length > 0) {
+                                const levelInfo = levelInfoResponse.documents[0];
+                                setLevelTitle(levelInfo.title as string);
+                            }
+                        } catch {
+                            // Ignore errors fetching level title
+                        }
                         setAccessDenied(true);
                         setAccessReason(accessData.reason || 'Ce niveau est verrouillé');
                         setLoading(false);
@@ -297,13 +313,32 @@ export default function LevelDetailPage() {
                     <div className="text-6xl mb-4">🔒</div>
                     <h2 className="text-2xl font-bold text-yellow-400 mb-4">NIVEAU VERROUILLÉ</h2>
                     <p className="text-yellow-200 mb-6">{accessReason}</p>
-                    <Link
-                        href="/jsbog"
-                        className="inline-block px-6 py-3 bg-green-500 text-black font-bold border-4 border-black rounded hover:bg-green-400 transition-colors"
-                    >
-                        RETOUR À LA CARTE
-                    </Link>
+                    <div className="flex flex-col gap-3">
+                        <button
+                            onClick={() => setShowUnlockModal(true)}
+                            className="px-6 py-3 bg-purple-600 text-white font-bold border-4 border-black rounded hover:bg-purple-500 transition-colors flex items-center justify-center gap-2"
+                        >
+                            💎 DÉBLOQUER AVEC GEMMES
+                        </button>
+                        <Link
+                            href="/jsbog"
+                            className="inline-block px-6 py-3 bg-green-500 text-black font-bold border-4 border-black rounded hover:bg-green-400 transition-colors"
+                        >
+                            RETOUR À LA CARTE
+                        </Link>
+                    </div>
                 </div>
+                <UnlockModal
+                    isOpen={showUnlockModal}
+                    onClose={() => setShowUnlockModal(false)}
+                    exerciseSlug={slug}
+                    exerciseType="js"
+                    exerciseTitle={levelTitle || slug}
+                    onUnlocked={() => {
+                        setShowUnlockModal(false);
+                        window.location.reload();
+                    }}
+                />
             </div>
         );
     }

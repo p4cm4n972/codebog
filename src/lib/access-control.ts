@@ -5,6 +5,7 @@
 
 import { Client, Databases, Query, Account } from 'node-appwrite';
 import { UserRole } from './appwrite/types';
+import { checkGemUnlock } from './gems';
 
 const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
 
@@ -173,6 +174,12 @@ export async function isJsLevelUnlocked(
         return { hasAccess: true };
     }
 
+    // Check if unlocked via gems
+    const gemUnlock = await checkGemUnlock(userId, levelSlug);
+    if (gemUnlock) {
+        return { hasAccess: true };
+    }
+
     const { databases } = createAdminClient();
 
     try {
@@ -263,6 +270,12 @@ export async function isCExerciseUnlocked(
 ): Promise<UserAccess> {
     // Admins and moderators have all access
     if (unlockAll) {
+        return { hasAccess: true };
+    }
+
+    // Check if unlocked via gems
+    const gemUnlock = await checkGemUnlock(userId, exerciseSlug);
+    if (gemUnlock) {
         return { hasAccess: true };
     }
 

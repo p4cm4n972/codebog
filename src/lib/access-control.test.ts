@@ -12,6 +12,14 @@ const mockAccountGet = vi.fn();
 // Mock databases.listDocuments response
 const mockListDocuments = vi.fn();
 
+// Mock checkGemUnlock from gems module
+const mockCheckGemUnlock = vi.fn();
+
+// Mock gems module (must be before node-appwrite mock)
+vi.mock('./gems', () => ({
+    checkGemUnlock: (...args: unknown[]) => mockCheckGemUnlock(...args),
+}));
+
 // Mock node-appwrite
 vi.mock('node-appwrite', () => {
     return {
@@ -39,6 +47,8 @@ vi.mock('node-appwrite', () => {
 describe('access-control', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        // Default: no gem unlock (returns null)
+        mockCheckGemUnlock.mockResolvedValue(null);
     });
 
     describe('verifyUserFromJWT', () => {

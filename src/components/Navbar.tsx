@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { databases } from '@/lib/appwrite/client';
 import { Query } from 'appwrite';
+import GemBalance from './GemBalance';
 
 const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
 
@@ -125,6 +126,9 @@ export default function Navbar() {
                     <div className="px-4 py-2">Loading...</div>
                 ) : user ? (
                     <div className="flex items-center gap-4">
+                        {/* Gem Balance */}
+                        <GemBalance className="hidden sm:flex" />
+
                         {/* User Dropdown Menu */}
                         <div className="relative" ref={userMenuRef}>
                             <button
@@ -178,6 +182,14 @@ export default function Navbar() {
                                     >
                                         <span className="w-5 h-5 flex items-center justify-center text-xs font-bold bg-blue-600 rounded">C</span>
                                         CBOG
+                                    </Link>
+                                    <Link
+                                        href="/shop"
+                                        className="flex items-center gap-2 px-4 py-3 text-white hover:bg-purple-900/30 hover:text-purple-300 transition-colors"
+                                        onClick={() => setUserMenuOpen(false)}
+                                    >
+                                        <span className="w-5 h-5 flex items-center justify-center text-sm">💎</span>
+                                        Boutique
                                     </Link>
                                     {isAdmin && (
                                         <>

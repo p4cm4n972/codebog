@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { databases } from '@/lib/appwrite/client';
 import { Query } from 'appwrite';
+import GemBalance from '@/components/GemBalance';
 
 const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
 
@@ -179,6 +180,14 @@ export default function ProfilePage() {
                   <span className={rank.color}>{rank.emoji} {rank.name}</span>
                 </p>
               )}
+              {/* Gem Balance in User Info */}
+              <div className="pt-4 border-t border-green-800">
+                <span className="text-green-400">GEMMES:</span>{' '}
+                <GemBalance showLink={false} className="inline-flex ml-2" />
+                <Link href="/shop" className="ml-2 text-purple-400 hover:text-purple-300 text-sm">
+                  [Boutique]
+                </Link>
+              </div>
             </div>
           </div>
 

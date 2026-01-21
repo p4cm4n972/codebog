@@ -7,6 +7,7 @@ import { databases } from '@/lib/appwrite/client';
 import { Query, ID } from 'appwrite';
 import ReactMarkdown from 'react-markdown';
 import Editor from '@monaco-editor/react';
+import UnlockModal from '@/components/UnlockModal';
 
 interface CExercise {
   $id: string;
@@ -42,6 +43,9 @@ export default function CExerciseDetailPage() {
   const [userCode, setUserCode] = useState('');
   const [accessDenied, setAccessDenied] = useState(false);
   const [accessReason, setAccessReason] = useState('');
+  const [showUnlockModal, setShowUnlockModal] = useState(false);
+  const [exerciseTitle, setExerciseTitle] = useState('');
+  const [exerciseWeek, setExerciseWeek] = useState('');
   const [hasExistingSubmission, setHasExistingSubmission] = useState(false);
   const [lastSubmissionPassed, setLastSubmissionPassed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -90,6 +94,20 @@ export default function CExerciseDetailPage() {
           const accessData = await accessResponse.json();
 
           if (!accessData.hasAccess) {
+            // Fetch exercise info for the unlock modal
+            try {
+              const exerciseInfoResponse = await databases.listDocuments(DATABASE_ID, C_EXERCISES_COLLECTION_ID, [
+                Query.equal('slug', slug),
+                Query.limit(1)
+              ]);
+              if (exerciseInfoResponse.documents.length > 0) {
+                const exerciseInfo = exerciseInfoResponse.documents[0];
+                setExerciseTitle(exerciseInfo.title as string);
+                setExerciseWeek(exerciseInfo.week as string);
+              }
+            } catch {
+              // Ignore errors fetching exercise info
+            }
             setAccessDenied(true);
             setAccessReason(accessData.reason || 'Cet exercice est verrouillé');
             setLoading(false);
@@ -249,13 +267,33 @@ export default function CExerciseDetailPage() {
           <div className="text-6xl mb-4">🔒</div>
           <h2 className="text-2xl font-bold text-yellow-400 mb-4">EXERCICE VERROUILLÉ</h2>
           <p className="text-yellow-200 mb-6">{accessReason}</p>
-          <button
-            onClick={() => router.push('/cbog')}
-            className="px-6 py-3 bg-blue-500 text-black font-bold border-4 border-black hover:bg-blue-400 transition-colors"
-          >
-            RETOUR AUX EXERCICES
-          </button>
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => setShowUnlockModal(true)}
+              className="px-6 py-3 bg-purple-600 text-white font-bold border-4 border-black rounded hover:bg-purple-500 transition-colors flex items-center justify-center gap-2"
+            >
+              💎 DÉBLOQUER AVEC GEMMES
+            </button>
+            <button
+              onClick={() => router.push('/cbog')}
+              className="px-6 py-3 bg-blue-500 text-black font-bold border-4 border-black hover:bg-blue-400 transition-colors"
+            >
+              RETOUR AUX EXERCICES
+            </button>
+          </div>
         </div>
+        <UnlockModal
+          isOpen={showUnlockModal}
+          onClose={() => setShowUnlockModal(false)}
+          exerciseSlug={slug}
+          exerciseType="c"
+          exerciseTitle={exerciseTitle || slug}
+          week={exerciseWeek}
+          onUnlocked={() => {
+            setShowUnlockModal(false);
+            window.location.reload();
+          }}
+        />
       </div>
     );
   }
