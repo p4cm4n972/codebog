@@ -162,23 +162,26 @@ export default function CbogMissionSelection() {
       {/* Hero Header */}
       <div className="text-center mb-8">
         <h1 className="text-4xl md:text-5xl font-bold font-mono text-shadow-hard mb-4">
-          <span className="text-cyan-400">CBOG</span> <span className="text-blue-300">PISCINE C</span>
+          <span className="text-cyan-400">CBOG</span> <span className="text-blue-300">LE MARÉCAGE C</span>
         </h1>
         <p className="text-xl text-blue-300 font-mono mb-2">
-          4 semaines intensives pour maîtriser le C
+          4 semaines à patauger dans le C
         </p>
         <p className="text-sm text-blue-400/70 max-w-2xl mx-auto">
-          Un exercice par jour, chaque jour pendant 4 semaines. Comme une vraie piscine de coding bootcamp.
+          Un exercice par jour, chaque jour pendant 4 semaines. Bienvenue dans le marécage.
         </p>
       </div>
 
-      {/* Piscine Timeline - 4 Weeks Visual */}
+      {/* Bog Timeline - 4 Weeks Visual */}
       {!loading && exercises.length > 0 && (
-        <div className="mb-8 p-4 bg-black/50 border-2 border-blue-700 rounded-lg">
-          <h2 className="text-sm text-cyan-400 font-mono mb-4 text-center uppercase tracking-wider">
-            Timeline Piscine
+        <div className="mb-8 p-6 bg-black border-2 border-blue-700 rounded-lg">
+          <h2 className="text-sm text-cyan-400 font-mono mb-6 text-center uppercase tracking-wider">
+            Traversée du Marécage
           </h2>
-          <div className="flex justify-between items-center gap-2 md:gap-4">
+          <div className="relative flex justify-between items-center">
+            {/* Connecting line behind circles */}
+            <div className="absolute top-6 left-[12%] right-[12%] h-1 bg-blue-800 hidden md:block" />
+
             {[1, 2, 3, 4].map((weekNum) => {
               const weekKey = `Semaine${weekNum}`;
               const weekData = groupedExercises.get(weekKey);
@@ -190,62 +193,39 @@ export default function CbogMissionSelection() {
               const isComplete = progress === 100;
 
               return (
-                <div key={weekNum} className="flex-1 flex flex-col items-center">
+                <div key={weekNum} className="flex flex-col items-center z-10">
                   {/* Week Circle */}
                   <div
-                    className={`relative w-12 h-12 md:w-16 md:h-16 rounded-full border-4 flex items-center justify-center transition-all ${
+                    className={`relative w-12 h-12 rounded-full border-4 flex items-center justify-center transition-all ${
                       isComplete
-                        ? 'border-blue-400 bg-blue-900/50'
+                        ? 'border-blue-400 bg-blue-900'
                         : isCurrentWeek
-                          ? 'border-cyan-400 bg-cyan-900/30 animate-pulse'
+                          ? 'border-cyan-400 bg-gray-900 animate-pulse'
                           : 'border-blue-700 bg-gray-900'
                     }`}
                   >
                     {isComplete ? (
-                      <span className="text-blue-400 text-xl md:text-2xl">✓</span>
+                      <span className="text-blue-400 text-xl">✓</span>
                     ) : (
-                      <span className={`font-bold text-lg md:text-xl ${isCurrentWeek ? 'text-cyan-400' : 'text-blue-500'}`}>
+                      <span className={`font-bold text-lg ${isCurrentWeek ? 'text-cyan-400' : 'text-blue-500'}`}>
                         S{weekNum}
                       </span>
                     )}
-                    {/* Progress ring */}
-                    <svg className="absolute inset-0 w-full h-full -rotate-90">
-                      <circle
-                        cx="50%"
-                        cy="50%"
-                        r="45%"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="3"
-                        className="text-blue-500/30"
-                      />
-                      <circle
-                        cx="50%"
-                        cy="50%"
-                        r="45%"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="3"
-                        strokeDasharray={`${progress * 2.83} 283`}
-                        className="text-cyan-400"
-                      />
-                    </svg>
+                  </div>
+                  {/* Progress bar under circle */}
+                  <div className="w-12 h-1 bg-blue-900 mt-2 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-cyan-400 transition-all duration-300"
+                      style={{ width: `${progress}%` }}
+                    />
                   </div>
                   {/* Week Label */}
-                  <span className={`text-xs md:text-sm mt-2 font-mono ${isCurrentWeek ? 'text-cyan-400' : 'text-blue-500'}`}>
+                  <span className={`text-xs mt-1 font-mono ${isCurrentWeek ? 'text-cyan-400' : 'text-blue-500'}`}>
                     {weekCompleted}/{weekTotal}
                   </span>
-                  {/* Connector line (except last) */}
-                  {weekNum < 4 && (
-                    <div className="hidden md:block absolute w-full h-1 bg-blue-800" style={{ left: '50%', top: '50%', transform: 'translateY(-50%)' }} />
-                  )}
                 </div>
               );
             })}
-          </div>
-          {/* Connecting lines between weeks */}
-          <div className="hidden md:flex justify-center mt-[-36px] mb-4 px-12">
-            <div className="flex-1 h-0.5 bg-gradient-to-r from-blue-700 via-blue-500 to-blue-700" />
           </div>
         </div>
       )}
@@ -270,9 +250,9 @@ export default function CbogMissionSelection() {
           <div className="mb-8 p-6 bg-black border-4 border-blue-500 font-mono">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
               <div>
-                <h2 className="text-xl text-cyan-400">PROGRESSION PISCINE</h2>
+                <h2 className="text-xl text-cyan-400">PROGRESSION</h2>
                 <p className="text-xs text-blue-400/70 mt-1">
-                  {Math.round((completedCount / totalCount) * 100)}% de la piscine complété
+                  {Math.round((completedCount / totalCount) * 100)}% du marécage traversé
                 </p>
               </div>
               <div className="flex items-center gap-4">
@@ -297,10 +277,10 @@ export default function CbogMissionSelection() {
             </div>
             <p className="mt-3 text-sm text-blue-300">
               {completedCount === totalCount
-                ? '🎉 FÉLICITATIONS ! Tu as survécu à la Piscine C !'
+                ? '🎉 FÉLICITATIONS ! Tu as traversé le marécage C !'
                 : completedCount === 0
-                  ? '🏊 Prêt à plonger ? Commence par la Semaine 1, Jour 1 !'
-                  : `🏊 Continue à nager ! ${totalCount - completedCount} exercice(s) avant la fin de la piscine.`}
+                  ? '🐊 Prêt à patauger ? Commence par la Semaine 1, Jour 1 !'
+                  : `🐊 Continue d'avancer ! ${totalCount - completedCount} exercice(s) avant la sortie du marécage.`}
             </p>
           </div>
 
