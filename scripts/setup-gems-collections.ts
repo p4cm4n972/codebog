@@ -75,10 +75,11 @@ async function setupUserGemsCollection() {
         // Create attributes
         console.log('Création des attributs...');
         await databases.createStringAttribute(APPWRITE_DATABASE_ID, USER_GEMS_COLLECTION, 'userId', 255, true);
-        // createIntegerAttribute params: databaseId, collectionId, key, required, min, max, default
-        await databases.createIntegerAttribute(APPWRITE_DATABASE_ID, USER_GEMS_COLLECTION, 'balance', true, 0, 999999, 0);
-        await databases.createIntegerAttribute(APPWRITE_DATABASE_ID, USER_GEMS_COLLECTION, 'totalPurchased', true, 0, 999999, 0);
-        await databases.createIntegerAttribute(APPWRITE_DATABASE_ID, USER_GEMS_COLLECTION, 'totalSpent', true, 0, 999999, 0);
+        // createIntegerAttribute params: databaseId, collectionId, key, required, min, max
+        // Note: Cannot set default value for required attributes in Appwrite
+        await databases.createIntegerAttribute(APPWRITE_DATABASE_ID, USER_GEMS_COLLECTION, 'balance', true, 0, 999999);
+        await databases.createIntegerAttribute(APPWRITE_DATABASE_ID, USER_GEMS_COLLECTION, 'totalPurchased', true, 0, 999999);
+        await databases.createIntegerAttribute(APPWRITE_DATABASE_ID, USER_GEMS_COLLECTION, 'totalSpent', true, 0, 999999);
         await databases.createDatetimeAttribute(APPWRITE_DATABASE_ID, USER_GEMS_COLLECTION, 'updatedAt', true);
 
         await waitForAttributes();
