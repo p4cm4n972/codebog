@@ -198,13 +198,21 @@ function parseExercise(exercisePath: string, worldSlug: string, order: number): 
     const indexJs = fs.existsSync(indexPath) ? fs.readFileSync(indexPath, 'utf-8') : '';
     const testJs = fs.existsSync(testPath) ? fs.readFileSync(testPath, 'utf-8') : '';
 
-    // Extract title from README
+    // Extract title from README (remove Ex## prefix in various formats)
     const titleMatch = readme.match(/^#\s+(.+)/m);
-    const title = titleMatch ? titleMatch[1].replace(/^Ex\d+\s*-\s*/, '').trim() : path.basename(exercisePath);
+    let title = titleMatch ? titleMatch[1] : path.basename(exercisePath);
+    // Remove Ex##, ex##, Ex## -, ex## - patterns from title
+    title = title.replace(/^[Ee]x\d+\s*[-:]?\s*/, '').trim();
+    // If title is still empty or just the folder name, try to extract from statement
+    if (!title || title.match(/^ex\d+$/i)) {
+        const statementTitle = readme.match(/##\s+(?:Objectif|Goal|Task)\s*\n+(.+)/i);
+        title = statementTitle ? statementTitle[1].trim() : `Level ${order}`;
+    }
 
-    // Extract slug from folder name
+    // Extract slug from folder name, removing exXX prefix for cleaner URLs
     const folderName = path.basename(exercisePath);
-    const slug = `${worldSlug}-${folderName}`;
+    const cleanName = folderName.replace(/^ex\d+-?/, '');
+    const slug = cleanName ? `${worldSlug}-${cleanName}` : `${worldSlug}-level-${order}`;
 
     // Determine difficulty based on world
     const difficultyMap: Record<string, string> = {
