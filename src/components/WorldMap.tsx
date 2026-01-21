@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { isWorldUnlocked, getWorldProgress, WorldProgress } from '@/lib/world-utils';
 
 // World images mapping - place images in public/worlds/
 const WORLD_IMAGES: Record<string, string> = {
@@ -31,12 +32,6 @@ interface World {
     totalLevels: number;
     difficulty: string;
     unlockRequirement: string;
-}
-
-interface WorldProgress {
-    worldSlug: string;
-    completedLevels: number;
-    totalLevels: number;
 }
 
 interface WorldMapProps {
@@ -115,32 +110,6 @@ const COLOR_CLASSES: Record<string, { bg: string; border: string; text: string; 
     }
 };
 
-function isWorldUnlocked(world: World, userProgress: WorldProgress[], unlockAll?: boolean): boolean {
-    // Admins and moderators have all worlds unlocked
-    if (unlockAll) return true;
-
-    if (!world.unlockRequirement) return true;
-
-    try {
-        const requirement = JSON.parse(world.unlockRequirement);
-        const progress = userProgress.find(p => p.worldSlug === requirement.worldSlug);
-        if (!progress) return false;
-
-        const percent = progress.totalLevels > 0
-            ? (progress.completedLevels / progress.totalLevels) * 100
-            : 0;
-        return percent >= requirement.minPercent;
-    } catch {
-        return true;
-    }
-}
-
-function getWorldProgress(worldSlug: string, userProgress: WorldProgress[]): number {
-    const progress = userProgress.find(p => p.worldSlug === worldSlug);
-    if (!progress || progress.totalLevels === 0) return 0;
-    return Math.round((progress.completedLevels / progress.totalLevels) * 100);
-}
-
 export default function WorldMap({ worlds, userProgress, unlockAll }: WorldMapProps) {
     const [hoveredWorld, setHoveredWorld] = useState<string | null>(null);
     const [selectedWorld, setSelectedWorld] = useState<World | null>(null);
@@ -184,8 +153,8 @@ export default function WorldMap({ worlds, userProgress, unlockAll }: WorldMapPr
                     const toWorld = worldBySlug.get(conn.to);
                     if (!fromWorld || !toWorld) return null;
 
-                    const fromUnlocked = isWorldUnlocked(fromWorld, userProgress, unlockAll);
-                    const toUnlocked = isWorldUnlocked(toWorld, userProgress, unlockAll);
+                    const fromUnlocked = isWorldUnlocked(fromWorld.unlockRequirement, userProgress, unlockAll);
+                    const toUnlocked = isWorldUnlocked(toWorld.unlockRequirement, userProgress, unlockAll);
                     const pathUnlocked = fromUnlocked && toUnlocked;
 
                     return (
@@ -207,7 +176,7 @@ export default function WorldMap({ worlds, userProgress, unlockAll }: WorldMapPr
 
             {/* World nodes */}
             {sortedWorlds.map(world => {
-                const unlocked = isWorldUnlocked(world, userProgress, unlockAll);
+                const unlocked = isWorldUnlocked(world.unlockRequirement, userProgress, unlockAll);
                 const progress = getWorldProgress(world.slug, userProgress);
                 const colors = COLOR_CLASSES[world.color] || COLOR_CLASSES.green;
                 const isHovered = hoveredWorld === world.slug;

@@ -9,7 +9,10 @@
     "lint": "eslint",
     "sync:piscine": "ts-node -r dotenv/config scripts/sync-piscine.ts dotenv_config_path=.env.local",
     "setup:submissions": "ts-node -r dotenv/config scripts/setup-submissions.ts dotenv_config_path=.env.local",
-    "migrate:testcode": "ts-node -r dotenv/config scripts/add-testcode-attribute.ts dotenv_config_path=.env.local"
+    "migrate:testcode": "ts-node -r dotenv/config scripts/add-testcode-attribute.ts dotenv_config_path=.env.local",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
@@ -26,17 +29,23 @@
   "devDependencies": {
     "@playwright/test": "^1.57.0",
     "@tailwindcss/postcss": "^4",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^5.1.2",
     "babel-plugin-react-compiler": "1.0.0",
     "dotenv": "^17.2.3",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
+    "jsdom": "^27.4.0",
     "playwright": "^1.57.0",
     "simple-git": "^3.30.0",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.0.17"
   }
 }
