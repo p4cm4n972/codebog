@@ -145,11 +145,110 @@ export default function CbogMissionSelection() {
   const completedCount = exercises.filter(e => e.completed).length;
   const totalCount = exercises.length;
 
+  // Calculate current week based on completion
+  const getCurrentWeek = () => {
+    const weeks = Array.from(groupedExercises.keys()).sort();
+    for (const week of weeks) {
+      const days = groupedExercises.get(week)!;
+      const weekExercises = Array.from(days.values()).flat();
+      const allCompleted = weekExercises.every(e => e.completed);
+      if (!allCompleted) return week;
+    }
+    return weeks[weeks.length - 1] || 'Semaine1';
+  };
+
   return (
     <div className="container mx-auto px-4 py-8 text-blue-400 min-h-screen">
-      <h1 className="text-4xl font-bold text-center mb-8 font-mono text-shadow-hard animate-pulse">
-        == CBOG_PISCINE_C ==
-      </h1>
+      {/* Hero Header */}
+      <div className="text-center mb-8">
+        <h1 className="text-4xl md:text-5xl font-bold font-mono text-shadow-hard mb-4">
+          <span className="text-cyan-400">CBOG</span> <span className="text-blue-300">PISCINE C</span>
+        </h1>
+        <p className="text-xl text-blue-300 font-mono mb-2">
+          4 semaines intensives pour maîtriser le C
+        </p>
+        <p className="text-sm text-blue-400/70 max-w-2xl mx-auto">
+          Un exercice par jour, chaque jour pendant 4 semaines. Comme une vraie piscine de coding bootcamp.
+        </p>
+      </div>
+
+      {/* Piscine Timeline - 4 Weeks Visual */}
+      {!loading && exercises.length > 0 && (
+        <div className="mb-8 p-4 bg-black/50 border-2 border-blue-700 rounded-lg">
+          <h2 className="text-sm text-cyan-400 font-mono mb-4 text-center uppercase tracking-wider">
+            Timeline Piscine
+          </h2>
+          <div className="flex justify-between items-center gap-2 md:gap-4">
+            {[1, 2, 3, 4].map((weekNum) => {
+              const weekKey = `Semaine${weekNum}`;
+              const weekData = groupedExercises.get(weekKey);
+              const weekExercises = weekData ? Array.from(weekData.values()).flat() : [];
+              const weekCompleted = weekExercises.filter(e => e.completed).length;
+              const weekTotal = weekExercises.length;
+              const progress = weekTotal > 0 ? (weekCompleted / weekTotal) * 100 : 0;
+              const isCurrentWeek = getCurrentWeek() === weekKey;
+              const isComplete = progress === 100;
+
+              return (
+                <div key={weekNum} className="flex-1 flex flex-col items-center">
+                  {/* Week Circle */}
+                  <div
+                    className={`relative w-12 h-12 md:w-16 md:h-16 rounded-full border-4 flex items-center justify-center transition-all ${
+                      isComplete
+                        ? 'border-blue-400 bg-blue-900/50'
+                        : isCurrentWeek
+                          ? 'border-cyan-400 bg-cyan-900/30 animate-pulse'
+                          : 'border-blue-700 bg-gray-900'
+                    }`}
+                  >
+                    {isComplete ? (
+                      <span className="text-blue-400 text-xl md:text-2xl">✓</span>
+                    ) : (
+                      <span className={`font-bold text-lg md:text-xl ${isCurrentWeek ? 'text-cyan-400' : 'text-blue-500'}`}>
+                        S{weekNum}
+                      </span>
+                    )}
+                    {/* Progress ring */}
+                    <svg className="absolute inset-0 w-full h-full -rotate-90">
+                      <circle
+                        cx="50%"
+                        cy="50%"
+                        r="45%"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        className="text-blue-500/30"
+                      />
+                      <circle
+                        cx="50%"
+                        cy="50%"
+                        r="45%"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        strokeDasharray={`${progress * 2.83} 283`}
+                        className="text-cyan-400"
+                      />
+                    </svg>
+                  </div>
+                  {/* Week Label */}
+                  <span className={`text-xs md:text-sm mt-2 font-mono ${isCurrentWeek ? 'text-cyan-400' : 'text-blue-500'}`}>
+                    {weekCompleted}/{weekTotal}
+                  </span>
+                  {/* Connector line (except last) */}
+                  {weekNum < 4 && (
+                    <div className="hidden md:block absolute w-full h-1 bg-blue-800" style={{ left: '50%', top: '50%', transform: 'translateY(-50%)' }} />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          {/* Connecting lines between weeks */}
+          <div className="hidden md:flex justify-center mt-[-36px] mb-4 px-12">
+            <div className="flex-1 h-0.5 bg-gradient-to-r from-blue-700 via-blue-500 to-blue-700" />
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 text-blue-400 font-mono">
@@ -169,24 +268,39 @@ export default function CbogMissionSelection() {
         <>
           {/* Progress Section */}
           <div className="mb-8 p-6 bg-black border-4 border-blue-500 font-mono">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl text-cyan-400">PROGRESSION</h2>
-              <span className="text-2xl font-bold text-blue-400">
-                {completedCount}/{totalCount}
-              </span>
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
+              <div>
+                <h2 className="text-xl text-cyan-400">PROGRESSION PISCINE</h2>
+                <p className="text-xs text-blue-400/70 mt-1">
+                  {Math.round((completedCount / totalCount) * 100)}% de la piscine complété
+                </p>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="text-center">
+                  <span className="block text-2xl font-bold text-blue-400">{completedCount}</span>
+                  <span className="text-xs text-blue-500">exercices</span>
+                </div>
+                <span className="text-blue-600">/</span>
+                <div className="text-center">
+                  <span className="block text-2xl font-bold text-cyan-400">{totalCount}</span>
+                  <span className="text-xs text-blue-500">total</span>
+                </div>
+              </div>
             </div>
             <div className="w-full bg-gray-800 h-6 border-2 border-blue-700">
               <div
-                className="h-full bg-blue-500 transition-all duration-500"
+                className="h-full bg-gradient-to-r from-blue-600 to-cyan-400 transition-all duration-500"
                 style={{
                   width: `${(completedCount / totalCount) * 100}%`,
                 }}
               />
             </div>
-            <p className="mt-2 text-sm text-blue-300">
+            <p className="mt-3 text-sm text-blue-300">
               {completedCount === totalCount
-                ? '🎉 TOUTES LES MISSIONS C COMPLÉTÉES !'
-                : `${totalCount - completedCount} mission(s) restante(s)`}
+                ? '🎉 FÉLICITATIONS ! Tu as survécu à la Piscine C !'
+                : completedCount === 0
+                  ? '🏊 Prêt à plonger ? Commence par la Semaine 1, Jour 1 !'
+                  : `🏊 Continue à nager ! ${totalCount - completedCount} exercice(s) avant la fin de la piscine.`}
             </p>
           </div>
 
