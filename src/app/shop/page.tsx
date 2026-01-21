@@ -188,7 +188,7 @@ function ShopContent() {
 
                 {/* Gem Packs */}
                 <h2 className="text-2xl font-bold text-yellow-400 mb-6">PACKS DE GEMMES</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 items-stretch">
                     {GEM_PACKS.map((pack) => {
                         const isPopular = pack.id === 'pack_500';
                         const isBestValue = pack.id === 'pack_1000';
@@ -196,7 +196,7 @@ function ShopContent() {
                         return (
                             <div
                                 key={pack.id}
-                                className={`relative p-6 border-4 rounded-lg transition-all ${
+                                className={`relative p-6 border-4 rounded-lg transition-all flex flex-col ${
                                     isPopular
                                         ? 'border-yellow-400 bg-yellow-900/10'
                                         : isBestValue
@@ -236,6 +236,9 @@ function ShopContent() {
                                         </div>
                                     )}
                                 </div>
+
+                                {/* Spacer to push button to bottom */}
+                                <div className="flex-grow"></div>
 
                                 {/* Buy button */}
                                 <button
