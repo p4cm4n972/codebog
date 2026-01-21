@@ -31,7 +31,7 @@ interface Submission {
 }
 
 export default function CExerciseDetailPage() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, getJWT } = useAuth();
   const router = useRouter();
   const params = useParams();
   const slug = params.slug as string;
@@ -40,6 +40,8 @@ export default function CExerciseDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [userCode, setUserCode] = useState('');
+  const [accessDenied, setAccessDenied] = useState(false);
+  const [accessReason, setAccessReason] = useState('');
   const [hasExistingSubmission, setHasExistingSubmission] = useState(false);
   const [lastSubmissionPassed, setLastSubmissionPassed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -71,6 +73,29 @@ export default function CExerciseDetailPage() {
       try {
         setLoading(true);
         setError('');
+        setAccessDenied(false);
+
+        // Check access first
+        const jwt = await getJWT();
+        if (jwt) {
+          const accessResponse = await fetch('/api/access/c-exercise', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${jwt}`,
+            },
+            body: JSON.stringify({ exerciseSlug: slug }),
+          });
+
+          const accessData = await accessResponse.json();
+
+          if (!accessData.hasAccess) {
+            setAccessDenied(true);
+            setAccessReason(accessData.reason || 'Cet exercice est verrouillé');
+            setLoading(false);
+            return;
+          }
+        }
 
         // Fetch exercise and user's last submission in parallel
         const [exerciseResponse, submissionsResponse] = await Promise.all([
@@ -115,7 +140,7 @@ export default function CExerciseDetailPage() {
     };
 
     fetchExerciseAndSubmission();
-  }, [user, slug]);
+  }, [user, slug, getJWT]);
 
   const handleSubmit = async () => {
     if (!user || !exercise) return;
@@ -124,10 +149,24 @@ export default function CExerciseDetailPage() {
     setSubmitResult(null);
 
     try {
+      // Get JWT for authentication
+      const jwt = await getJWT();
+      if (!jwt) {
+        setSubmitResult({
+          success: false,
+          message: 'Erreur d\'authentification. Veuillez vous reconnecter.',
+        });
+        setSubmitting(false);
+        return;
+      }
+
       // Execute code and run tests
       const executeResponse = await fetch('/api/execute-c', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwt}`,
+        },
         body: JSON.stringify({
           code: userCode,
           exerciseSlug: exercise.slug,
@@ -199,6 +238,24 @@ export default function CExerciseDetailPage() {
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
         </svg>
         <p>Chargement de la mission...</p>
+      </div>
+    );
+  }
+
+  if (accessDenied) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-[#0a0f0a] font-mono text-white p-4">
+        <div className="text-center border-4 border-yellow-500 bg-yellow-900/20 p-8 max-w-md">
+          <div className="text-6xl mb-4">🔒</div>
+          <h2 className="text-2xl font-bold text-yellow-400 mb-4">EXERCICE VERROUILLÉ</h2>
+          <p className="text-yellow-200 mb-6">{accessReason}</p>
+          <button
+            onClick={() => router.push('/cbog')}
+            className="px-6 py-3 bg-blue-500 text-black font-bold border-4 border-black hover:bg-blue-400 transition-colors"
+          >
+            RETOUR AUX EXERCICES
+          </button>
+        </div>
       </div>
     );
   }

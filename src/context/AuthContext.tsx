@@ -19,6 +19,7 @@ interface AuthContextType {
     login: (email: string, password: string) => Promise<void>;
     logout: () => Promise<void>;
     setError: (error: string) => void;
+    getJWT: () => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -99,8 +100,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
+    const getJWT = async (): Promise<string | null> => {
+        if (!user) return null;
+        try {
+            const jwt = await account.createJWT();
+            return jwt.jwt;
+        } catch (error) {
+            console.error('Failed to create JWT:', error);
+            return null;
+        }
+    };
+
     return (
-        <AuthContext.Provider value={{ user, isLoading, role, isAdmin, isModerator, error, login, logout, setError }}>
+        <AuthContext.Provider value={{ user, isLoading, role, isAdmin, isModerator, error, login, logout, setError, getJWT }}>
             {children}
         </AuthContext.Provider>
     );

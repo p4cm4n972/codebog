@@ -53,7 +53,7 @@ const COLOR_CLASSES: Record<string, { border: string; text: string; bg: string }
 };
 
 export default function LevelDetailPage() {
-    const { user, isLoading } = useAuth();
+    const { user, isLoading, getJWT } = useAuth();
     const router = useRouter();
     const params = useParams();
     const slug = params.slug as string;
@@ -62,6 +62,8 @@ export default function LevelDetailPage() {
     const [world, setWorld] = useState<World | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [accessDenied, setAccessDenied] = useState(false);
+    const [accessReason, setAccessReason] = useState('');
     const [userCode, setUserCode] = useState('');
     const [hasExistingSubmission, setHasExistingSubmission] = useState(false);
     const [lastSubmissionPassed, setLastSubmissionPassed] = useState(false);
@@ -92,6 +94,29 @@ export default function LevelDetailPage() {
             try {
                 setLoading(true);
                 setError('');
+                setAccessDenied(false);
+
+                // Get JWT and check access first
+                const jwt = await getJWT();
+                if (jwt) {
+                    const accessResponse = await fetch('/api/access/js-level', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${jwt}`,
+                        },
+                        body: JSON.stringify({ levelSlug: slug }),
+                    });
+
+                    const accessData = await accessResponse.json();
+
+                    if (!accessData.hasAccess) {
+                        setAccessDenied(true);
+                        setAccessReason(accessData.reason || 'Ce niveau est verrouillé');
+                        setLoading(false);
+                        return;
+                    }
+                }
 
                 // Fetch level
                 const levelResponse = await databases.listDocuments(DATABASE_ID, JS_LEVELS_COLLECTION, [
@@ -149,7 +174,7 @@ export default function LevelDetailPage() {
         };
 
         fetchLevelAndSubmission();
-    }, [user, slug]);
+    }, [user, slug, getJWT]);
 
     const handleSubmit = async () => {
         if (!user || !level) return;
@@ -158,10 +183,23 @@ export default function LevelDetailPage() {
         setSubmitResult(null);
 
         try {
+            // Get JWT for authenticated API call
+            const jwt = await getJWT();
+            if (!jwt) {
+                setSubmitResult({
+                    success: false,
+                    message: 'Session expirée. Veuillez vous reconnecter.',
+                });
+                return;
+            }
+
             // Execute code and run tests
             const executeResponse = await fetch('/api/execute', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${jwt}`,
+                },
                 body: JSON.stringify({
                     code: userCode,
                     exerciseSlug: level.slug,
@@ -170,6 +208,15 @@ export default function LevelDetailPage() {
             });
 
             const executeData = await executeResponse.json();
+
+            // Handle access denied
+            if (executeResponse.status === 403) {
+                setSubmitResult({
+                    success: false,
+                    message: `Accès refusé: ${executeData.reason || 'Ce niveau est verrouillé'}`,
+                });
+                return;
+            }
 
             if (!executeData.success) {
                 setSubmitResult({
@@ -239,6 +286,24 @@ export default function LevelDetailPage() {
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                 </svg>
                 <p>Chargement du niveau...</p>
+            </div>
+        );
+    }
+
+    if (accessDenied) {
+        return (
+            <div className="flex min-h-screen flex-col items-center justify-center bg-[#0a0f0a] font-mono text-white p-4">
+                <div className="text-center border-4 border-yellow-500 bg-yellow-500/10 rounded-lg p-8 max-w-md">
+                    <div className="text-6xl mb-4">🔒</div>
+                    <h2 className="text-2xl font-bold text-yellow-400 mb-4">NIVEAU VERROUILLÉ</h2>
+                    <p className="text-yellow-200 mb-6">{accessReason}</p>
+                    <Link
+                        href="/jsbog"
+                        className="inline-block px-6 py-3 bg-green-500 text-black font-bold border-4 border-black rounded hover:bg-green-400 transition-colors"
+                    >
+                        RETOUR À LA CARTE
+                    </Link>
+                </div>
             </div>
         );
     }

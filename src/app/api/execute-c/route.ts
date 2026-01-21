@@ -5,6 +5,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
 import crypto from 'crypto';
+import { verifyUserFromJWT, isCExerciseUnlocked } from '@/lib/access-control';
 
 const execAsync = promisify(exec);
 
@@ -81,12 +82,41 @@ export async function POST(request: NextRequest) {
   const executableFile = path.join(workDir, 'solution');
 
   try {
-    const { code, testCode } = await request.json();
+    const { code, exerciseSlug, testCode } = await request.json();
 
-    if (!code) {
+    if (!code || !exerciseSlug) {
       return NextResponse.json(
-        { success: false, error: 'No code provided' },
+        { success: false, error: 'Code and exerciseSlug are required' },
         { status: 400 }
+      );
+    }
+
+    // Verify user authentication via JWT
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const jwt = authHeader.substring(7);
+    const userInfo = await verifyUserFromJWT(jwt);
+
+    if (!userInfo) {
+      return NextResponse.json(
+        { error: 'Invalid or expired token' },
+        { status: 401 }
+      );
+    }
+
+    // Check if user has access to this exercise
+    const access = await isCExerciseUnlocked(userInfo.userId, exerciseSlug, userInfo.unlockAll);
+
+    if (!access.hasAccess) {
+      return NextResponse.json(
+        { error: 'Access denied', reason: access.reason },
+        { status: 403 }
       );
     }
 

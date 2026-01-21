@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as ivm from 'isolated-vm';
+import { verifyUserFromJWT, isJsLevelUnlocked } from '@/lib/access-control';
 
 export async function POST(request: NextRequest) {
   let isolate: ivm.Isolate | undefined;
@@ -11,6 +12,35 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Code and exerciseSlug are required' },
         { status: 400 }
+      );
+    }
+
+    // Verify user authentication via JWT
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const jwt = authHeader.substring(7);
+    const userInfo = await verifyUserFromJWT(jwt);
+
+    if (!userInfo) {
+      return NextResponse.json(
+        { error: 'Invalid or expired token' },
+        { status: 401 }
+      );
+    }
+
+    // Check if user has access to this exercise
+    const access = await isJsLevelUnlocked(userInfo.userId, exerciseSlug, userInfo.unlockAll);
+
+    if (!access.hasAccess) {
+      return NextResponse.json(
+        { error: 'Access denied', reason: access.reason },
+        { status: 403 }
       );
     }
 
