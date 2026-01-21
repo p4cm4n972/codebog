@@ -283,10 +283,10 @@ export default function CExerciseDetailPage() {
         {/* Header */}
         <div className="mb-8">
           <button
-            onClick={() => router.push('/cbog')}
+            onClick={() => router.push(`/cbog/week/${exercise.week.toLowerCase()}`)}
             className="mb-4 px-4 py-2 bg-blue-500 text-black font-mono font-bold border-4 border-black hover:bg-blue-400 transition-colors"
           >
-            ← RETOUR
+            ← RETOUR AUX EXERCICES
           </button>
           <h1 className="text-4xl font-bold text-cyan-400 font-mono">
             {exercise.title}
