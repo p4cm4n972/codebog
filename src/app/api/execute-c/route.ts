@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyUserFromJWT, isCExerciseUnlocked } from '@/lib/access-control';
 
-// Judge0 API configuration
-const JUDGE0_API_URL = process.env.JUDGE0_API_URL || 'https://judge0-ce.p.rapidapi.com';
-const JUDGE0_API_KEY = process.env.JUDGE0_API_KEY;
-const JUDGE0_API_HOST = process.env.JUDGE0_API_HOST || 'judge0-ce.p.rapidapi.com';
+// Judge0 API configuration - read at runtime, not build time
+function getJudge0Config() {
+  return {
+    apiUrl: process.env.JUDGE0_API_URL || 'https://judge0-ce.p.rapidapi.com',
+    apiKey: process.env.JUDGE0_API_KEY,
+    apiHost: process.env.JUDGE0_API_HOST || 'judge0-ce.p.rapidapi.com',
+  };
+}
 
 // C language ID in Judge0 (GCC 9.2.0)
 const C_LANGUAGE_ID = 50;
@@ -92,17 +96,18 @@ function parseTestOutput(output: string): { passed: number; failed: number; tota
  * Submit code to Judge0 API
  */
 async function submitToJudge0(sourceCode: string): Promise<string> {
+  const config = getJudge0Config();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
 
   // Add RapidAPI headers if API key is configured
-  if (JUDGE0_API_KEY) {
-    headers['X-RapidAPI-Key'] = JUDGE0_API_KEY;
-    headers['X-RapidAPI-Host'] = JUDGE0_API_HOST;
+  if (config.apiKey) {
+    headers['X-RapidAPI-Key'] = config.apiKey;
+    headers['X-RapidAPI-Host'] = config.apiHost;
   }
 
-  const response = await fetch(`${JUDGE0_API_URL}/submissions?base64_encoded=true&wait=false`, {
+  const response = await fetch(`${config.apiUrl}/submissions?base64_encoded=true&wait=false`, {
     method: 'POST',
     headers,
     body: JSON.stringify({
@@ -133,16 +138,17 @@ async function submitToJudge0(sourceCode: string): Promise<string> {
  * Poll Judge0 for submission result
  */
 async function pollJudge0Result(token: string): Promise<Judge0Response> {
+  const config = getJudge0Config();
   const headers: Record<string, string> = {};
 
-  if (JUDGE0_API_KEY) {
-    headers['X-RapidAPI-Key'] = JUDGE0_API_KEY;
-    headers['X-RapidAPI-Host'] = JUDGE0_API_HOST;
+  if (config.apiKey) {
+    headers['X-RapidAPI-Key'] = config.apiKey;
+    headers['X-RapidAPI-Host'] = config.apiHost;
   }
 
   for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt++) {
     const response = await fetch(
-      `${JUDGE0_API_URL}/submissions/${token}?base64_encoded=true&fields=stdout,stderr,compile_output,message,status,time,memory`,
+      `${config.apiUrl}/submissions/${token}?base64_encoded=true&fields=stdout,stderr,compile_output,message,status,time,memory`,
       { headers }
     );
 
@@ -218,7 +224,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if Judge0 API is configured
-    if (!JUDGE0_API_KEY && JUDGE0_API_URL.includes('rapidapi')) {
+    const config = getJudge0Config();
+    if (!config.apiKey && config.apiUrl.includes('rapidapi')) {
       return NextResponse.json(
         {
           success: false,
