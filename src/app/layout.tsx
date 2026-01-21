@@ -23,8 +23,46 @@ const pressStart2P = Press_Start_2P({
 });
 
 export const metadata: Metadata = {
-  title: "CODEBOG.DEV",
-  description: "Apprendre le code dans le BOG",
+  title: {
+    default: "CODEBOG - Apprends à coder en JavaScript et C",
+    template: "%s | CODEBOG",
+  },
+  description: "Plateforme gratuite pour apprendre à coder. Parcours gamifié avec exercices pratiques en JavaScript et C, progression par niveaux et défis algorithmiques.",
+  keywords: ["coding", "programmation", "javascript", "C", "apprendre à coder", "exercices", "algorithmes", "bootcamp", "gratuit", "français"],
+  authors: [{ name: "ITMade Studio", url: "https://itmade.studio" }],
+  creator: "ITMade Studio",
+  publisher: "CODEBOG",
+  metadataBase: new URL("https://codebog.dev"),
+  openGraph: {
+    type: "website",
+    locale: "fr_FR",
+    url: "https://codebog.dev",
+    siteName: "CODEBOG",
+    title: "CODEBOG - Apprends à coder en JavaScript et C",
+    description: "Plateforme gratuite pour apprendre à coder. Parcours gamifié avec exercices pratiques, progression par niveaux et défis algorithmiques.",
+    images: [
+      {
+        url: "/logo.png",
+        width: 512,
+        height: 512,
+        alt: "CODEBOG Logo",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: "CODEBOG - Apprends à coder",
+    description: "Plateforme gratuite pour apprendre JavaScript et C avec un parcours gamifié.",
+    images: ["/logo.png"],
+  },
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({

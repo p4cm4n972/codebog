@@ -97,8 +97,14 @@ export default function Navbar() {
         <nav className="z-10 flex items-center justify-between border-b-4 border-black bg-[#1a2e1a] p-4 font-mono text-white relative">
             {/* Logo */}
             <div className="flex items-center gap-2">
-                <Link href="/" className="text-2xl font-bold tracking-tighter text-white hover:text-[#ffcc00]">
-                    CODEBOG
+                <Link href="/" className="flex items-center">
+                    <Image
+                        src="/logo.png"
+                        alt="CODEBOG"
+                        width={48}
+                        height={48}
+                        className="hover:scale-105 transition-transform"
+                    />
                 </Link>
                 <span className="text-[10px] px-1.5 py-0.5 bg-yellow-400 text-black font-bold rounded">
                     BÊTA
