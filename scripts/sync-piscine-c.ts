@@ -51,7 +51,7 @@ interface ParsedExercise {
 /**
  * Extrait le titre de l'exercice depuis le header du fichier C
  */
-function extractTitle(content: string): string {
+function extractTitle(content: string, slug: string): string {
     // Cherche la ligne "Exercice : xxx" ou "CHALLENGE : xxx"
     const exerciseMatch = content.match(/Exercice\s*:\s*(.+)/);
     if (exerciseMatch) {
@@ -70,7 +70,14 @@ function extractTitle(content: string): string {
             .trim();
     }
 
-    return 'Exercice C';
+    // Cherche le titre dans le premier commentaire (ex: /* ex03_ft_sqrt.c - Racine carrée entière */)
+    const headerMatch = content.match(/\/\*\s*\w+\.c\s*-\s*(.+?)\s*\*\//);
+    if (headerMatch) {
+        return headerMatch[1].trim();
+    }
+
+    // Fallback: utilise le slug comme titre
+    return slug;
 }
 
 /**
@@ -252,7 +259,7 @@ async function parseExerciseFile(filePath: string, week: string, day: string, or
         // Slug basé sur le nom du fichier
         const slug = filename.replace(/^(ex\d+_|challenge_)/, '');
 
-        const title = extractTitle(content);
+        const title = extractTitle(content, slug);
         const statement = extractStatement(content);
         const starterCode = extractStarterCode(content);
         const testCode = extractTestCode(content);
