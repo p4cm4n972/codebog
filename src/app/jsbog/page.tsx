@@ -2,213 +2,242 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { databases } from '@/lib/appwrite/client';
 import { Query } from 'appwrite';
+import WorldMap from '@/components/WorldMap';
 
-interface Exercise {
-  $id: string;
-  title: string;
-  slug: string;
-  statement: string;
+interface World {
+    $id: string;
+    slug: string;
+    name: string;
+    description: string;
+    icon: string;
+    color: string;
+    bgGradient: string;
+    posX: number;
+    posY: number;
+    order: number;
+    totalLevels: number;
+    difficulty: string;
+    unlockRequirement: string;
 }
 
-interface ParsedExercise extends Exercise {
-  subtitle: string;
-  objective: string;
-  completed: boolean;
+interface Level {
+    $id: string;
+    slug: string;
+    worldSlug: string;
 }
 
 interface Submission {
-  exerciseSlug: string;
-  passed: boolean;
+    exerciseSlug: string;
+    passed: boolean;
+}
+
+interface WorldProgress {
+    worldSlug: string;
+    completedLevels: number;
+    totalLevels: number;
 }
 
 const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
-const COLLECTION_ID = 'exercises';
-const SUBMISSIONS_COLLECTION_ID = 'submissions';
+const JS_WORLDS_COLLECTION = 'js-worlds';
+const JS_LEVELS_COLLECTION = 'js-levels';
+const JS_SUBMISSIONS_COLLECTION = 'js-submissions';
 
-function parseExercise(exercise: Exercise, completedSlugs: Set<string>): ParsedExercise {
-  const lines = exercise.statement.split('\n');
+export default function JsbogWorldMap() {
+    const { user, isLoading } = useAuth();
+    const router = useRouter();
+    const [worlds, setWorlds] = useState<World[]>([]);
+    const [userProgress, setUserProgress] = useState<WorldProgress[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [totalXP, setTotalXP] = useState(0);
 
-  // Extract subtitle from title line (after '-')
-  let subtitle = exercise.title;
-  const titleLine = lines.find(line => line.startsWith('# '));
-  if (titleLine) {
-    const parts = titleLine.split(' - ');
-    if (parts.length > 1) {
-      subtitle = parts.slice(1).join(' - ').trim();
-    }
-  }
-
-  // Extract objective (first line after "## Objectif")
-  let objective = '';
-  const objectifIndex = lines.findIndex(line => line.trim() === '## Objectif');
-  if (objectifIndex !== -1 && objectifIndex + 1 < lines.length) {
-    // Skip empty lines and get the first non-empty line after "## Objectif"
-    for (let i = objectifIndex + 1; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (line && !line.startsWith('#')) {
-        objective = line;
-        break;
-      }
-    }
-  }
-
-  return {
-    ...exercise,
-    subtitle,
-    objective,
-    completed: completedSlugs.has(exercise.slug),
-  };
-}
-
-export default function JsbogMissionSelection() {
-  const { user, isLoading } = useAuth();
-  const router = useRouter();
-  const [exercises, setExercises] = useState<ParsedExercise[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push('/login');
-    }
-  }, [isLoading, user, router]);
-
-  useEffect(() => {
-    const fetchExercisesAndProgress = async () => {
-      if (!user) return;
-
-      try {
-        setLoading(true);
-        setError('');
-
-        // Fetch exercises and user submissions in parallel
-        const [exercisesResponse, submissionsResponse] = await Promise.all([
-          databases.listDocuments(DATABASE_ID, COLLECTION_ID),
-          databases.listDocuments(DATABASE_ID, SUBMISSIONS_COLLECTION_ID, [
-            Query.equal('userId', user.$id),
-            Query.equal('passed', true),
-          ]),
-        ]);
-
-        // Create a set of completed exercise slugs
-        const completedSlugs = new Set<string>(
-          (submissionsResponse.documents as unknown as Submission[]).map(s => s.exerciseSlug)
-        );
-
-        const rawExercises = exercisesResponse.documents as unknown as Exercise[];
-        const parsedExercises = rawExercises.map(ex => parseExercise(ex, completedSlugs));
-        setExercises(parsedExercises);
-      } catch (err) {
-        console.error('Failed to fetch exercises:', err);
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError('Failed to load exercises');
+    useEffect(() => {
+        if (!isLoading && !user) {
+            router.push('/login');
         }
-      } finally {
-        setLoading(false);
-      }
-    };
+    }, [isLoading, user, router]);
 
-    fetchExercisesAndProgress();
-  }, [user]);
+    useEffect(() => {
+        const fetchWorldsAndProgress = async () => {
+            if (!user) return;
 
-  if (isLoading || !user) {
+            try {
+                setLoading(true);
+                setError('');
+
+                // Fetch worlds, levels and submissions in parallel
+                const [worldsResponse, levelsResponse, submissionsResponse] = await Promise.all([
+                    databases.listDocuments(DATABASE_ID, JS_WORLDS_COLLECTION, [
+                        Query.orderAsc('order'),
+                        Query.limit(100)
+                    ]),
+                    databases.listDocuments(DATABASE_ID, JS_LEVELS_COLLECTION, [
+                        Query.limit(500)
+                    ]),
+                    databases.listDocuments(DATABASE_ID, JS_SUBMISSIONS_COLLECTION, [
+                        Query.equal('userId', user.$id),
+                        Query.equal('passed', true),
+                        Query.limit(500)
+                    ]).catch(() => ({ documents: [] })) // Handle if collection doesn't exist yet
+                ]);
+
+                const worldsData = worldsResponse.documents as unknown as World[];
+                const levelsData = levelsResponse.documents as unknown as Level[];
+                const submissionsData = submissionsResponse.documents as unknown as Submission[];
+
+                // Calculate progress per world
+                const completedSlugs = new Set(submissionsData.map(s => s.exerciseSlug));
+                const progressMap = new Map<string, { completed: number; total: number }>();
+
+                // Initialize progress for each world
+                worldsData.forEach(world => {
+                    progressMap.set(world.slug, { completed: 0, total: world.totalLevels });
+                });
+
+                // Count completed levels per world
+                levelsData.forEach(level => {
+                    if (completedSlugs.has(level.slug)) {
+                        const progress = progressMap.get(level.worldSlug);
+                        if (progress) {
+                            progress.completed++;
+                        }
+                    }
+                });
+
+                // Convert to array
+                const progressArray: WorldProgress[] = Array.from(progressMap.entries()).map(
+                    ([worldSlug, data]) => ({
+                        worldSlug,
+                        completedLevels: data.completed,
+                        totalLevels: data.total
+                    })
+                );
+
+                // Calculate total XP (simplified: 100XP per completed level)
+                const totalCompleted = progressArray.reduce((sum, p) => sum + p.completedLevels, 0);
+                setTotalXP(totalCompleted * 100);
+
+                setWorlds(worldsData);
+                setUserProgress(progressArray);
+            } catch (err) {
+                console.error('Failed to fetch worlds:', err);
+                if (err instanceof Error) {
+                    setError(err.message);
+                } else {
+                    setError('Failed to load world map');
+                }
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchWorldsAndProgress();
+    }, [user]);
+
+    if (isLoading || !user) {
+        return (
+            <div className="flex min-h-screen flex-col items-center justify-center bg-[#0a0f0a] font-mono text-green-400">
+                <svg className="animate-spin h-10 w-10 mb-4" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                <p>Chargement de la session...</p>
+            </div>
+        );
+    }
+
+    const totalLevels = userProgress.reduce((sum, p) => sum + p.totalLevels, 0);
+    const completedLevels = userProgress.reduce((sum, p) => sum + p.completedLevels, 0);
+    const progressPercent = totalLevels > 0 ? Math.round((completedLevels / totalLevels) * 100) : 0;
+
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-[#0a0f0a] font-mono text-green-400">
-        <svg className="animate-spin h-10 w-10 mb-4" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-        </svg>
-        <p>Chargement de la session...</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="container mx-auto px-4 py-8 text-green-400 min-h-screen">
-      <h1 className="text-4xl font-bold text-center mb-8 font-mono text-shadow-hard animate-pulse">
-        == SELECTIONNE_TA_MISSION ==
-      </h1>
-
-      {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 text-green-400 font-mono">
-          <svg className="animate-spin h-12 w-12 mb-4" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-          </svg>
-          <p className="text-lg">Chargement des missions...</p>
-        </div>
-      ) : error ? (
-        <div className="text-center text-red-500 font-mono border-4 border-red-500 p-8">
-          <h2 className="text-3xl font-bold mb-4">ERREUR_SYSTEME</h2>
-          <p>IMPOSSIBLE DE CHARGER LES MISSIONS DEPUIS LA BASE.</p>
-          <p className="mt-2 text-sm">{error}</p>
-        </div>
-      ) : exercises.length > 0 ? (
-        <>
-          {/* Progress Section */}
-          <div className="mb-8 p-6 bg-black border-4 border-green-500 font-mono">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl text-yellow-400">PROGRESSION</h2>
-              <span className="text-2xl font-bold text-green-400">
-                {exercises.filter(e => e.completed).length}/{exercises.length}
-              </span>
-            </div>
-            <div className="w-full bg-gray-800 h-6 border-2 border-green-700">
-              <div
-                className="h-full bg-green-500 transition-all duration-500"
-                style={{
-                  width: `${(exercises.filter(e => e.completed).length / exercises.length) * 100}%`,
-                }}
-              />
-            </div>
-            <p className="mt-2 text-sm text-green-300">
-              {exercises.filter(e => e.completed).length === exercises.length
-                ? '🎉 TOUTES LES MISSIONS COMPLÉTÉES !'
-                : `${exercises.length - exercises.filter(e => e.completed).length} mission(s) restante(s)`}
-            </p>
-          </div>
-
-          {/* Exercise Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {exercises.map((exercise) => (
-              <Link href={`/jsbog/${exercise.slug}`} key={exercise.$id}>
-                <div className={`group block bg-black border-4 ${exercise.completed ? 'border-green-400' : 'border-green-500'} p-6 font-mono transform transition-transform duration-200 hover:-translate-y-2 hover:border-yellow-400 cursor-pointer overflow-hidden relative`}>
-                  {/* Completion Badge */}
-                  {exercise.completed && (
-                    <div className="absolute top-2 right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                      <span className="text-black text-lg font-bold">✓</span>
-                    </div>
-                  )}
-                  <div className="text-green-400 text-sm mb-2 truncate">/{exercise.slug}</div>
-                  <h2 className="text-2xl font-bold mb-3 text-yellow-400 truncate">{exercise.subtitle}</h2>
-                  <div className="relative overflow-hidden h-5">
-                    <p className="text-green-300 text-sm whitespace-nowrap absolute left-0 top-0 scrolling-text">
-                      {exercise.objective}
+        <div className="min-h-screen bg-[#0a0f0a] py-8 px-4">
+            <div className="container mx-auto max-w-6xl">
+                {/* Header */}
+                <div className="text-center mb-8">
+                    <h1 className="text-4xl md:text-5xl font-bold text-green-400 font-mono mb-2">
+                        JSBOG
+                    </h1>
+                    <p className="text-green-300/70 font-mono">
+                        JavaScript Bootcamp of Glory
                     </p>
-                  </div>
-                  {exercise.completed && (
-                    <div className="mt-3 text-xs text-green-400 uppercase tracking-wider">
-                      Mission accomplie
-                    </div>
-                  )}
                 </div>
-              </Link>
-            ))}
-          </div>
-        </>
-      ) : (
-        <div className="text-center text-yellow-400 font-mono border-4 border-yellow-400 p-8">
-          <h2 className="text-3xl font-bold mb-4">AUCUNE_MISSION_DISPONIBLE</h2>
-          <p>Les missions seront bientôt disponibles.</p>
-          <p className="mt-4 text-green-400">Bienvenue dans le BOG, {user.name}!</p>
+
+                {/* Stats Bar */}
+                <div className="flex flex-wrap justify-center gap-4 mb-8">
+                    {/* XP */}
+                    <div className="bg-black/50 border-2 border-yellow-500 rounded-lg px-6 py-3 flex items-center gap-3">
+                        <span className="text-2xl">⭐</span>
+                        <div>
+                            <div className="text-yellow-400 font-bold text-xl">{totalXP} XP</div>
+                            <div className="text-yellow-400/60 text-xs">Experience</div>
+                        </div>
+                    </div>
+
+                    {/* Progress */}
+                    <div className="bg-black/50 border-2 border-green-500 rounded-lg px-6 py-3 flex items-center gap-3">
+                        <span className="text-2xl">📊</span>
+                        <div>
+                            <div className="text-green-400 font-bold text-xl">{progressPercent}%</div>
+                            <div className="text-green-400/60 text-xs">{completedLevels}/{totalLevels} niveaux</div>
+                        </div>
+                    </div>
+
+                    {/* Worlds */}
+                    <div className="bg-black/50 border-2 border-purple-500 rounded-lg px-6 py-3 flex items-center gap-3">
+                        <span className="text-2xl">🌍</span>
+                        <div>
+                            <div className="text-purple-400 font-bold text-xl">{worlds.length}</div>
+                            <div className="text-purple-400/60 text-xs">Mondes</div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Main Content */}
+                {loading ? (
+                    <div className="flex flex-col items-center justify-center py-20 text-green-400 font-mono">
+                        <svg className="animate-spin h-12 w-12 mb-4" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        <p className="text-lg">Chargement de la carte...</p>
+                    </div>
+                ) : error ? (
+                    <div className="text-center text-red-500 font-mono border-4 border-red-500 bg-red-500/10 rounded-lg p-8">
+                        <h2 className="text-3xl font-bold mb-4">ERREUR_SYSTEME</h2>
+                        <p>IMPOSSIBLE DE CHARGER LA CARTE DU MONDE.</p>
+                        <p className="mt-2 text-sm">{error}</p>
+                        <p className="mt-4 text-yellow-400 text-sm">
+                            Astuce: Exécutez d&apos;abord les scripts de setup et sync.
+                        </p>
+                    </div>
+                ) : worlds.length > 0 ? (
+                    <>
+                        {/* World Map */}
+                        <WorldMap worlds={worlds} userProgress={userProgress} />
+
+                        {/* Legend / Help */}
+                        <div className="mt-8 text-center text-green-400/60 font-mono text-sm">
+                            <p>Clique sur un monde pour voir ses niveaux</p>
+                            <p className="mt-1">Complete les niveaux pour débloquer les mondes suivants</p>
+                        </div>
+                    </>
+                ) : (
+                    <div className="text-center text-yellow-400 font-mono border-4 border-yellow-400 bg-yellow-400/10 rounded-lg p-8">
+                        <h2 className="text-3xl font-bold mb-4">CARTE_NON_INITIALISÉE</h2>
+                        <p>Les mondes ne sont pas encore configurés.</p>
+                        <p className="mt-4 text-green-400 text-sm">
+                            Exécutez: <code className="bg-black px-2 py-1 rounded">npx tsx scripts/setup-js-worldmap.ts</code>
+                        </p>
+                        <p className="text-green-400 text-sm">
+                            Puis: <code className="bg-black px-2 py-1 rounded">npx tsx scripts/sync-js-worldmap.ts</code>
+                        </p>
+                    </div>
+                )}
+            </div>
         </div>
-      )}
-    </div>
-  );
+    );
 }
