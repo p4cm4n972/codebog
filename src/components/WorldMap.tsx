@@ -2,6 +2,20 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+
+// World images mapping - place images in public/worlds/
+const WORLD_IMAGES: Record<string, string> = {
+    'fondations': '/worlds/fondations.png',
+    'fp-valley': '/worlds/fp-valley.png',
+    'async-forest': '/worlds/async-forest.png',
+    'closures-cave': '/worlds/closures-cave.png',
+    'oop-temple': '/worlds/oop-temple.png',
+    'meta-tower': '/worlds/meta-tower.png',
+    'perf-peak': '/worlds/perf-peak.png',
+    'itmade-arena': '/worlds/itmade-arena.png',
+    'summit': '/worlds/summit.png',
+};
 
 interface World {
     $id: string;
@@ -34,12 +48,13 @@ interface WorldMapProps {
 const WORLD_CONNECTIONS = [
     { from: 'fondations', to: 'fp-valley' },
     { from: 'fondations', to: 'async-forest' },
+    { from: 'fondations', to: 'itmade-arena' },
     { from: 'fp-valley', to: 'closures-cave' },
     { from: 'async-forest', to: 'oop-temple' },
     { from: 'closures-cave', to: 'meta-tower' },
-    { from: 'oop-temple', to: 'itmade-arena' },
-    { from: 'meta-tower', to: 'itmade-arena' },
-    { from: 'itmade-arena', to: 'summit' },
+    { from: 'oop-temple', to: 'perf-peak' },
+    { from: 'meta-tower', to: 'summit' },
+    { from: 'perf-peak', to: 'summit' },
 ];
 
 const COLOR_CLASSES: Record<string, { bg: string; border: string; text: string; glow: string }> = {
@@ -90,6 +105,12 @@ const COLOR_CLASSES: Record<string, { bg: string; border: string; text: string; 
         border: 'border-amber-400',
         text: 'text-amber-400',
         glow: 'shadow-amber-500/50'
+    },
+    slate: {
+        bg: 'bg-gradient-to-br from-slate-500 to-slate-700',
+        border: 'border-slate-400',
+        text: 'text-slate-400',
+        glow: 'shadow-slate-500/50'
     }
 };
 
@@ -207,25 +228,36 @@ export default function WorldMap({ worlds, userProgress }: WorldMapProps) {
                                 relative group
                                 w-20 h-20 md:w-24 md:h-24
                                 rounded-full
-                                ${unlocked ? colors.bg : 'bg-gray-700'}
+                                ${WORLD_IMAGES[world.slug] ? 'bg-black/30' : (unlocked ? colors.bg : 'bg-gray-700')}
                                 border-4 ${unlocked ? colors.border : 'border-gray-600'}
                                 ${unlocked ? `shadow-lg ${colors.glow} hover:shadow-xl hover:scale-110` : 'opacity-60'}
                                 transition-all duration-300
                                 flex items-center justify-center
+                                overflow-hidden
                                 ${isHovered && unlocked ? 'scale-110' : ''}
                             `}
                         >
                             {/* Lock icon for locked worlds */}
                             {!unlocked && (
-                                <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full z-10">
                                     <span className="text-3xl">🔒</span>
                                 </div>
                             )}
 
-                            {/* World icon */}
-                            <span className={`text-3xl md:text-4xl ${!unlocked ? 'opacity-30' : ''}`}>
-                                {world.icon}
-                            </span>
+                            {/* World image or icon */}
+                            {WORLD_IMAGES[world.slug] ? (
+                                <Image
+                                    src={WORLD_IMAGES[world.slug]}
+                                    alt={world.name}
+                                    fill
+                                    className={`object-cover rounded-full ${!unlocked ? 'opacity-30 grayscale' : ''}`}
+                                    sizes="96px"
+                                />
+                            ) : (
+                                <span className={`text-3xl md:text-4xl ${!unlocked ? 'opacity-30' : ''}`}>
+                                    {world.icon}
+                                </span>
+                            )}
 
                             {/* Progress ring */}
                             {unlocked && progress > 0 && (
@@ -309,22 +341,40 @@ export default function WorldMap({ worlds, userProgress }: WorldMapProps) {
                         `}
                         onClick={e => e.stopPropagation()}
                     >
-                        {/* Header */}
-                        <div className="flex items-center gap-4 mb-4">
-                            <div className={`
-                                w-16 h-16 rounded-full flex items-center justify-center
-                                ${COLOR_CLASSES[selectedWorld.color]?.bg || 'bg-green-600'}
-                                border-4 ${COLOR_CLASSES[selectedWorld.color]?.border || 'border-green-400'}
-                            `}>
-                                <span className="text-3xl">{selectedWorld.icon}</span>
-                            </div>
-                            <div>
-                                <h2 className="text-2xl font-bold text-white">{selectedWorld.name}</h2>
-                                <div className={`text-sm ${COLOR_CLASSES[selectedWorld.color]?.text || 'text-green-400'}`}>
-                                    {selectedWorld.totalLevels} niveaux - {selectedWorld.difficulty}
+                        {/* Header with image */}
+                        {WORLD_IMAGES[selectedWorld.slug] && (
+                            <div className="relative w-full h-32 mb-4 rounded-lg overflow-hidden border-4 border-black">
+                                <Image
+                                    src={WORLD_IMAGES[selectedWorld.slug]}
+                                    alt={selectedWorld.name}
+                                    fill
+                                    className="object-cover"
+                                    sizes="400px"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                                <div className="absolute bottom-2 left-3 flex items-center gap-2">
+                                    <span className="text-2xl">{selectedWorld.icon}</span>
+                                    <h2 className="text-xl font-bold text-white">{selectedWorld.name}</h2>
                                 </div>
                             </div>
-                        </div>
+                        )}
+                        {!WORLD_IMAGES[selectedWorld.slug] && (
+                            <div className="flex items-center gap-4 mb-4">
+                                <div className={`
+                                    w-16 h-16 rounded-full flex items-center justify-center
+                                    ${COLOR_CLASSES[selectedWorld.color]?.bg || 'bg-green-600'}
+                                    border-4 ${COLOR_CLASSES[selectedWorld.color]?.border || 'border-green-400'}
+                                `}>
+                                    <span className="text-3xl">{selectedWorld.icon}</span>
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-bold text-white">{selectedWorld.name}</h2>
+                                    <div className={`text-sm ${COLOR_CLASSES[selectedWorld.color]?.text || 'text-green-400'}`}>
+                                        {selectedWorld.totalLevels} niveaux - {selectedWorld.difficulty}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Description */}
                         <p className="text-gray-300 mb-4">{selectedWorld.description}</p>
