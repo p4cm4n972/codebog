@@ -4,7 +4,7 @@ test.describe('CBOG Submission', () => {
     test.beforeEach(async ({ page }) => {
         // Login
         await page.goto('http://localhost:3000/login');
-        await page.fill('input[type="email"]', 'manuel.adele@hotmail.com');
+        await page.fill('input[type="email"]', 'manuel.adele@icloud.com');
         await page.fill('input[type="password"]', 'alleluia');
         await page.click('button[type="submit"]');
 

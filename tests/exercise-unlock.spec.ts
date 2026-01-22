@@ -3,6 +3,12 @@ import { test, expect } from '@playwright/test';
 const BASE_URL = 'http://localhost:3000';
 
 /**
+ * NOTE: These E2E tests may fail due to Appwrite rate limiting when run repeatedly.
+ * The core unlock logic is tested in unit tests (src/lib/access-control.test.ts).
+ * Run these tests sparingly or with delays between runs.
+ */
+
+/**
  * Test exercise unlock mechanism after validation
  *
  * This test verifies that:
@@ -15,7 +21,7 @@ test.describe('Exercise Unlock Mechanism', () => {
     // Login before each test with a regular user account
     test.beforeEach(async ({ page }) => {
         await page.goto(`${BASE_URL}/login`);
-        await page.fill('input[type="email"]', 'manuel.adele@hotmail.com');
+        await page.fill('input[type="email"]', 'manuel.adele@icloud.com');
         await page.fill('input[type="password"]', 'alleluia');
         await page.click('button[type="submit"]');
         await page.waitForURL('**/profile', { timeout: 10000 });
