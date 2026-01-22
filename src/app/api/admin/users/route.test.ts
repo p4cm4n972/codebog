@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GET } from './route';
+import { NextRequest } from 'next/server';
 
 // Create mock instances
 const mockAccountGet = vi.fn();
@@ -30,10 +31,24 @@ vi.mock('node-appwrite', () => {
             listDocuments = mockDbListDocuments;
         },
         Query: {
-            limit: vi.fn().mockReturnValue('limit:100'),
+            limit: vi.fn().mockReturnValue('limit:25'),
+            offset: vi.fn().mockReturnValue('offset:0'),
+            search: vi.fn().mockReturnValue('search:name'),
+            orderAsc: vi.fn().mockReturnValue('orderAsc'),
+            orderDesc: vi.fn().mockReturnValue('orderDesc'),
+            equal: vi.fn().mockReturnValue('equal'),
         },
     };
 });
+
+// Helper to create mock request
+function createMockRequest(params: Record<string, string> = {}) {
+    const url = new URL('http://localhost:3000/api/admin/users');
+    Object.entries(params).forEach(([key, value]) => {
+        url.searchParams.set(key, value);
+    });
+    return new NextRequest(url);
+}
 
 import { headers } from 'next/headers';
 
@@ -50,7 +65,7 @@ describe('/api/admin/users', () => {
                 get: vi.fn().mockReturnValue(null),
             });
 
-            const response = await GET();
+            const response = await GET(createMockRequest());
             const data = await response.json();
 
             expect(response.status).toBe(401);
@@ -62,7 +77,7 @@ describe('/api/admin/users', () => {
                 get: vi.fn().mockReturnValue('Basic some-token'),
             });
 
-            const response = await GET();
+            const response = await GET(createMockRequest());
             const data = await response.json();
 
             expect(response.status).toBe(401);
@@ -80,7 +95,7 @@ describe('/api/admin/users', () => {
                 prefs: { role: 'user' },
             });
 
-            const response = await GET();
+            const response = await GET(createMockRequest());
             const data = await response.json();
 
             expect(response.status).toBe(403);
@@ -98,7 +113,7 @@ describe('/api/admin/users', () => {
                 prefs: { role: 'moderator' },
             });
 
-            const response = await GET();
+            const response = await GET(createMockRequest());
             const data = await response.json();
 
             expect(response.status).toBe(403);
@@ -138,12 +153,15 @@ describe('/api/admin/users', () => {
                 total: 0,
             });
 
-            const response = await GET();
+            const response = await GET(createMockRequest());
             const data = await response.json();
 
             expect(response.status).toBe(200);
             expect(data.users).toBeDefined();
             expect(data.stats).toBeDefined();
+            expect(data.pagination).toBeDefined();
+            expect(data.pagination.page).toBe(1);
+            expect(data.pagination.total).toBe(1);
             expect(data.users).toHaveLength(1);
             expect(data.users[0].email).toBe('test@example.com');
         });
@@ -169,11 +187,43 @@ describe('/api/admin/users', () => {
                 total: 0,
             });
 
-            const response = await GET();
+            const response = await GET(createMockRequest());
             const data = await response.json();
 
             expect(response.status).toBe(200);
             expect(data.users).toBeDefined();
+            expect(data.pagination).toBeDefined();
+        });
+
+        it('should support pagination params', async () => {
+            mockHeaders.mockResolvedValue({
+                get: vi.fn().mockReturnValue('Bearer valid-jwt-token'),
+            });
+
+            mockAccountGet.mockResolvedValue({
+                $id: 'admin-123',
+                email: 'admin@example.com',
+                prefs: { role: 'admin' },
+            });
+
+            mockUsersList.mockResolvedValue({
+                users: [],
+                total: 100,
+            });
+
+            mockDbListDocuments.mockResolvedValue({
+                documents: [],
+                total: 0,
+            });
+
+            const response = await GET(createMockRequest({ page: '2', limit: '10' }));
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.pagination.page).toBe(2);
+            expect(data.pagination.limit).toBe(10);
+            expect(data.pagination.total).toBe(100);
+            expect(data.pagination.totalPages).toBe(10);
         });
     });
 });

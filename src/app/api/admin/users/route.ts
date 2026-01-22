@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { Client, Users, Databases, Query, Account } from 'node-appwrite';
 import { UserRole } from '@/lib/appwrite/types';
@@ -18,8 +18,18 @@ function getUserRole(prefs: Record<string, unknown> | undefined, email: string):
     return 'user';
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
     try {
+        // Get pagination params from URL
+        const { searchParams } = new URL(request.url);
+        const page = parseInt(searchParams.get('page') || '1', 10);
+        const limit = Math.min(parseInt(searchParams.get('limit') || '25', 10), 100); // Max 100
+        const search = searchParams.get('search') || '';
+        const sortBy = searchParams.get('sortBy') || 'registration'; // registration, name, xp
+        const sortOrder = searchParams.get('sortOrder') || 'desc'; // asc, desc
+
+        const offset = (page - 1) * limit;
+
         // Get JWT from Authorization header
         const headersList = await headers();
         const authHeader = headersList.get('authorization');
@@ -46,7 +56,7 @@ export async function GET() {
             return NextResponse.json({ error: 'Forbidden - Admin only' }, { status: 403 });
         }
 
-        // Now use admin API key to fetch all users
+        // Now use admin API key to fetch users
         const adminClient = new Client()
             .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!)
             .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!)
@@ -55,13 +65,47 @@ export async function GET() {
         const users = new Users(adminClient);
         const databases = new Databases(adminClient);
 
-        // Fetch all users
-        const usersList = await users.list([Query.limit(100)]);
+        // Build queries for users list
+        const queries: string[] = [
+            Query.limit(limit),
+            Query.offset(offset),
+        ];
 
-        // Fetch submissions stats
+        // Add search if provided (Appwrite Users API supports search)
+        if (search) {
+            queries.push(Query.search('name', search));
+        }
+
+        // Add sorting
+        if (sortBy === 'name') {
+            queries.push(sortOrder === 'asc' ? Query.orderAsc('name') : Query.orderDesc('name'));
+        } else {
+            // Default: sort by registration date
+            queries.push(sortOrder === 'asc' ? Query.orderAsc('$createdAt') : Query.orderDesc('$createdAt'));
+        }
+
+        // Fetch paginated users
+        const usersList = await users.list(queries);
+
+        // Get user IDs for this page to fetch their submissions
+        const userIds = usersList.users.map(u => u.$id);
+
+        // Fetch submissions only for users on this page (much more efficient)
         const [jsSubmissions, cSubmissions] = await Promise.all([
-            databases.listDocuments(DATABASE_ID, 'js-submissions', [Query.limit(1000)]).catch(() => ({ documents: [], total: 0 })),
-            databases.listDocuments(DATABASE_ID, 'c-submissions', [Query.limit(1000)]).catch(() => ({ documents: [], total: 0 })),
+            userIds.length > 0
+                ? databases.listDocuments(DATABASE_ID, 'js-submissions', [
+                    Query.equal('userId', userIds),
+                    Query.equal('passed', true),
+                    Query.limit(5000),
+                ]).catch(() => ({ documents: [] }))
+                : { documents: [] },
+            userIds.length > 0
+                ? databases.listDocuments(DATABASE_ID, 'c-submissions', [
+                    Query.equal('userId', userIds),
+                    Query.equal('passed', true),
+                    Query.limit(5000),
+                ]).catch(() => ({ documents: [] }))
+                : { documents: [] },
         ]);
 
         // Calculate stats per user
@@ -72,10 +116,10 @@ export async function GET() {
 
         const userStats = usersList.users.map(user => {
             const jsCount = (jsSubmissions.documents as unknown as Submission[]).filter(s =>
-                s.userId === user.$id && s.passed
+                s.userId === user.$id
             ).length;
             const cCount = (cSubmissions.documents as unknown as Submission[]).filter(s =>
-                s.userId === user.$id && s.passed
+                s.userId === user.$id
             ).length;
             const role = getUserRole(user.prefs, user.email);
 
@@ -95,19 +139,45 @@ export async function GET() {
             };
         });
 
-        // Global stats
-        const globalStats = {
-            totalUsers: usersList.total,
-            totalJsSubmissions: jsSubmissions.total,
-            totalCSubmissions: cSubmissions.total,
-            activeToday: usersList.users.filter(u => {
-                const lastAccess = new Date(u.accessedAt);
-                const today = new Date();
-                return lastAccess.toDateString() === today.toDateString();
-            }).length,
-        };
+        // Sort by XP if requested (done client-side since Appwrite doesn't support this)
+        if (sortBy === 'xp') {
+            userStats.sort((a, b) => {
+                const diff = a.stats.totalXP - b.stats.totalXP;
+                return sortOrder === 'asc' ? diff : -diff;
+            });
+        }
 
-        return NextResponse.json({ users: userStats, stats: globalStats });
+        // Get total counts for global stats (cached, only on first page)
+        let globalStats = null;
+        if (page === 1) {
+            const [totalJs, totalC] = await Promise.all([
+                databases.listDocuments(DATABASE_ID, 'js-submissions', [Query.limit(1)]).catch(() => ({ total: 0 })),
+                databases.listDocuments(DATABASE_ID, 'c-submissions', [Query.limit(1)]).catch(() => ({ total: 0 })),
+            ]);
+
+            globalStats = {
+                totalUsers: usersList.total,
+                totalJsSubmissions: totalJs.total,
+                totalCSubmissions: totalC.total,
+                activeToday: usersList.users.filter(u => {
+                    const lastAccess = new Date(u.accessedAt);
+                    const today = new Date();
+                    return lastAccess.toDateString() === today.toDateString();
+                }).length,
+            };
+        }
+
+        return NextResponse.json({
+            users: userStats,
+            stats: globalStats,
+            pagination: {
+                page,
+                limit,
+                total: usersList.total,
+                totalPages: Math.ceil(usersList.total / limit),
+                hasMore: offset + usersList.users.length < usersList.total,
+            }
+        });
     } catch (error) {
         console.error('Admin API error:', error);
         return NextResponse.json(
