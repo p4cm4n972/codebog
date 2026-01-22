@@ -72,15 +72,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr">
-      <head>
-        {/* Preload LCP image for faster rendering */}
-        <link
-          rel="preload"
-          href="/bg-swamp.webp"
-          as="image"
-          type="image/webp"
-        />
-      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${pressStart2P.variable} flex flex-col min-h-screen bg-[#0a0f0a]`}
       >
