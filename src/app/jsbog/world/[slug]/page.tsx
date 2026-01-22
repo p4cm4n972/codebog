@@ -7,6 +7,54 @@ import { useAuth } from '@/context/AuthContext';
 import { databases } from '@/lib/appwrite/client';
 import { Query } from 'appwrite';
 
+// Skeleton component for loading state
+function WorldPageSkeleton() {
+    return (
+        <div className="min-h-screen bg-[#0a0f0a] py-8 px-4">
+            <div className="container mx-auto max-w-4xl">
+                {/* Back button skeleton */}
+                <div className="mb-6 w-40 h-6 bg-green-900/30 rounded animate-pulse" />
+
+                {/* World Header skeleton */}
+                <div className="bg-gradient-to-r from-green-800/50 to-green-900/50 rounded-xl border-4 border-black p-6 mb-8">
+                    <div className="flex items-center gap-4">
+                        <div className="w-20 h-20 bg-black/30 rounded-full animate-pulse" />
+                        <div className="flex-1">
+                            <div className="h-8 w-48 bg-white/20 rounded animate-pulse mb-2" />
+                            <div className="h-4 w-full bg-white/10 rounded animate-pulse" />
+                        </div>
+                    </div>
+                    {/* Progress bar skeleton */}
+                    <div className="mt-6">
+                        <div className="flex justify-between mb-2">
+                            <div className="h-4 w-32 bg-white/10 rounded animate-pulse" />
+                            <div className="h-4 w-12 bg-white/10 rounded animate-pulse" />
+                        </div>
+                        <div className="h-4 bg-black/30 rounded-full" />
+                    </div>
+                </div>
+
+                {/* Levels Grid skeleton */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                        <div
+                            key={i}
+                            className="bg-gray-800/50 border-4 border-green-700/30 rounded-lg p-4 flex items-center gap-4 animate-pulse"
+                        >
+                            <div className="w-12 h-12 bg-green-900/30 rounded-full" />
+                            <div className="flex-1">
+                                <div className="h-4 w-20 bg-gray-700/50 rounded mb-2" />
+                                <div className="h-5 w-32 bg-gray-600/50 rounded mb-2" />
+                                <div className="h-3 w-16 bg-yellow-900/30 rounded" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}
+
 interface World {
     $id: string;
     slug: string;
@@ -123,16 +171,14 @@ export default function WorldLevelsPage() {
         fetchWorldAndLevels();
     }, [user, worldSlug]);
 
-    if (isLoading || !user) {
-        return (
-            <div className="flex min-h-screen flex-col items-center justify-center bg-[#0a0f0a] font-mono text-green-400">
-                <svg className="animate-spin h-10 w-10 mb-4" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                <p>Chargement...</p>
-            </div>
-        );
+    // Show skeleton during auth loading OR when user is logged in but data is loading
+    if (isLoading || (user && loading)) {
+        return <WorldPageSkeleton />;
+    }
+
+    // If not logged in (and auth is done), return null - redirect happens via useEffect
+    if (!user) {
+        return null;
     }
 
     const colors = world ? COLOR_CLASSES[world.color] || COLOR_CLASSES.green : COLOR_CLASSES.green;
@@ -151,15 +197,7 @@ export default function WorldLevelsPage() {
                     <span>Retour à la carte</span>
                 </Link>
 
-                {loading ? (
-                    <div className="flex flex-col items-center justify-center py-20 text-green-400 font-mono">
-                        <svg className="animate-spin h-12 w-12 mb-4" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                        </svg>
-                        <p className="text-lg">Chargement du monde...</p>
-                    </div>
-                ) : error ? (
+                {error ? (
                     <div className="text-center text-red-500 font-mono border-4 border-red-500 bg-red-500/10 rounded-lg p-8">
                         <h2 className="text-3xl font-bold mb-4">ERREUR</h2>
                         <p>{error}</p>
