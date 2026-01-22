@@ -263,9 +263,14 @@ export default function ExerciseDetailPage() {
     }
   };
 
-  // Show skeleton during auth loading or data loading
-  if (isLoading || !user || loading) {
+  // Show skeleton during auth loading OR when user is logged in but data is loading
+  if (isLoading || (user && loading)) {
     return <ExercisePageSkeleton />;
+  }
+
+  // If not logged in (and auth is done), return null - redirect happens via useEffect
+  if (!user) {
+    return null;
   }
 
   if (error || !exercise) {
