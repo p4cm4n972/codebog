@@ -47,3 +47,4 @@ next-env.d.ts
 /scripts/piscine-C
 .playwright-mcp/
 .env*.local
+lighthouse-report.report.*
