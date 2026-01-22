@@ -59,6 +59,102 @@ const WEEKS_CONFIG: Record<string, { name: string; description: string; icon: st
     },
 };
 
+// Skeleton components for loading state
+function ProgressBarSkeleton() {
+    return (
+        <div className="max-w-md mx-auto animate-pulse">
+            <div className="flex justify-between mb-1">
+                <div className="h-4 w-24 bg-blue-900/50 rounded" />
+                <div className="h-4 w-8 bg-blue-900/50 rounded" />
+            </div>
+            <div className="h-3 bg-blue-900/50 rounded-full border border-blue-800" />
+        </div>
+    );
+}
+
+function TimelineSkeleton() {
+    return (
+        <div className="hidden md:flex justify-center items-center gap-4 mb-8">
+            {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="flex items-center">
+                    <div className="flex flex-col items-center">
+                        <div className="w-12 h-12 rounded-full border-4 border-blue-800 bg-blue-900/30 animate-pulse" />
+                        <div className="w-6 h-3 bg-blue-900/50 rounded mt-1 animate-pulse" />
+                    </div>
+                    {i < 4 && (
+                        <div className="w-16 h-1 mx-2 rounded bg-blue-900/50 animate-pulse" />
+                    )}
+                </div>
+            ))}
+        </div>
+    );
+}
+
+function WeekCardSkeleton() {
+    return (
+        <div className="relative overflow-hidden rounded-xl p-6 border-4 border-blue-800/50 bg-gradient-to-br from-blue-900/20 to-gray-900/30 animate-pulse">
+            {/* Icon & Title */}
+            <div className="flex items-start gap-4 mb-4">
+                <div className="w-16 h-16 rounded-full bg-blue-800/50" />
+                <div className="flex-1">
+                    <div className="h-6 w-32 bg-blue-800/50 rounded mb-2" />
+                    <div className="h-4 w-full bg-blue-900/30 rounded" />
+                    <div className="h-4 w-2/3 bg-blue-900/30 rounded mt-1" />
+                </div>
+            </div>
+
+            {/* Progress */}
+            <div className="mt-4">
+                <div className="flex justify-between mb-1">
+                    <div className="h-4 w-24 bg-blue-900/30 rounded" />
+                    <div className="h-4 w-8 bg-blue-900/30 rounded" />
+                </div>
+                <div className="h-2 bg-blue-900/50 rounded-full" />
+            </div>
+
+            {/* Arrow placeholder */}
+            <div className="absolute bottom-4 right-4 w-6 h-6 bg-blue-900/30 rounded" />
+        </div>
+    );
+}
+
+function PageSkeleton() {
+    return (
+        <div className="min-h-screen bg-[#0a0f0a] py-8 px-4">
+            <div className="container mx-auto max-w-5xl">
+                {/* Header */}
+                <div className="text-center mb-8">
+                    <h1 className="text-4xl md:text-5xl font-bold text-cyan-400 mb-2">
+                        CBOG
+                    </h1>
+                    <p className="text-blue-300 text-lg mb-4">
+                        4 semaines pour maîtriser le C
+                    </p>
+
+                    {/* Progress skeleton */}
+                    <ProgressBarSkeleton />
+                </div>
+
+                {/* Timeline skeleton */}
+                <TimelineSkeleton />
+
+                {/* Week Cards Grid skeleton */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <WeekCardSkeleton />
+                    <WeekCardSkeleton />
+                    <WeekCardSkeleton />
+                    <WeekCardSkeleton />
+                </div>
+
+                {/* Legend skeleton */}
+                <div className="mt-8 text-center">
+                    <div className="h-4 w-64 bg-blue-900/30 rounded mx-auto animate-pulse" />
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export default function CbogPage() {
     const { user, isLoading } = useAuth();
     const router = useRouter();
@@ -139,16 +235,9 @@ export default function CbogPage() {
         fetchData();
     }, [user]);
 
-    if (isLoading || !user) {
-        return (
-            <div className="flex min-h-screen flex-col items-center justify-center bg-[#0a0f0a] font-mono text-blue-400">
-                <svg className="animate-spin h-10 w-10 mb-4" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                <p>Chargement...</p>
-            </div>
-        );
+    // Show skeleton during auth loading or data loading
+    if (isLoading || !user || loading) {
+        return <PageSkeleton />;
     }
 
     const totalExercises = weeks.reduce((sum, w) => sum + w.totalExercises, 0);
@@ -168,7 +257,7 @@ export default function CbogPage() {
                     </p>
 
                     {/* Global Progress */}
-                    {!loading && totalExercises > 0 && (
+                    {totalExercises > 0 && (
                         <div className="max-w-md mx-auto">
                             <div className="flex justify-between text-sm text-blue-400 mb-1">
                                 <span>{totalCompleted}/{totalExercises} exercices</span>
@@ -184,15 +273,7 @@ export default function CbogPage() {
                     )}
                 </div>
 
-                {loading ? (
-                    <div className="flex flex-col items-center justify-center py-20 text-blue-400 font-mono">
-                        <svg className="animate-spin h-12 w-12 mb-4" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                        </svg>
-                        <p>Chargement des semaines...</p>
-                    </div>
-                ) : error ? (
+                {error ? (
                     <div className="text-center text-red-500 font-mono border-4 border-red-500 bg-red-500/10 rounded-lg p-8">
                         <h2 className="text-2xl font-bold mb-4">ERREUR</h2>
                         <p>{error}</p>
