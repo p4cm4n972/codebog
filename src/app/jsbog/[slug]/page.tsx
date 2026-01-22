@@ -17,6 +17,69 @@ const Editor = dynamic(() => import('@monaco-editor/react'), {
   ),
 });
 
+// Skeleton components for loading state
+function ExercisePageSkeleton() {
+  return (
+    <div className="min-h-screen bg-[#0a0f0a] text-white p-4 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header skeleton */}
+        <div className="mb-8">
+          <div className="mb-4 w-28 h-10 bg-green-900/30 rounded animate-pulse" />
+          <div className="h-10 w-64 bg-yellow-900/30 rounded animate-pulse mb-2" />
+          <div className="h-5 w-32 bg-green-900/20 rounded animate-pulse" />
+        </div>
+
+        {/* Two Column Layout skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Instructions Section skeleton - Left */}
+          <div className="lg:col-span-4 bg-black border-4 border-green-500/50 p-6 md:p-8 max-h-[calc(100vh-200px)]">
+            <div className="space-y-4 animate-pulse">
+              <div className="h-8 w-40 bg-yellow-900/30 rounded" />
+              <div className="h-4 w-full bg-green-900/20 rounded" />
+              <div className="h-4 w-5/6 bg-green-900/20 rounded" />
+              <div className="h-4 w-4/5 bg-green-900/20 rounded" />
+              <div className="h-6 w-32 bg-green-900/30 rounded mt-6" />
+              <div className="h-4 w-full bg-green-900/20 rounded" />
+              <div className="h-4 w-3/4 bg-green-900/20 rounded" />
+              <div className="h-20 w-full bg-green-900/10 rounded border-2 border-green-800/30" />
+              <div className="h-4 w-2/3 bg-green-900/20 rounded" />
+            </div>
+          </div>
+
+          {/* Code Editor Section skeleton - Right */}
+          <div className="lg:col-span-8 bg-black border-4 border-yellow-400/50 p-6 md:p-8 flex flex-col max-h-[calc(100vh-200px)]">
+            {/* Editor header skeleton */}
+            <div className="mb-4 flex items-center justify-between">
+              <div className="h-6 w-32 bg-yellow-900/30 rounded animate-pulse" />
+              <div className="flex gap-2">
+                <div className="w-3 h-3 rounded-full bg-gray-700" />
+                <div className="w-3 h-3 rounded-full bg-gray-700" />
+                <div className="w-3 h-3 rounded-full bg-gray-700" />
+              </div>
+            </div>
+
+            {/* Monaco Editor skeleton */}
+            <div className="flex-grow border-2 border-green-700/50 rounded overflow-hidden bg-[#1e1e1e] animate-pulse">
+              <div className="p-4 space-y-2">
+                <div className="h-4 w-48 bg-gray-700/50 rounded" />
+                <div className="h-4 w-32 bg-gray-700/50 rounded" />
+                <div className="h-4 w-64 bg-gray-700/50 rounded" />
+                <div className="h-4 w-40 bg-gray-700/50 rounded" />
+                <div className="h-4 w-56 bg-gray-700/50 rounded" />
+              </div>
+            </div>
+
+            {/* Submit Button skeleton */}
+            <div className="mt-4">
+              <div className="w-full h-14 bg-green-900/30 rounded animate-pulse" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface Exercise {
   $id: string;
   title: string;
@@ -200,20 +263,9 @@ export default function ExerciseDetailPage() {
     }
   };
 
-  if (isLoading || !user) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-[#0a0f0a] font-mono text-white">
-        <p>Loading session...</p>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-[#0a0f0a] font-mono text-white">
-        <p className="text-green-400">Chargement de la mission...</p>
-      </div>
-    );
+  // Show skeleton during auth loading or data loading
+  if (isLoading || !user || loading) {
+    return <ExercisePageSkeleton />;
   }
 
   if (error || !exercise) {

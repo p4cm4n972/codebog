@@ -18,6 +18,73 @@ const Editor = dynamic(() => import('@monaco-editor/react'), {
   ),
 });
 
+// Skeleton components for loading state
+function CExercisePageSkeleton() {
+  return (
+    <div className="min-h-screen bg-[#0a0f0a] text-white p-4 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header skeleton */}
+        <div className="mb-8">
+          <div className="mb-4 w-44 h-10 bg-blue-900/30 rounded animate-pulse" />
+          <div className="h-10 w-64 bg-cyan-900/30 rounded animate-pulse mb-2" />
+          <div className="flex gap-4 mt-2">
+            <div className="h-5 w-24 bg-blue-900/20 rounded animate-pulse" />
+            <div className="h-5 w-32 bg-gray-800/50 rounded animate-pulse" />
+          </div>
+        </div>
+
+        {/* Two Column Layout skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Instructions Section skeleton - Left */}
+          <div className="lg:col-span-4 bg-black border-4 border-blue-500/50 p-6 md:p-8 max-h-[calc(100vh-200px)]">
+            <div className="space-y-4 animate-pulse">
+              <div className="h-8 w-40 bg-cyan-900/30 rounded" />
+              <div className="h-4 w-full bg-blue-900/20 rounded" />
+              <div className="h-4 w-5/6 bg-blue-900/20 rounded" />
+              <div className="h-4 w-4/5 bg-blue-900/20 rounded" />
+              <div className="h-6 w-32 bg-blue-900/30 rounded mt-6" />
+              <div className="h-4 w-full bg-blue-900/20 rounded" />
+              <div className="h-4 w-3/4 bg-blue-900/20 rounded" />
+              <div className="h-20 w-full bg-blue-900/10 rounded border-2 border-blue-800/30" />
+              <div className="h-4 w-2/3 bg-blue-900/20 rounded" />
+            </div>
+          </div>
+
+          {/* Code Editor Section skeleton - Right */}
+          <div className="lg:col-span-8 bg-black border-4 border-cyan-400/50 p-6 md:p-8 flex flex-col max-h-[calc(100vh-200px)]">
+            {/* Editor header skeleton */}
+            <div className="mb-4 flex items-center justify-between">
+              <div className="h-6 w-36 bg-cyan-900/30 rounded animate-pulse" />
+              <div className="flex gap-2">
+                <div className="w-3 h-3 rounded-full bg-gray-700" />
+                <div className="w-3 h-3 rounded-full bg-gray-700" />
+                <div className="w-3 h-3 rounded-full bg-gray-700" />
+              </div>
+            </div>
+
+            {/* Monaco Editor skeleton */}
+            <div className="flex-grow border-2 border-blue-700/50 rounded overflow-hidden bg-[#1e1e1e] animate-pulse">
+              <div className="p-4 space-y-2">
+                <div className="h-4 w-32 bg-gray-700/50 rounded" />
+                <div className="h-4 w-48 bg-gray-700/50 rounded" />
+                <div className="h-4 w-24 bg-gray-700/50 rounded" />
+                <div className="h-4 w-56 bg-gray-700/50 rounded" />
+                <div className="h-4 w-40 bg-gray-700/50 rounded" />
+                <div className="h-4 w-20 bg-gray-700/50 rounded" />
+              </div>
+            </div>
+
+            {/* Submit Button skeleton */}
+            <div className="mt-4">
+              <div className="w-full h-14 bg-blue-900/30 rounded animate-pulse" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface CExercise {
   $id: string;
   title: string;
@@ -249,24 +316,9 @@ export default function CExerciseDetailPage() {
     }
   };
 
-  if (isLoading || !user) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-[#0a0f0a] font-mono text-white">
-        <p>Loading session...</p>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-[#0a0f0a] font-mono text-blue-400">
-        <svg className="animate-spin h-10 w-10 mb-4" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-        </svg>
-        <p>Chargement de la mission...</p>
-      </div>
-    );
+  // Show skeleton during auth loading or data loading
+  if (isLoading || !user || loading) {
+    return <CExercisePageSkeleton />;
   }
 
   if (accessDenied) {
