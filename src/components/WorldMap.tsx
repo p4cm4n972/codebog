@@ -7,15 +7,15 @@ import { isWorldUnlocked, getWorldProgress, WorldProgress } from '@/lib/world-ut
 
 // World images mapping - place images in public/worlds/
 const WORLD_IMAGES: Record<string, string> = {
-    'fondations': '/worlds/fondations.png',
-    'fp-valley': '/worlds/fp-valley.png',
-    'async-forest': '/worlds/async-forest.png',
-    'closures-cave': '/worlds/closures-cave.png',
-    'oop-temple': '/worlds/oop-temple.png',
-    'meta-tower': '/worlds/meta-tower.png',
-    'perf-peak': '/worlds/perf-peak.png',
-    'itmade-arena': '/worlds/itmade-arena.png',
-    'summit': '/worlds/summit.png',
+    'fondations': '/worlds/fondations.webp',
+    'fp-valley': '/worlds/fp-valley.webp',
+    'async-forest': '/worlds/async-forest.webp',
+    'closures-cave': '/worlds/closures-cave.webp',
+    'oop-temple': '/worlds/oop-temple.webp',
+    'meta-tower': '/worlds/meta-tower.webp',
+    'perf-peak': '/worlds/perf-peak.webp',
+    'itmade-arena': '/worlds/itmade-arena.webp',
+    'summit': '/worlds/summit.webp',
 };
 
 interface World {
