@@ -263,9 +263,12 @@ describe('/api/execute', () => {
             const response = await POST(request);
             const data = await response.json();
 
-            // The outer catch returns 500 for unexpected errors
-            expect(response.status).toBe(500);
-            expect(data.error).toBe('Internal server error');
+            // Execution errors now return 200 with success: false
+            // This is better API design - HTTP status reflects request handling, not code execution
+            expect(response.status).toBe(200);
+            expect(data.success).toBe(false);
+            expect(data.results.passed).toBe(false);
+            expect(data.results.error).toBe('Syntax error');
         });
 
     });
