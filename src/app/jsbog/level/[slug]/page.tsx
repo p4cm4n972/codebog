@@ -42,7 +42,7 @@ function LevelPageSkeleton() {
                 {/* Two Column Layout skeleton */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
                     {/* Instructions skeleton - Left */}
-                    <div className="lg:col-span-4 bg-[#1a2e1a] border-4 border-green-500/50 rounded-lg p-4 md:p-6 max-h-[calc(100vh-220px)]">
+                    <div className="lg:col-span-4 bg-[#1a2e1a] border-4 border-green-500/50 rounded-lg p-4 md:p-6 max-h-[calc(100vh-180px)]">
                         <div className="space-y-4 animate-pulse">
                             <div className="h-6 w-32 bg-green-900/30 rounded" />
                             <div className="h-4 w-full bg-green-900/20 rounded" />
@@ -57,7 +57,7 @@ function LevelPageSkeleton() {
 
                     {/* Editor skeleton - Right */}
                     <div className="lg:col-span-8 flex flex-col gap-4">
-                        <div className="bg-[#1e1e1e] border-4 border-black rounded-lg overflow-hidden flex-1 min-h-[400px]">
+                        <div className="bg-[#1e1e1e] border-4 border-black rounded-lg overflow-hidden flex-1 min-h-[calc(100vh-280px)]">
                             {/* Editor header */}
                             <div className="bg-[#2d2d2d] px-4 py-2 flex items-center justify-between">
                                 <div className="h-4 w-20 bg-gray-600/50 rounded animate-pulse" />
@@ -465,7 +465,7 @@ export default function LevelDetailPage() {
                 {/* Two Column Layout */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
                     {/* Instructions - Left */}
-                    <div className={`lg:col-span-4 bg-[#1a2e1a] border-4 ${colors.border} rounded-lg p-4 md:p-6 overflow-y-auto max-h-[calc(100vh-220px)]`}>
+                    <div className={`lg:col-span-4 bg-[#1a2e1a] border-4 ${colors.border} rounded-lg p-4 md:p-6 overflow-y-auto max-h-[calc(100vh-180px)]`}>
                         <h2 className={`text-xl font-bold ${colors.text} mb-4 font-mono`}>Instructions</h2>
                         <div className="prose prose-invert prose-green max-w-none text-sm">
                             <ReactMarkdown>{level.statement}</ReactMarkdown>
@@ -475,7 +475,7 @@ export default function LevelDetailPage() {
                     {/* Editor - Right */}
                     <div className="lg:col-span-8 flex flex-col gap-4">
                         {/* Monaco Editor */}
-                        <div className="bg-[#1e1e1e] border-4 border-black rounded-lg overflow-hidden flex-1 min-h-[400px]">
+                        <div className="bg-[#1e1e1e] border-4 border-black rounded-lg overflow-hidden flex-1">
                             <div className="bg-[#2d2d2d] px-4 py-2 flex items-center justify-between">
                                 <span className="text-gray-400 font-mono text-sm">index.js</span>
                                 {hasExistingSubmission && (
@@ -485,7 +485,7 @@ export default function LevelDetailPage() {
                                 )}
                             </div>
                             <Editor
-                                height="400px"
+                                height="calc(100vh - 280px)"
                                 defaultLanguage="javascript"
                                 value={userCode}
                                 onChange={(value) => setUserCode(value || '')}
