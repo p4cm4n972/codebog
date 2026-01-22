@@ -71,7 +71,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="fr">
       <head>
         {/* Preload LCP image for faster rendering */}
         <link

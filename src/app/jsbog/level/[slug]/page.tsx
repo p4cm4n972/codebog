@@ -7,8 +7,17 @@ import { useAuth } from '@/context/AuthContext';
 import { databases } from '@/lib/appwrite/client';
 import { Query, ID } from 'appwrite';
 import ReactMarkdown from 'react-markdown';
-import Editor from '@monaco-editor/react';
+import dynamic from 'next/dynamic';
 import UnlockModal from '@/components/UnlockModal';
+
+const Editor = dynamic(() => import('@monaco-editor/react'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full bg-[#1e1e1e] flex items-center justify-center text-gray-400">
+      Chargement de l&apos;éditeur...
+    </div>
+  ),
+});
 
 interface Level {
     $id: string;
