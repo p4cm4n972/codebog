@@ -10,7 +10,7 @@ export default function LandingPage() {
     <main className="flex flex-col bg-[#0a0f0a] font-pixel text-white">
       {/* Hero Section */}
       <section
-        className="relative flex flex-grow flex-col items-center justify-between overflow-hidden bg-cover bg-center bg-no-repeat [image-rendering:pixelated] bg-[url('/bg-swamp.png')] min-h-screen py-8 md:py-12"
+        className="relative flex flex-grow flex-col items-center justify-between overflow-hidden bg-cover bg-center bg-no-repeat [image-rendering:pixelated] bg-[url('/bg-swamp.webp')] min-h-screen py-8 md:py-12"
       >
         {/* Dark overlay */}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60"></div>
