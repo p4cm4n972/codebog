@@ -17,6 +17,15 @@ interface Submission {
   type: 'js' | 'c';
 }
 
+interface GemTransaction {
+  $id: string;
+  type: 'purchase' | 'unlock' | 'refund';
+  amount: number;
+  description: string;
+  exerciseSlug?: string;
+  createdAt: string;
+}
+
 interface PiscineStats {
   totalExercises: number;
   completedExercises: number;
@@ -45,10 +54,12 @@ function getRank(jsCompleted: number, jsTotal: number, cCompleted: number, cTota
 }
 
 export default function ProfilePage() {
-  const { user, isLoading, logout } = useAuth();
+  const { user, isLoading, logout, getJWT } = useAuth();
   const router = useRouter();
   const [stats, setStats] = useState<Stats | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
+  const [transactions, setTransactions] = useState<GemTransaction[]>([]);
+  const [loadingTransactions, setLoadingTransactions] = useState(true);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -122,6 +133,36 @@ export default function ProfilePage() {
 
     fetchStats();
   }, [user]);
+
+  // Fetch gem transactions
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      if (!user) return;
+
+      try {
+        setLoadingTransactions(true);
+        const jwt = await getJWT();
+        if (!jwt) return;
+
+        const response = await fetch('/api/gems/transactions', {
+          headers: {
+            'Authorization': `Bearer ${jwt}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setTransactions(data.transactions || []);
+        }
+      } catch (err) {
+        console.error('Failed to fetch transactions:', err);
+      } finally {
+        setLoadingTransactions(false);
+      }
+    };
+
+    fetchTransactions();
+  }, [user, getJWT]);
 
   if (isLoading) {
     return (
@@ -334,6 +375,65 @@ export default function ProfilePage() {
             </div>
           ) : (
             <p className="text-gray-400">Aucune activité pour le moment. Commence une mission !</p>
+          )}
+        </div>
+
+        {/* Gem Transaction History */}
+        <div className="mt-6 bg-black border-4 border-purple-500 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-purple-400">💎 HISTORIQUE GEMMES</h2>
+            <Link href="/shop" className="text-sm text-purple-300 hover:text-purple-200">
+              [Boutique →]
+            </Link>
+          </div>
+          {loadingTransactions ? (
+            <p className="text-gray-400">Chargement...</p>
+          ) : transactions.length > 0 ? (
+            <div className="space-y-3">
+              {transactions.map((tx) => (
+                <div
+                  key={tx.$id}
+                  className="flex items-center justify-between p-3 border border-purple-900/50 rounded"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className={
+                      tx.type === 'purchase' ? 'text-green-400' :
+                      tx.type === 'unlock' ? 'text-yellow-400' :
+                      'text-blue-400'
+                    }>
+                      {tx.type === 'purchase' ? '💰' :
+                       tx.type === 'unlock' ? '🔓' :
+                       '↩️'}
+                    </span>
+                    <span className={`text-xs px-2 py-0.5 rounded ${
+                      tx.type === 'purchase' ? 'bg-green-900/50 text-green-400' :
+                      tx.type === 'unlock' ? 'bg-yellow-900/50 text-yellow-400' :
+                      'bg-blue-900/50 text-blue-400'
+                    }`}>
+                      {tx.type === 'purchase' ? 'ACHAT' :
+                       tx.type === 'unlock' ? 'DÉBLOCAGE' :
+                       'REMBOURSEMENT'}
+                    </span>
+                    <span className="text-gray-300 text-sm">{tx.description}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className={`font-bold ${tx.amount > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      {tx.amount > 0 ? '+' : ''}{tx.amount} 💎
+                    </span>
+                    <div className="text-xs text-gray-500">
+                      {new Date(tx.createdAt).toLocaleDateString('fr-FR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-400">Aucune transaction. <Link href="/shop" className="text-purple-400 hover:underline">Achète des gemmes</Link> pour débloquer des exercices !</p>
           )}
         </div>
 
