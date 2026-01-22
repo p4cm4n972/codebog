@@ -19,6 +19,74 @@ const Editor = dynamic(() => import('@monaco-editor/react'), {
   ),
 });
 
+// Skeleton component for loading state
+function LevelPageSkeleton() {
+    return (
+        <div className="min-h-screen bg-[#0a0f0a] text-white p-4 md:p-6">
+            <div className="max-w-7xl mx-auto">
+                {/* Header skeleton */}
+                <div className="mb-6">
+                    <div className="mb-4 w-32 h-10 bg-green-900/30 rounded animate-pulse" />
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-green-800/50 rounded-full animate-pulse" />
+                        <div>
+                            <div className="h-8 w-56 bg-gray-700/50 rounded animate-pulse mb-2" />
+                            <div className="flex items-center gap-3">
+                                <div className="h-4 w-20 bg-green-900/30 rounded animate-pulse" />
+                                <div className="h-4 w-16 bg-yellow-900/30 rounded animate-pulse" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Two Column Layout skeleton */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                    {/* Instructions skeleton - Left */}
+                    <div className="lg:col-span-4 bg-[#1a2e1a] border-4 border-green-500/50 rounded-lg p-4 md:p-6 max-h-[calc(100vh-220px)]">
+                        <div className="space-y-4 animate-pulse">
+                            <div className="h-6 w-32 bg-green-900/30 rounded" />
+                            <div className="h-4 w-full bg-green-900/20 rounded" />
+                            <div className="h-4 w-5/6 bg-green-900/20 rounded" />
+                            <div className="h-4 w-4/5 bg-green-900/20 rounded" />
+                            <div className="h-4 w-full bg-green-900/20 rounded" />
+                            <div className="h-4 w-3/4 bg-green-900/20 rounded" />
+                            <div className="h-16 w-full bg-green-900/10 rounded border-2 border-green-800/30 mt-4" />
+                            <div className="h-4 w-2/3 bg-green-900/20 rounded" />
+                        </div>
+                    </div>
+
+                    {/* Editor skeleton - Right */}
+                    <div className="lg:col-span-8 flex flex-col gap-4">
+                        <div className="bg-[#1e1e1e] border-4 border-black rounded-lg overflow-hidden flex-1 min-h-[400px]">
+                            {/* Editor header */}
+                            <div className="bg-[#2d2d2d] px-4 py-2 flex items-center justify-between">
+                                <div className="h-4 w-20 bg-gray-600/50 rounded animate-pulse" />
+                                <div className="flex gap-2">
+                                    <div className="w-3 h-3 rounded-full bg-gray-600" />
+                                    <div className="w-3 h-3 rounded-full bg-gray-600" />
+                                    <div className="w-3 h-3 rounded-full bg-gray-600" />
+                                </div>
+                            </div>
+                            {/* Code lines skeleton */}
+                            <div className="p-4 space-y-2 animate-pulse">
+                                <div className="h-4 w-48 bg-gray-700/50 rounded" />
+                                <div className="h-4 w-32 bg-gray-700/50 rounded" />
+                                <div className="h-4 w-64 bg-gray-700/50 rounded" />
+                                <div className="h-4 w-40 bg-gray-700/50 rounded" />
+                                <div className="h-4 w-56 bg-gray-700/50 rounded" />
+                                <div className="h-4 w-24 bg-gray-700/50 rounded" />
+                            </div>
+                        </div>
+
+                        {/* Submit button skeleton */}
+                        <div className="w-full h-14 bg-green-900/30 rounded-lg border-4 border-black animate-pulse" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 interface Level {
     $id: string;
     slug: string;
@@ -291,28 +359,14 @@ export default function LevelDetailPage() {
         }
     };
 
-    if (isLoading || !user) {
-        return (
-            <div className="flex min-h-screen flex-col items-center justify-center bg-[#0a0f0a] font-mono text-green-400">
-                <svg className="animate-spin h-10 w-10 mb-4" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                <p>Chargement...</p>
-            </div>
-        );
+    // Show skeleton during auth loading OR when user is logged in but data is loading
+    if (isLoading || (user && loading)) {
+        return <LevelPageSkeleton />;
     }
 
-    if (loading) {
-        return (
-            <div className="flex min-h-screen flex-col items-center justify-center bg-[#0a0f0a] font-mono text-green-400">
-                <svg className="animate-spin h-10 w-10 mb-4" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                <p>Chargement du niveau...</p>
-            </div>
-        );
+    // If not logged in (and auth is done), return null - redirect happens via useEffect
+    if (!user) {
+        return null;
     }
 
     if (accessDenied) {
