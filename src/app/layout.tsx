@@ -25,22 +25,35 @@ const pressStart2P = Press_Start_2P({
 
 export const metadata: Metadata = {
   title: {
-    default: "CODEBOG - Apprends à coder en JavaScript et C",
+    default: "CODEBOG - Exercices algorithme gratuits | JavaScript & C",
     template: "%s | CODEBOG",
   },
-  description: "Plateforme gratuite pour apprendre à coder. Parcours gamifié avec exercices pratiques en JavaScript et C, progression par niveaux et défis algorithmiques.",
-  keywords: ["coding", "programmation", "javascript", "C", "apprendre à coder", "exercices", "algorithmes", "bootcamp", "gratuit", "français"],
+  description: "Exercices algorithme gratuits en ligne. Plateforme française pour apprendre à coder avec des exos pratiques en JavaScript et C. Parcours gamifié, défis algorithmiques et progression par niveaux.",
+  keywords: [
+    "exercice algorithme gratuit",
+    "exo algorithme",
+    "algorithme gratuit",
+    "exercices programmation",
+    "apprendre à coder gratuit",
+    "javascript exercices",
+    "langage C exercices",
+    "coding bootcamp gratuit",
+    "défis algorithmiques",
+    "leetcode français",
+    "programmation débutant",
+    "cours code gratuit"
+  ],
   authors: [{ name: "ITMade Studio", url: "https://itmade.studio" }],
   creator: "ITMade Studio",
   publisher: "CODEBOG",
-  metadataBase: new URL("https://codebog.dev"),
+  metadataBase: new URL("https://codebog.itmade.fr"),
   openGraph: {
     type: "website",
     locale: "fr_FR",
-    url: "https://codebog.dev",
+    url: "https://codebog.itmade.fr",
     siteName: "CODEBOG",
-    title: "CODEBOG - Apprends à coder en JavaScript et C",
-    description: "Plateforme gratuite pour apprendre à coder. Parcours gamifié avec exercices pratiques, progression par niveaux et défis algorithmiques.",
+    title: "CODEBOG - Exercices algorithme gratuits | JavaScript & C",
+    description: "Exercices algorithme gratuits en ligne. Plateforme française pour apprendre à coder avec des exos pratiques. Parcours gamifié et défis algorithmiques.",
     images: [
       {
         url: "/logo.png",
@@ -51,9 +64,9 @@ export const metadata: Metadata = {
     ],
   },
   twitter: {
-    card: "summary",
-    title: "CODEBOG - Apprends à coder",
-    description: "Plateforme gratuite pour apprendre JavaScript et C avec un parcours gamifié.",
+    card: "summary_large_image",
+    title: "CODEBOG - Exercices algorithme gratuits",
+    description: "Exos algorithme gratuits en JavaScript et C. Parcours gamifié pour apprendre à coder.",
     images: ["/logo.png"],
   },
   icons: {
