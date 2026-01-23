@@ -3,6 +3,7 @@ import Link from 'next/link';
 export default function LandingPage() {
   const yellowButtonClasses = "px-10 py-5 bg-[#ffcc00] text-black text-2xl md:text-3xl font-bold uppercase border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] active:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] transition-all duration-150 rounded-none";
   const greenButtonClasses = "px-10 py-5 bg-[#2ecc71] text-black text-2xl md:text-3xl font-bold uppercase border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] active:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] transition-all duration-150 rounded-none";
+  const comingSoonButtonClasses = "relative px-10 py-5 bg-gray-600 text-gray-400 text-2xl md:text-3xl font-bold uppercase border-4 border-gray-700 shadow-[8px_8px_0px_0px_rgba(0,0,0,0.5)] rounded-none cursor-not-allowed opacity-75";
 
   return (
     <>
@@ -35,13 +36,32 @@ export default function LandingPage() {
           <div className="flex-grow"></div>
 
           {/* Bottom: Buttons */}
-          <div className="z-10 flex flex-col gap-4 md:flex-row md:gap-8 px-4 pb-8 md:pb-16">
-            <Link href="/jsbog" className={yellowButtonClasses}>
-              JSBOG
-            </Link>
-            <Link href="/cbog" className={greenButtonClasses}>
-              CBOG
-            </Link>
+          <div className="z-10 flex flex-col items-center gap-6 px-4 pb-8 md:pb-16">
+            {/* Active courses */}
+            <div className="flex flex-col gap-4 md:flex-row md:gap-8">
+              <Link href="/jsbog" className={yellowButtonClasses}>
+                JSBOG
+              </Link>
+              <Link href="/cbog" className={greenButtonClasses}>
+                CBOG
+              </Link>
+            </div>
+
+            {/* Coming soon courses */}
+            <div className="flex flex-col gap-4 md:flex-row md:gap-8">
+              <div className={comingSoonButtonClasses}>
+                <span className="absolute -top-3 -right-3 px-2 py-1 bg-[#3498db] text-white text-xs font-bold border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                  BIENTÔT
+                </span>
+                PYBOG
+              </div>
+              <div className={comingSoonButtonClasses}>
+                <span className="absolute -top-3 -right-3 px-2 py-1 bg-[#9b59b6] text-white text-xs font-bold border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                  BIENTÔT
+                </span>
+                ALGOBOG
+              </div>
+            </div>
           </div>
         </section>
       </main>

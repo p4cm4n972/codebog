@@ -265,26 +265,114 @@ function parseLeetcodeExercise(filePath: string, worldSlug: string, order: numbe
     const titlePart = fileName.replace(/^\d+-/, '');
     const title = titlePart.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
-    // Try to extract problem description from comments
-    const descMatch = content.match(/\/\*\*[\s\S]*?\*\//);
-    const description = descMatch ? descMatch[0] : `Résoudre le problème "${title}"`;
+    // Extract metadata from JSDoc block
+    const difficultyMatch = content.match(/DIFFICULTÉ:\s*(\w+)/i);
+    const difficulty = difficultyMatch ? difficultyMatch[1].toLowerCase() : 'advanced';
 
-    // Create statement from the file content (using first major comment block)
-    const statement = `# ${title}\n\n${description}\n\n## Code\n\nVoir le fichier source pour les détails.`;
+    const timeMatch = content.match(/TEMPS ATTENDU:\s*([^\n*]+)/i);
+    const expectedTime = timeMatch ? timeMatch[1].trim() : '';
+
+    const patternsMatch = content.match(/PATTERNS:\s*([^\n*]+)/i);
+    const patterns = patternsMatch ? patternsMatch[1].trim() : '';
+
+    const complexityMatch = content.match(/COMPLEXITÉ CIBLE:\s*([^\n*]+)/i);
+    const targetComplexity = complexityMatch ? complexityMatch[1].trim() : '';
+
+    // Extract ÉNONCÉ section
+    const statementMatch = content.match(/ÉNONCÉ\s*:\s*\n\*\*\n([\s\S]*?)(?=\*\*\s*EXEMPLES|\*\/)/i);
+    let problemStatement = '';
+    if (statementMatch) {
+        problemStatement = statementMatch[1]
+            .replace(/^\*\*\s?/gm, '') // Remove ** at start of lines
+            .replace(/\n\*\*$/gm, '')
+            .trim();
+    }
+
+    // Extract EXEMPLES section
+    const examplesMatch = content.match(/EXEMPLES\s*:\s*\n\*\*\n([\s\S]*?)(?=\*\*\s*CONTRAINTES|\*\/)/i);
+    let examples = '';
+    if (examplesMatch) {
+        examples = examplesMatch[1]
+            .replace(/^\*\*\s?/gm, '')
+            .replace(/\n\*\*$/gm, '')
+            .trim();
+    }
+
+    // Extract CONTRAINTES section
+    const constraintsMatch = content.match(/CONTRAINTES\s*:\s*\n\*\*\s*([\s\S]*?)(?=\*\/)/i);
+    let constraints = '';
+    if (constraintsMatch) {
+        constraints = constraintsMatch[1]
+            .replace(/^\*\*\s?/gm, '')
+            .replace(/\n\*\*$/gm, '')
+            .trim();
+    }
+
+    // Build structured statement in Markdown
+    const statement = `# ${title}
+
+## Métadonnées
+${patterns ? `- **Patterns**: ${patterns}` : ''}
+${targetComplexity ? `- **Complexité cible**: ${targetComplexity}` : ''}
+${expectedTime ? `- **Temps attendu**: ${expectedTime}` : ''}
+
+## Énoncé
+
+${problemStatement}
+
+## Exemples
+
+\`\`\`
+${examples}
+\`\`\`
+
+## Contraintes
+
+${constraints}
+`;
+
+    // Extract function signature for starter code
+    // Look for the main function (the one matching the file name pattern, or marked as OPTIMALE)
+    const fileBaseName = fileName.replace(/^\d+-/, '').replace(/-/g, '');
+    const optimaleMatch = content.match(/OPTIMALE[^]*?function\s+(\w+)\s*\(([^)]*)\)/i);
+    const namedMatch = content.match(new RegExp(`function\\s+(${fileBaseName}|\\w*${fileBaseName}\\w*)\\s*\\(([^)]*)\\)`, 'i'));
+    const fallbackMatch = content.match(/function\s+(\w+)\s*\(([^)]*)\)/);
+
+    const funcMatch = optimaleMatch || namedMatch || fallbackMatch;
+    const funcName = funcMatch ? funcMatch[1] : 'solution';
+    const funcParams = funcMatch ? funcMatch[2] : '';
+
+    const starterCode = `/**
+ * ${title}
+ * Patterns: ${patterns || 'À découvrir'}
+ * Complexité cible: ${targetComplexity || 'À optimiser'}
+ */
+function ${funcName}(${funcParams}) {
+    // Votre solution ici
+
+}`;
+
+    // XP based on difficulty
+    const xpMap: Record<string, number> = {
+        'easy': 100,
+        'medium': 150,
+        'hard': 250,
+        'advanced': 150
+    };
 
     return {
         slug: `${worldSlug}-${fileName}`,
         worldSlug,
         title,
         statement,
-        starterCode: `// ${title}\n// Implémentez votre solution ici\n\nfunction solution() {\n    // Votre code ici\n}\n\nmodule.exports = { solution };`,
-        testCode: content, // The file contains tests
+        starterCode,
+        testCode: content,
         solution: '',
         order,
-        xpReward: 150,
+        xpReward: xpMap[difficulty] || 150,
         maxStars: 3,
-        difficulty: 'advanced',
-        tags: JSON.stringify(['algorithm', 'problem-solving']),
+        difficulty,
+        tags: JSON.stringify(patterns ? patterns.split(',').map(p => p.trim().toLowerCase()) : ['algorithm']),
         hints: JSON.stringify([])
     };
 }

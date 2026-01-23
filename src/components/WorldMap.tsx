@@ -284,9 +284,11 @@ export default function WorldMap({ worlds, userProgress, unlockAll }: WorldMapPr
                             )}
                         </div>
 
-                        {/* Hover tooltip */}
+                        {/* Hover tooltip - show below for worlds near top, above for others */}
                         {isHovered && unlocked && (
-                            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-48 p-3 bg-black/90 border border-gray-700 rounded-lg text-sm z-30">
+                            <div className={`absolute left-1/2 -translate-x-1/2 w-48 p-3 bg-black/90 border border-gray-700 rounded-lg text-sm z-30 ${
+                                world.posY < 20 ? 'top-full mt-16' : 'bottom-full mb-2'
+                            }`}>
                                 <div className="font-bold text-white mb-1">{world.name}</div>
                                 <div className="text-gray-400 text-xs mb-2">{world.description}</div>
                                 <div className="flex justify-between text-xs">

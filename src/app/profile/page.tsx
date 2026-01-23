@@ -164,14 +164,148 @@ export default function ProfilePage() {
     fetchTransactions();
   }, [user, getJWT]);
 
-  if (isLoading) {
+  // Show skeleton while loading auth or stats
+  if (isLoading || (user && loadingStats)) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-[#0a0f0a] font-mono text-white">
-        <p>Loading session...</p>
-      </div>
+      <main className="min-h-screen bg-[#0a0f0a] font-mono text-white p-4 md:p-8">
+        <div className="max-w-4xl mx-auto animate-pulse">
+          {/* Header skeleton */}
+          <div className="mb-8">
+            <div className="flex gap-2 mb-4">
+              <div className="h-10 w-20 bg-green-900/50 border-4 border-green-900/30" />
+              <div className="h-10 w-20 bg-blue-900/50 border-4 border-blue-900/30" />
+            </div>
+            <div className="h-10 w-64 bg-green-900/30 rounded" />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* User Info Card skeleton */}
+            <div className="bg-black border-4 border-green-500/50 p-6">
+              <div className="h-6 w-32 bg-yellow-900/50 rounded mb-6" />
+              <div className="space-y-4">
+                <div className="h-5 w-48 bg-gray-700 rounded" />
+                <div className="h-5 w-56 bg-gray-700 rounded" />
+                <div className="h-5 w-40 bg-gray-700 rounded" />
+                <div className="h-5 w-44 bg-gray-700 rounded" />
+                <div className="pt-4 border-t border-green-800">
+                  <div className="h-5 w-36 bg-purple-900/50 rounded" />
+                </div>
+              </div>
+            </div>
+
+            {/* Global Stats Card skeleton */}
+            <div className="bg-black border-4 border-yellow-400/50 p-6">
+              <div className="h-6 w-48 bg-yellow-900/50 rounded mb-6" />
+              <div className="space-y-4">
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <div className="h-4 w-16 bg-gray-700 rounded" />
+                    <div className="h-6 w-16 bg-gray-700 rounded" />
+                  </div>
+                  <div className="w-full bg-gray-800 h-4 border border-gray-700" />
+                  <div className="h-3 w-24 bg-gray-700/50 rounded mt-1" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center p-3 border border-gray-700 rounded">
+                    <div className="h-8 w-12 bg-gray-700 rounded mx-auto mb-1" />
+                    <div className="h-3 w-20 bg-gray-700/50 rounded mx-auto" />
+                  </div>
+                  <div className="text-center p-3 border border-gray-700 rounded">
+                    <div className="h-8 w-12 bg-gray-700 rounded mx-auto mb-1" />
+                    <div className="h-3 w-20 bg-gray-700/50 rounded mx-auto" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Piscine Stats skeleton */}
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-black border-4 border-green-500/50 p-6">
+              <div className="flex justify-between mb-4">
+                <div className="h-6 w-20 bg-green-900/50 rounded" />
+                <div className="h-4 w-24 bg-green-900/30 rounded" />
+              </div>
+              <div className="space-y-3">
+                <div className="w-full bg-gray-800 h-3 border border-green-700/50" />
+                <div className="flex justify-between">
+                  <div className="h-4 w-24 bg-gray-700 rounded" />
+                  <div className="h-4 w-8 bg-gray-700 rounded" />
+                </div>
+              </div>
+            </div>
+            <div className="bg-black border-4 border-blue-500/50 p-6">
+              <div className="flex justify-between mb-4">
+                <div className="h-6 w-20 bg-blue-900/50 rounded" />
+                <div className="h-4 w-24 bg-blue-900/30 rounded" />
+              </div>
+              <div className="space-y-3">
+                <div className="w-full bg-gray-800 h-3 border border-blue-700/50" />
+                <div className="flex justify-between">
+                  <div className="h-4 w-24 bg-gray-700 rounded" />
+                  <div className="h-4 w-8 bg-gray-700 rounded" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Activity skeleton */}
+          <div className="mt-6 bg-black border-4 border-gray-700/50 p-6">
+            <div className="h-6 w-40 bg-yellow-900/50 rounded mb-6" />
+            <div className="space-y-3">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="flex items-center justify-between p-3 border border-gray-700 rounded">
+                  <div className="flex items-center gap-3">
+                    <div className="w-5 h-5 bg-gray-700 rounded" />
+                    <div className="w-8 h-5 bg-gray-700 rounded" />
+                    <div className="w-32 h-5 bg-yellow-900/30 rounded" />
+                  </div>
+                  <div className="w-24 h-4 bg-gray-700 rounded" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Gem History skeleton */}
+          <div className="mt-6 bg-black border-4 border-purple-500/50 p-6">
+            <div className="flex justify-between mb-6">
+              <div className="h-6 w-44 bg-purple-900/50 rounded" />
+              <div className="h-4 w-24 bg-purple-900/30 rounded" />
+            </div>
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center justify-between p-3 border border-purple-900/30 rounded">
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 bg-purple-900/50 rounded" />
+                    <div className="w-20 h-5 bg-purple-900/30 rounded" />
+                    <div className="w-32 h-4 bg-gray-700 rounded" />
+                  </div>
+                  <div className="text-right">
+                    <div className="w-16 h-5 bg-gray-700 rounded mb-1" />
+                    <div className="w-20 h-3 bg-gray-700/50 rounded" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Support skeleton */}
+          <div className="mt-6 bg-black border-4 border-[#ff5e5b]/50 p-6 text-center">
+            <div className="h-6 w-48 bg-[#ff5e5b]/30 rounded mx-auto mb-4" />
+            <div className="h-4 w-80 bg-gray-700/50 rounded mx-auto mb-4" />
+            <div className="h-12 w-48 bg-[#ff5e5b]/30 rounded mx-auto" />
+          </div>
+
+          {/* Logout skeleton */}
+          <div className="mt-8 flex justify-center">
+            <div className="h-16 w-40 bg-red-900/30 border-4 border-black/50 rounded" />
+          </div>
+        </div>
+      </main>
     );
   }
 
+  // Redirect if not logged in
   if (!user) {
     return null;
   }

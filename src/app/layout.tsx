@@ -5,6 +5,7 @@ import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import CookieConsent from "@/components/CookieConsent";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -81,6 +82,7 @@ export default function RootLayout({
             {children}
           </div>
           <Footer />
+          <CookieConsent />
         </AuthProvider>
       </body>
     </html>
