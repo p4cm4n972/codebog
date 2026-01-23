@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { databases } from '@/lib/appwrite/client';
-import { Query, ID } from 'appwrite';
+import { Query } from 'appwrite';
 import ReactMarkdown from 'react-markdown';
 import dynamic from 'next/dynamic';
 import UnlockModal from '@/components/UnlockModal';
@@ -254,8 +254,8 @@ export default function CExerciseDetailPage() {
         return;
       }
 
-      // Execute code and run tests
-      const executeResponse = await fetch('/api/execute-c', {
+      // Submit code - server validates tests AND creates submission
+      const response = await fetch('/api/submissions/c', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -268,43 +268,47 @@ export default function CExerciseDetailPage() {
         }),
       });
 
-      const executeData = await executeResponse.json();
+      const data = await response.json();
 
-      // Save submission to Appwrite with test results
-      await databases.createDocument(
-        DATABASE_ID,
-        C_SUBMISSIONS_COLLECTION_ID,
-        ID.unique(),
-        {
-          userId: user.$id,
-          exerciseId: exercise.$id,
-          exerciseSlug: exercise.slug,
-          code: userCode,
-          submittedAt: new Date().toISOString(),
-          passed: executeData.results?.passed || false,
-          compiled: executeData.results?.compiled || false,
-          compileError: executeData.results?.compileError || '',
-          testResults: JSON.stringify(executeData.results || {}),
-        }
-      );
-
-      if (!executeData.success) {
+      // Handle access denied
+      if (response.status === 403) {
         setSubmitResult({
           success: false,
-          message: executeData.results?.compiled === false ? 'Erreur de compilation' : 'Échec des tests',
-          results: executeData.results,
+          message: `Accès refusé: ${data.reason || 'Cet exercice est verrouillé'}`,
         });
-      } else {
-        setSubmitResult({
-          success: true,
-          message: executeData.results.passed ? '✅ Tous les tests sont passés !' : '❌ Certains tests ont échoué',
-          results: executeData.results,
-        });
-        if (executeData.results.passed) {
-          setLastSubmissionPassed(true);
-          setHasExistingSubmission(true);
-        }
+        return;
       }
+
+      // Handle errors
+      if (response.status !== 200) {
+        setSubmitResult({
+          success: false,
+          message: data.results?.compiled === false
+            ? 'Erreur de compilation'
+            : (data.error || 'Erreur lors de la soumission'),
+          results: data.results,
+        });
+        return;
+      }
+
+      // Update local state
+      if (data.results?.passed) {
+        setLastSubmissionPassed(true);
+        setHasExistingSubmission(true);
+      }
+
+      // Show results
+      const xpMessage = data.submission?.isFirstCompletion
+        ? `+${data.submission.xpEarned} XP`
+        : '(déjà complété)';
+
+      setSubmitResult({
+        success: data.results?.passed || false,
+        message: data.results?.passed
+          ? `✅ Tous les tests sont passés ! ${xpMessage}`
+          : '❌ Certains tests ont échoué',
+        results: data.results,
+      });
     } catch (err: unknown) {
       console.error('Submission failed:', err);
       setSubmitResult({

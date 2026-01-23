@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { databases } from '@/lib/appwrite/client';
-import { Query, ID } from 'appwrite';
+import { Query } from 'appwrite';
 import ReactMarkdown from 'react-markdown';
 import dynamic from 'next/dynamic';
 import UnlockModal from '@/components/UnlockModal';
@@ -286,8 +286,8 @@ export default function LevelDetailPage() {
                 return;
             }
 
-            // Execute code and run tests
-            const executeResponse = await fetch('/api/execute', {
+            // Submit code - server validates tests AND creates submission
+            const response = await fetch('/api/submissions/js', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -300,53 +300,44 @@ export default function LevelDetailPage() {
                 }),
             });
 
-            const executeData = await executeResponse.json();
+            const data = await response.json();
 
             // Handle access denied
-            if (executeResponse.status === 403) {
+            if (response.status === 403) {
                 setSubmitResult({
                     success: false,
-                    message: `Accès refusé: ${executeData.reason || 'Ce niveau est verrouillé'}`,
+                    message: `Accès refusé: ${data.reason || 'Ce niveau est verrouillé'}`,
                 });
                 return;
             }
 
-            if (!executeData.success) {
+            // Handle errors
+            if (response.status !== 200) {
                 setSubmitResult({
                     success: false,
-                    message: 'Échec des tests',
-                    results: executeData.results,
+                    message: data.error || 'Erreur lors de la soumission',
+                    results: data.results,
                 });
                 return;
             }
 
-            // Save submission to Appwrite
-            await databases.createDocument(
-                DATABASE_ID,
-                JS_SUBMISSIONS_COLLECTION,
-                ID.unique(),
-                {
-                    userId: user.$id,
-                    exerciseId: level.$id,
-                    exerciseSlug: level.slug,
-                    worldSlug: level.worldSlug,
-                    code: userCode,
-                    submittedAt: new Date().toISOString(),
-                    passed: executeData.results.passed,
-                    testResults: JSON.stringify(executeData.results),
-                    xpEarned: executeData.results.passed ? level.xpReward : 0,
-                }
-            );
+            // Update local state
+            if (data.results?.passed) {
+                setLastSubmissionPassed(true);
+                setHasExistingSubmission(true);
+            }
 
-            setLastSubmissionPassed(executeData.results.passed);
-            setHasExistingSubmission(true);
+            // Show results
+            const xpMessage = data.submission?.isFirstCompletion
+                ? `+${data.submission.xpEarned} XP`
+                : '(déjà complété)';
 
             setSubmitResult({
-                success: true,
-                message: executeData.results.passed
-                    ? `✅ Niveau complété ! +${level.xpReward} XP`
+                success: data.results?.passed || false,
+                message: data.results?.passed
+                    ? `✅ Niveau complété ! ${xpMessage}`
                     : '❌ Certains tests ont échoué',
-                results: executeData.results,
+                results: data.results,
             });
         } catch (err) {
             console.error('Submission failed:', err);
