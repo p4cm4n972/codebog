@@ -238,12 +238,24 @@ function parseExercise(exercisePath: string, worldSlug: string, order: number): 
     const difficulty = difficultyMap[worldSlug] || 'intermediate';
     const xpReward = xpMap[difficulty];
 
+    // Clean the statement: remove "Tests" section
+    let cleanedStatement = readme
+        .replace(/##\s*Tests?\s*\n+```(?:bash|sh)?\n*node\s+ex\d+\/test\.js\s*\n*```/gi, '')
+        .replace(/##\s*Tests?\s*\n+`node\s+ex\d+\/test\.js`/gi, '')
+        .replace(/##\s*Tests?\s*\n+node\s+ex\d+\/test\.js/gi, '')
+        .trim();
+
+    // Clean the starter code: remove "// Export" comments
+    let cleanedStarterCode = indexJs
+        .replace(/\/\/\s*Export\s*\n?/gi, '')
+        .trim();
+
     return {
         slug,
         worldSlug,
         title,
-        statement: readme,
-        starterCode: indexJs,
+        statement: cleanedStatement,
+        starterCode: cleanedStarterCode,
         testCode: testJs,
         solution: '', // Solutions are kept private
         order,
