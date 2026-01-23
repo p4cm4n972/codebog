@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 
@@ -34,6 +34,16 @@ export default function UnlockModal({
     const [userBalance, setUserBalance] = useState<number | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
+    const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Cleanup timer on unmount
+    useEffect(() => {
+        return () => {
+            if (timerRef.current) {
+                clearTimeout(timerRef.current);
+            }
+        };
+    }, []);
 
     // Fetch unlock cost and balance when modal opens
     useEffect(() => {
@@ -117,7 +127,8 @@ export default function UnlockModal({
                 setSuccess(true);
                 setUserBalance(data.newBalance);
                 if (onUnlocked) {
-                    setTimeout(() => {
+                    // Store timer ref for cleanup on unmount
+                    timerRef.current = setTimeout(() => {
                         onUnlocked();
                     }, 1500);
                 }
