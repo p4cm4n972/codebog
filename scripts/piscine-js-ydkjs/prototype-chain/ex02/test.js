@@ -1,0 +1,27 @@
+// Note: Functions are expected to be defined by user code
+// (shadow1, shadow2, shadow3, shadow4)
+
+// Test utilities
+let passed = 0;
+let failed = 0;
+
+function assert(condition, message) {
+    if (condition) {
+        console.log(`✓ ${message}`);
+        passed++;
+    } else {
+        console.error(`✗ ${message}`);
+        failed++;
+    }
+}
+
+console.log('Testing Ex02 - Shadowing...\n');
+
+assert(JSON.stringify(shadow1()) === JSON.stringify([2, 1]), 'should return [2, 1] (child shadows parent)');
+assert(shadow2() === 1, 'should return 1 (assignment silently fails)');
+assert(shadow3() === 1, 'should return 1 (assignment silently ignored)');
+console.log('\n' + '='.repeat(50));
+console.log(`Results: ${passed} passed, ${failed} failed`);
+console.log('='.repeat(50));
+
+// process.exit not available in sandbox
