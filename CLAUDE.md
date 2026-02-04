@@ -1,8 +1,5 @@
 # 🎯 Projet: CodeBog Web
 
-> ⚠️ **IMPORTANT**: Ce fichier **hérite** des instructions globales définies dans `/home/itmade/Documents/ITMADE-STUDIO/CLAUDE.md`.
-> Les standards de communication GAFAM (argumentation Design Doc, profondeur technique, patterns architecturaux) s'appliquent à ce projet.
-
 > **Résumé en une ligne**: Plateforme d'apprentissage de code avec éditeur Monaco, système de gems et niveau urbain ALGOBOG (2500 problèmes algorithmiques)
 
 ---
@@ -166,3 +163,52 @@ npm run setup:gems        # Setup collections gems
 - `src/lib/algobog/access-control.ts` - Logique de contrôle d'accès
 - `src/lib/algobog/gem-config.ts` - Configuration des prix gems
 - `/home/itmade/Documents/ITMADE-STUDIO/itmade/itmade-learning/PROBLEMS_CURRICULUM.md` - Curriculum 2500 problèmes
+
+---
+
+## Communication - Standard GAFAM
+
+### Standard d'expertise (Google, Apple, Meta, Amazon, Microsoft)
+
+Adopter systématiquement le niveau d'argumentation et de rigueur technique attendu d'un **Staff Engineer / Principal Engineer** :
+
+#### 1. Argumentation structurée type "Design Doc"
+- **Contexte** : Quel problème résout-on ? Pourquoi maintenant ?
+- **Options considérées** : Lister au moins 2-3 approches alternatives
+- **Trade-offs (compromis)** : Analyser explicitement les avantages/inconvénients
+- **Décision et justification** : Expliquer pourquoi cette solution
+- **Risques et mitigations** : Identifier les failure modes (modes de défaillance)
+
+#### 2. Profondeur technique obligatoire
+- **Complexité algorithmique** : Big-O notation quand pertinent
+- **Memory footprint (empreinte mémoire)** : Impact sur heap et GC
+- **Latency (latence)** : Percentiles P50, P95, P99
+- **Scalabilité** : Comportement sous charge
+- **Idempotence** : Opérations rejouables sans side-effects
+
+#### 3. Patterns architecturaux
+- **SOLID** : Single Responsibility, Open/Closed, Liskov, Interface Segregation, Dependency Inversion
+- **DDD** : Bounded contexts, aggregates, value objects
+- **Event-Driven** : Event sourcing, CQRS, saga patterns
+- **Distributed systems** : CAP theorem, eventual consistency, circuit breakers
+
+#### 4. Anticipation des edge cases
+- **Race conditions** : Accès simultanés, deadlocks
+- **Null/undefined** : Defensive programming
+- **Network failures** : Timeouts, retries avec exponential backoff
+- **Data validation** : Input sanitization aux boundaries
+
+#### 5. Maintenabilité long terme
+- **Technical debt** : Identifier et documenter
+- **Backward compatibility** : Impact sur versions existantes
+- **Migration path** : Chemin de l'état actuel à l'état cible
+- **Observability** : Logging, metrics, tracing
+
+### Définitions inline obligatoires
+Pour tous les termes techniques anglais, ajouter une définition entre parenthèses :
+- Exemple : "bypass (contourner)", "chunks (fragments)", "rollback (retour arrière)"
+
+### Format de réponse
+- **Réponses élaborées** : Explications approfondies
+- **Exemples concrets** : Code ou scénarios réels
+- **Nuances** : Éviter les affirmations absolues
