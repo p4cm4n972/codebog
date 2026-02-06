@@ -155,7 +155,8 @@ describe('/api/execute', () => {
             const data = await response.json();
 
             expect(response.status).toBe(401);
-            expect(data.error).toBe('Invalid or expired token');
+            // Note: Route uses unified auth flow - returns same message for all auth failures
+            expect(data.error).toBe('Authentication required');
         });
 
         it('should return 403 if user does not have access to level', async () => {
