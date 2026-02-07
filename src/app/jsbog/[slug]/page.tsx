@@ -1,147 +1,60 @@
-"use client";
+'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
-import { databases } from '@/lib/appwrite/client';
-import { Query, ID } from 'appwrite';
-import ReactMarkdown from 'react-markdown';
-import dynamic from 'next/dynamic';
+import ModuleCard from '@/components/jsbog/ModuleCard';
+import { getSeasonBySlug, SEASON_COLOR_CLASSES, JsSeason } from '@/lib/js-seasons-config';
 
-const Editor = dynamic(() => import('@monaco-editor/react'), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-full bg-[#1e1e1e] flex items-center justify-center text-gray-400">
-      Chargement de l&apos;éditeur...
-    </div>
-  ),
-});
-
-// Skeleton components for loading state
-function ExercisePageSkeleton() {
+// Skeleton components
+function ModuleCardSkeleton() {
   return (
-    <div className="min-h-screen bg-[#0a0f0a] text-white p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header skeleton */}
+    <div className="bg-[#1a1a2e] border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] rounded-lg overflow-hidden animate-pulse">
+      <div className="aspect-square bg-gray-800" />
+      <div className="p-3 border-t-4 border-gray-700">
+        <div className="h-4 bg-gray-700 rounded w-3/4 mb-2" />
+        <div className="h-8 bg-gray-800 rounded mb-2" />
+        <div className="h-1.5 bg-gray-800 rounded-full" />
+      </div>
+    </div>
+  );
+}
+
+function PageSkeleton() {
+  return (
+    <div className="min-h-screen bg-[#0a0f0a]">
+      {/* Banner skeleton */}
+      <div className="relative h-48 md:h-64 bg-gray-800 animate-pulse" />
+
+      <div className="container mx-auto max-w-6xl px-4 py-8">
+        {/* Title skeleton */}
         <div className="mb-8">
-          <div className="mb-4 w-28 h-10 bg-green-900/30 rounded animate-pulse" />
-          <div className="h-10 w-64 bg-yellow-900/30 rounded animate-pulse mb-2" />
-          <div className="h-5 w-32 bg-green-900/20 rounded animate-pulse" />
+          <div className="h-8 bg-gray-800 rounded w-64 mb-2 animate-pulse" />
+          <div className="h-4 bg-gray-800 rounded w-96 animate-pulse" />
         </div>
 
-        {/* Two Column Layout skeleton */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Instructions Section skeleton - Left */}
-          <div className="lg:col-span-4 bg-black border-4 border-green-500/50 p-6 md:p-8 max-h-[calc(100vh-200px)]">
-            <div className="space-y-4 animate-pulse">
-              <div className="h-8 w-40 bg-yellow-900/30 rounded" />
-              <div className="h-4 w-full bg-green-900/20 rounded" />
-              <div className="h-4 w-5/6 bg-green-900/20 rounded" />
-              <div className="h-4 w-4/5 bg-green-900/20 rounded" />
-              <div className="h-6 w-32 bg-green-900/30 rounded mt-6" />
-              <div className="h-4 w-full bg-green-900/20 rounded" />
-              <div className="h-4 w-3/4 bg-green-900/20 rounded" />
-              <div className="h-20 w-full bg-green-900/10 rounded border-2 border-green-800/30" />
-              <div className="h-4 w-2/3 bg-green-900/20 rounded" />
-            </div>
-          </div>
-
-          {/* Code Editor Section skeleton - Right */}
-          <div className="lg:col-span-8 bg-black border-4 border-yellow-400/50 p-6 md:p-8 flex flex-col max-h-[calc(100vh-200px)]">
-            {/* Editor header skeleton */}
-            <div className="mb-4 flex items-center justify-between">
-              <div className="h-6 w-32 bg-yellow-900/30 rounded animate-pulse" />
-              <div className="flex gap-2">
-                <div className="w-3 h-3 rounded-full bg-gray-700" />
-                <div className="w-3 h-3 rounded-full bg-gray-700" />
-                <div className="w-3 h-3 rounded-full bg-gray-700" />
-              </div>
-            </div>
-
-            {/* Monaco Editor skeleton */}
-            <div className="flex-grow border-2 border-green-700/50 rounded overflow-hidden bg-[#1e1e1e] animate-pulse">
-              <div className="p-4 space-y-2">
-                <div className="h-4 w-48 bg-gray-700/50 rounded" />
-                <div className="h-4 w-32 bg-gray-700/50 rounded" />
-                <div className="h-4 w-64 bg-gray-700/50 rounded" />
-                <div className="h-4 w-40 bg-gray-700/50 rounded" />
-                <div className="h-4 w-56 bg-gray-700/50 rounded" />
-              </div>
-            </div>
-
-            {/* Submit Button skeleton */}
-            <div className="mt-4">
-              <div className="w-full h-14 bg-green-900/30 rounded animate-pulse" />
-            </div>
-          </div>
+        {/* Modules grid skeleton */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+            <ModuleCardSkeleton key={i} />
+          ))}
         </div>
       </div>
     </div>
   );
 }
 
-interface Exercise {
-  $id: string;
-  title: string;
-  slug: string;
-  statement: string;
-  starterCode?: string;
-  testCode?: string;
-}
-
-const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
-const COLLECTION_ID = 'exercises';
-const SUBMISSIONS_COLLECTION_ID = 'submissions';
-
-interface Submission {
-  code: string;
-  passed: boolean;
-  submittedAt: string;
-}
-
-function extractInstructions(statement: string): string {
-  // Extract from "## Instructions" to before "## Tests"
-  const lines = statement.split('\n');
-  const instructionsIndex = lines.findIndex(line => line.trim() === '## Instructions');
-  const testsIndex = lines.findIndex(line => line.trim() === '## Tests');
-
-  if (instructionsIndex === -1) {
-    return statement; // Return full statement if no Instructions section found
-  }
-
-  // If Tests section exists, exclude it
-  if (testsIndex !== -1 && testsIndex > instructionsIndex) {
-    return lines.slice(instructionsIndex, testsIndex).join('\n');
-  }
-
-  return lines.slice(instructionsIndex).join('\n');
-}
-
-export default function ExerciseDetailPage() {
-  const { user, isLoading } = useAuth();
+export default function SeasonDetailPage() {
+  const { user, isLoading, getJWT } = useAuth();
   const router = useRouter();
   const params = useParams();
   const slug = params.slug as string;
 
-  const [exercise, setExercise] = useState<Exercise | null>(null);
+  const [season, setSeason] = useState<JsSeason | null>(null);
+  const [moduleProgress, setModuleProgress] = useState<Record<string, { completed: number; total: number }>>({});
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [userCode, setUserCode] = useState('');
-  const [hasExistingSubmission, setHasExistingSubmission] = useState(false);
-  const [lastSubmissionPassed, setLastSubmissionPassed] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [submitResult, setSubmitResult] = useState<{
-    success: boolean;
-    message: string;
-    results?: {
-      passed: boolean;
-      totalTests: number;
-      passedTests: number;
-      failedTests: number;
-      output?: string;
-      error?: string;
-    };
-  } | null>(null);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -150,347 +63,237 @@ export default function ExerciseDetailPage() {
   }, [isLoading, user, router]);
 
   useEffect(() => {
-    const fetchExerciseAndSubmission = async () => {
-      if (!user) return;
+    const loadSeason = async () => {
+      if (!user || !slug) return;
 
-      try {
-        setLoading(true);
-        setError('');
-
-        // Fetch exercise and user's last submission in parallel
-        const [exerciseResponse, submissionsResponse] = await Promise.all([
-          databases.listDocuments(DATABASE_ID, COLLECTION_ID, [Query.equal('slug', slug)]),
-          databases.listDocuments(DATABASE_ID, SUBMISSIONS_COLLECTION_ID, [
-            Query.equal('userId', user.$id),
-            Query.equal('exerciseSlug', slug),
-            Query.orderDesc('submittedAt'),
-            Query.limit(1),
-          ]),
-        ]);
-
-        if (exerciseResponse.documents.length === 0) {
-          setError('Exercise not found');
-          return;
-        }
-
-        const exerciseData = exerciseResponse.documents[0] as unknown as Exercise;
-        setExercise(exerciseData);
-
-        // Check if user has a previous submission
-        if (submissionsResponse.documents.length > 0) {
-          const lastSubmission = submissionsResponse.documents[0] as unknown as Submission;
-          setUserCode(lastSubmission.code);
-          setHasExistingSubmission(true);
-          setLastSubmissionPassed(lastSubmission.passed);
-        } else {
-          setUserCode(exerciseData.starterCode || '// Write your code here');
-          setHasExistingSubmission(false);
-          setLastSubmissionPassed(false);
-        }
-      } catch (err: any) {
-        console.error('Failed to fetch exercise:', err);
-        if (err instanceof Error) {
-            setError(err.message);
-        } else {
-            setError('Failed to load exercise');
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchExerciseAndSubmission();
-  }, [user, slug]);
-
-  const handleSubmit = async () => {
-    if (!user || !exercise) return;
-
-    setSubmitting(true);
-    setSubmitResult(null);
-
-    try {
-      // Execute code and run tests
-      const executeResponse = await fetch('/api/execute', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          code: userCode,
-          exerciseSlug: exercise.slug,
-          testCode: exercise.testCode,
-        }),
-      });
-
-      const executeData = await executeResponse.json();
-
-      if (!executeData.success) {
-        setSubmitResult({
-          success: false,
-          message: 'Échec des tests',
-          results: executeData.results,
-        });
+      const foundSeason = getSeasonBySlug(slug);
+      if (!foundSeason) {
+        router.push('/jsbog');
         return;
       }
 
-      // Save submission to Appwrite with test results
-      await databases.createDocument(
-        DATABASE_ID,
-        'submissions',
-        ID.unique(),
-        {
-          userId: user.$id,
-          exerciseId: exercise.$id,
-          exerciseSlug: exercise.slug,
-          code: userCode,
-          submittedAt: new Date().toISOString(),
-          passed: executeData.results.passed,
-          testResults: JSON.stringify(executeData.results),
+      setSeason(foundSeason);
+
+      // Charger la progression réelle pour chaque module
+      const progress: Record<string, { completed: number; total: number }> = {};
+
+      // Initialiser avec 0 pour tous les modules
+      foundSeason.modules.forEach(module => {
+        progress[module.slug] = {
+          completed: 0,
+          total: module.exerciseCount
+        };
+      });
+
+      // Charger la progression depuis l'API pour chaque module en parallèle
+      try {
+        const jwt = await getJWT();
+        if (!jwt) {
+          console.warn('No JWT available for API calls');
+          setModuleProgress(progress);
+          setLoading(false);
+          return;
         }
-      );
 
-      setSubmitResult({
-        success: true,
-        message: executeData.results.passed ? '✅ Tous les tests sont passés !' : '❌ Certains tests ont échoué',
-        results: executeData.results,
-      });
-    } catch (err: any) {
-      console.error('Submission failed:', err);
-      setSubmitResult({
-        success: false,
-        message: err.message || 'Erreur lors de la soumission',
-      });
-    } finally {
-      setSubmitting(false);
-    }
-  };
+        const progressPromises = foundSeason.modules.map(async (module) => {
+          const response = await fetch(
+            `/api/jsbog/submissions?season=${slug}&module=${module.slug}`,
+            {
+              headers: {
+                'Authorization': `Bearer ${jwt}`,
+              },
+            }
+          );
+          if (response.ok) {
+            const data = await response.json();
+            return {
+              moduleSlug: module.slug,
+              completed: data.completedExercises?.length || 0
+            };
+          }
+          return { moduleSlug: module.slug, completed: 0 };
+        });
 
-  // Show skeleton during auth loading OR when user is logged in but data is loading
-  if (isLoading || (user && loading)) {
-    return <ExercisePageSkeleton />;
+        const results = await Promise.all(progressPromises);
+        results.forEach(result => {
+          if (progress[result.moduleSlug]) {
+            progress[result.moduleSlug].completed = result.completed;
+          }
+        });
+      } catch (error) {
+        console.error('Error loading progress:', error);
+      }
+
+      setModuleProgress(progress);
+      setLoading(false);
+    };
+
+    loadSeason();
+  }, [user, slug, router, getJWT]);
+
+  if (isLoading || !user || loading || !season) {
+    return <PageSkeleton />;
   }
 
-  // If not logged in (and auth is done), return null - redirect happens via useEffect
-  if (!user) {
-    return null;
-  }
-
-  if (error || !exercise) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-[#0a0f0a] font-mono text-white p-4">
-        <div className="text-center text-red-500 border-4 border-red-500 p-8">
-          <h2 className="text-3xl font-bold mb-4">ERREUR</h2>
-          <p>{error || 'Exercise not found'}</p>
-          <button
-            onClick={() => router.push('/jsbog')}
-            className="mt-6 px-6 py-3 bg-green-500 text-black font-bold border-4 border-black hover:bg-green-400"
-          >
-            RETOUR AUX MISSIONS
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const instructions = extractInstructions(exercise.statement);
+  const colors = SEASON_COLOR_CLASSES[season.slug as keyof typeof SEASON_COLOR_CLASSES];
+  const totalCompleted = Object.values(moduleProgress).reduce((sum, p) => sum + p.completed, 0);
+  const progressPercent = Math.round((totalCompleted / season.totalExercises) * 100);
 
   return (
-    <div className="min-h-screen bg-[#0a0f0a] text-white p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <button
-            onClick={() => router.push('/jsbog')}
-            className="mb-4 px-4 py-2 bg-green-500 text-black font-mono font-bold border-4 border-black hover:bg-green-400 transition-colors"
-          >
-            ← RETOUR
-          </button>
-          <h1 className="text-4xl font-bold text-yellow-400 font-mono">
-            {exercise.title}
-          </h1>
-          <p className="text-green-400 font-mono mt-2">/{exercise.slug}</p>
+    <div className="min-h-screen bg-[#0a0f0a]">
+      {/* Banner */}
+      <div className="relative h-48 md:h-64 overflow-hidden">
+        {/* Gradient background */}
+        <div className={`absolute inset-0 bg-gradient-to-r ${season.colors.gradient}`} />
+
+        {/* Banner image */}
+        <Image
+          src={season.images.banner}
+          alt={season.name}
+          fill
+          className="object-cover"
+          priority
+          onError={(e) => {
+            e.currentTarget.style.display = 'none';
+          }}
+        />
+
+        {/* Overlay gradient */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0f0a] via-transparent to-black/30" />
+
+        {/* Content */}
+        <div className="absolute bottom-0 left-0 right-0 p-6">
+          <div className="container mx-auto max-w-6xl">
+            <div className="flex items-end justify-between">
+              <div>
+                <span className={`
+                  inline-block px-3 py-1 mb-2
+                  bg-black/60 border-2 ${colors?.border || 'border-gray-500'}
+                  rounded font-mono text-sm font-bold
+                  ${colors?.text || 'text-gray-400'}
+                `}>
+                  SAISON {season.order}
+                </span>
+                <h1 className="text-3xl md:text-4xl font-bold text-white font-mono">
+                  {season.name}
+                </h1>
+                <p className={`text-lg font-mono ${colors?.text || 'text-gray-400'}`}>
+                  {season.subtitle}
+                </p>
+              </div>
+
+              {/* Progress circle */}
+              <div className="hidden sm:block relative w-20 h-20">
+                <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    fill="rgba(0,0,0,0.5)"
+                    stroke="rgba(255,255,255,0.1)"
+                    strokeWidth="6"
+                  />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    fill="none"
+                    stroke={season.colors.primary}
+                    strokeWidth="6"
+                    strokeLinecap="round"
+                    strokeDasharray={`${progressPercent * 2.83} 283`}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-white font-bold font-mono">{progressPercent}%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div className="container mx-auto max-w-6xl px-4 py-8">
+        {/* Breadcrumb */}
+        <nav className="mb-6 font-mono text-sm">
+          <Link href="/jsbog" className="text-gray-500 hover:text-green-400 transition-colors">
+            JSBOG
+          </Link>
+          <span className="text-gray-600 mx-2">/</span>
+          <span className={colors?.text || 'text-gray-400'}>{season.name}</span>
+        </nav>
+
+        {/* Description */}
+        <p className="text-gray-400 mb-6 max-w-2xl">
+          {season.description}
+        </p>
+
+        {/* Stats bar */}
+        <div className="flex flex-wrap gap-4 mb-8">
+          <div className="bg-black/30 border border-gray-800 rounded-lg px-4 py-2 flex items-center gap-2">
+            <span>📚</span>
+            <span className="text-gray-400 font-mono text-sm">
+              {season.modules.length} modules
+            </span>
+          </div>
+          <div className="bg-black/30 border border-gray-800 rounded-lg px-4 py-2 flex items-center gap-2">
+            <span>⚡</span>
+            <span className="text-gray-400 font-mono text-sm">
+              {totalCompleted}/{season.totalExercises} exercices
+            </span>
+          </div>
+          <div className="bg-black/30 border border-gray-800 rounded-lg px-4 py-2 flex items-center gap-2">
+            <span>🎯</span>
+            <span className={`font-mono text-sm ${
+              season.difficulty === 'Débutant' ? 'text-green-400' :
+              season.difficulty === 'Intermédiaire' ? 'text-yellow-400' :
+              season.difficulty === 'Avancé' ? 'text-orange-400' :
+              'text-red-400'
+            }`}>
+              {season.difficulty}
+            </span>
+          </div>
         </div>
 
-        {/* Two Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Instructions Section - Left */}
-          <div className="lg:col-span-4 bg-black border-4 border-green-500 p-6 md:p-8 overflow-y-auto max-h-[calc(100vh-200px)]">
-            <div className="prose prose-invert prose-green max-w-none font-mono">
-              <ReactMarkdown
-                components={{
-                  h2: ({ children }) => (
-                    <h2 className="text-2xl font-bold text-yellow-400 mb-4 mt-6">{children}</h2>
-                  ),
-                  h3: ({ children }) => (
-                    <h3 className="text-xl font-bold text-green-400 mb-3 mt-4">{children}</h3>
-                  ),
-                  p: ({ children }) => (
-                    <p className="text-green-300 mb-4 leading-relaxed">{children}</p>
-                  ),
-                  ul: ({ children }) => (
-                    <ul className="list-disc list-inside text-green-300 mb-4 space-y-2">{children}</ul>
-                  ),
-                  ol: ({ children }) => (
-                    <ol className="list-decimal list-inside text-green-300 mb-4 space-y-2">{children}</ol>
-                  ),
-                  code: ({ className, children }) => {
-                    const isBlock = className?.includes('language-');
-                    if (isBlock) {
-                      return (
-                        <pre className="bg-black border-2 border-green-700 p-4 rounded overflow-x-auto mb-4">
-                          <code className="text-green-400 text-sm">{children}</code>
-                        </pre>
-                      );
-                    }
-                    return (
-                      <code className="bg-green-900/30 text-yellow-400 px-2 py-1 rounded text-sm">
-                        {children}
-                      </code>
-                    );
-                  },
-                }}
-              >
-                {instructions}
-              </ReactMarkdown>
-            </div>
-          </div>
+        {/* Section title */}
+        <h2 className="text-xl font-bold text-white font-mono mb-4 flex items-center gap-2">
+          <span className={colors?.text || 'text-gray-400'}>▸</span>
+          Modules
+        </h2>
 
-          {/* Code Editor Section - Right */}
-          <div className="lg:col-span-8 bg-black border-4 border-yellow-400 p-6 md:p-8 flex flex-col max-h-[calc(100vh-200px)]">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-yellow-400 font-mono">CODE_EDITOR</h2>
-              <div className="flex gap-2">
-                <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                <div className="w-3 h-3 rounded-full bg-green-500"></div>
-              </div>
-            </div>
+        {/* Modules grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 mb-8">
+          {season.modules.map((module, index) => {
+            const progress = moduleProgress[module.slug] || { completed: 0, total: module.exerciseCount };
+            const progressPercent = Math.round((progress.completed / progress.total) * 100);
 
-            {/* Submission Status Banner */}
-            {hasExistingSubmission && (
-              <div className={`mb-4 p-3 border-2 rounded flex items-center justify-between ${lastSubmissionPassed ? 'border-green-500 bg-green-900/20' : 'border-yellow-500 bg-yellow-900/20'}`}>
-                <div className="flex items-center gap-2">
-                  {lastSubmissionPassed ? (
-                    <>
-                      <span className="text-green-400 text-lg">✓</span>
-                      <span className="text-green-400 text-sm font-mono">Dernière solution validée</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-yellow-400 text-lg">⏳</span>
-                      <span className="text-yellow-400 text-sm font-mono">Dernière tentative chargée</span>
-                    </>
-                  )}
-                </div>
-                <button
-                  onClick={() => {
-                    setUserCode(exercise?.starterCode || '// Write your code here');
-                    setHasExistingSubmission(false);
-                  }}
-                  className="px-3 py-1 text-xs font-mono text-gray-400 hover:text-white border border-gray-600 hover:border-gray-400 rounded transition-colors"
-                >
-                  RESET
-                </button>
-              </div>
-            )}
+            // First module always unlocked, others based on previous completion
+            const isLocked = index > 0 && false; // TODO: implement proper unlock logic
 
-            {/* Monaco Editor */}
-            <div className="flex-grow border-2 border-green-700 rounded overflow-hidden">
-              <Editor
-                height="100%"
-                defaultLanguage="javascript"
-                value={userCode}
-                onChange={(value) => setUserCode(value || '')}
-                theme="vs-dark"
-                options={{
-                  minimap: { enabled: false },
-                  fontSize: 14,
-                  lineNumbers: 'on',
-                  scrollBeyondLastLine: false,
-                  automaticLayout: true,
-                  tabSize: 2,
-                }}
+            return (
+              <ModuleCard
+                key={module.id}
+                module={module}
+                seasonSlug={season.slug}
+                progress={progressPercent}
+                completedExercises={progress.completed}
+                isLocked={isLocked}
+                colorClass={colors?.border || 'border-gray-500'}
               />
-            </div>
+            );
+          })}
+        </div>
 
-            {/* Submit Button */}
-            <div className="mt-4">
-              <button
-                onClick={handleSubmit}
-                disabled={submitting}
-                className="w-full px-6 py-4 bg-[#2ecc71] text-black text-xl font-bold uppercase border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] active:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] transition-all duration-150 rounded-none disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
-              >
-                {submitting ? (
-                  <>
-                    <svg className="animate-spin h-6 w-6" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    ANALYSE EN COURS...
-                  </>
-                ) : 'SOUMETTRE'}
-              </button>
-            </div>
-
-            {/* Results - Inside Editor Section */}
-            {submitResult && (
-              <div className={`mt-4 p-4 border-2 ${submitResult.results?.passed ? 'border-green-500 bg-green-900/20' : 'border-red-500 bg-red-900/20'} rounded`}>
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className={`text-lg font-bold font-mono ${submitResult.results?.passed ? 'text-green-400' : 'text-red-400'}`}>
-                    {submitResult.results?.passed ? '✅ MISSION RÉUSSIE' : '❌ MISSION ÉCHOUÉE'}
-                  </h3>
-                  <button
-                    onClick={() => setSubmitResult(null)}
-                    className="w-6 h-6 flex items-center justify-center text-lg text-gray-400 hover:text-white hover:bg-white/10 rounded transition-colors"
-                  >
-                    ✕
-                  </button>
-                </div>
-
-                {submitResult.results && (
-                  <>
-                    <div className="flex gap-4 text-sm font-mono mb-3">
-                      <span className="text-green-400">
-                        ✓ Réussis: {submitResult.results.passedTests}/{submitResult.results.totalTests}
-                      </span>
-                      {submitResult.results.failedTests > 0 && (
-                        <span className="text-red-400">
-                          ✗ Échoués: {submitResult.results.failedTests}
-                        </span>
-                      )}
-                    </div>
-
-                    {submitResult.results.output && (
-                      <div className="max-h-48 overflow-y-auto p-3 bg-black/50 border border-gray-700 rounded">
-                        <div className="text-xs font-mono space-y-1">
-                          {submitResult.results.output.split('\n').map((line, index) => {
-                            const isPass = line.includes('✓');
-                            const isFail = line.includes('✗');
-                            const colorClass = isPass
-                              ? 'text-green-400'
-                              : isFail
-                                ? 'text-red-400'
-                                : 'text-gray-400';
-                            return (
-                              <div key={index} className={colorClass}>
-                                {line}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-
-                    {submitResult.results.error && (
-                      <div className="mt-3 p-3 bg-red-900/30 border border-red-700 rounded">
-                        <p className="text-red-400 font-mono text-xs whitespace-pre-wrap">
-                          {submitResult.results.error}
-                        </p>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
-          </div>
+        {/* Back link */}
+        <div className="mt-8 text-center">
+          <Link
+            href="/jsbog"
+            className="inline-flex items-center gap-2 text-gray-500 hover:text-green-400 transition-colors font-mono text-sm"
+          >
+            <span>←</span>
+            <span>Retour aux saisons</span>
+          </Link>
         </div>
       </div>
     </div>
