@@ -62,8 +62,9 @@ function PageSkeleton() {
 }
 
 export default function JsBogPage() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isAdmin, isModerator } = useAuth();
   const router = useRouter();
+  const unlockAll = isAdmin || isModerator;
   const [userProgress, setUserProgress] = useState<Record<string, { completed: number; total: number }>>({});
   const [loading, setLoading] = useState(true);
 
@@ -155,7 +156,7 @@ export default function JsBogPage() {
           {JS_SEASONS.map((season) => {
             const progress = userProgress[season.slug] || { completed: 0, total: season.totalExercises };
             const progressPercent = Math.round((progress.completed / progress.total) * 100);
-            const isLocked = !isSeasonUnlocked(season);
+            const isLocked = !unlockAll && !isSeasonUnlocked(season);
             const unlockCountdown = isLocked ? getTimeUntilUnlock(season) : null;
 
             return (

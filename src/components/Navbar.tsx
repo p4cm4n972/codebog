@@ -91,6 +91,7 @@ export default function Navbar() {
     const navLinks = [
         { href: '/jsbog', label: 'JSBOG' },
         { href: '/cbog', label: 'CBOG' },
+        { href: '/algobog', label: 'ALGOBOG' },
     ];
 
     return (
@@ -182,6 +183,14 @@ export default function Navbar() {
                                     >
                                         <span className="w-5 h-5 flex items-center justify-center text-xs font-bold bg-blue-600 rounded">C</span>
                                         CBOG
+                                    </Link>
+                                    <Link
+                                        href="/algobog"
+                                        className="flex items-center gap-2 px-4 py-3 text-white hover:bg-green-900/50 hover:text-[#ffcc00] transition-colors"
+                                        onClick={() => setUserMenuOpen(false)}
+                                    >
+                                        <span className="w-5 h-5 flex items-center justify-center text-xs font-bold bg-purple-600 rounded">A</span>
+                                        ALGOBOG
                                     </Link>
                                     <Link
                                         href="/shop"

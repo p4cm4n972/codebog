@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     "langage C exercices",
     "coding bootcamp gratuit",
     "défis algorithmiques",
-    "leetcode français",
+    "plateforme code français",
     "programmation débutant",
     "cours code gratuit"
   ],

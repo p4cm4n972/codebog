@@ -56,11 +56,12 @@ function PageSkeleton() {
 }
 
 export default function ModuleDetailPage() {
-  const { user, isLoading, getJWT } = useAuth();
+  const { user, isLoading, isAdmin, isModerator, getJWT } = useAuth();
   const router = useRouter();
   const params = useParams();
   const seasonSlug = params.slug as string;
   const moduleSlug = params.module as string;
+  const unlockAll = isAdmin || isModerator;
 
   const [season, setSeason] = useState<JsSeason | null>(null);
   const [module, setModule] = useState<JsModule | null>(null);
@@ -118,8 +119,8 @@ export default function ModuleDetailPage() {
               if (completedSet.has(ex.slug)) {
                 // Exercice déjà réussi
                 status = 'completed';
-              } else if (idx === 0) {
-                // Premier exercice toujours accessible
+              } else if (unlockAll || idx === 0) {
+                // Admin/Moderator ou premier exercice toujours accessible
                 status = 'current';
               } else {
                 // Vérifie si l'exercice précédent est complété
@@ -169,7 +170,7 @@ export default function ModuleDetailPage() {
             index: i - startIdx + 1,
             title: `Exercice ${i - startIdx + 1}`,
             slug: `${foundModule.slug}-ex${(i - startIdx).toString().padStart(2, '0')}`,
-            status: i === startIdx ? 'current' : 'locked'
+            status: (unlockAll || i === startIdx) ? 'current' : 'locked'
           });
         }
 
@@ -181,7 +182,7 @@ export default function ModuleDetailPage() {
     };
 
     loadModuleData();
-  }, [user, seasonSlug, moduleSlug, router, getJWT]);
+  }, [user, seasonSlug, moduleSlug, router, getJWT, unlockAll]);
 
   if (isLoading || !user || loading || !season || !module) {
     return <PageSkeleton />;

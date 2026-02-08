@@ -152,17 +152,22 @@ export default function SeasonDetailPage() {
           alt={season.name}
           fill
           className="object-cover"
+          style={{ zIndex: 1 }}
           priority
           onError={(e) => {
+            console.error('Failed to load banner:', season.images.banner);
             e.currentTarget.style.display = 'none';
+          }}
+          onLoad={() => {
+            console.log('Banner loaded:', season.images.banner);
           }}
         />
 
         {/* Overlay gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0f0a] via-transparent to-black/30" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0f0a] via-transparent to-black/30" style={{ zIndex: 2 }} />
 
         {/* Content */}
-        <div className="absolute bottom-0 left-0 right-0 p-6">
+        <div className="absolute bottom-0 left-0 right-0 p-6" style={{ zIndex: 3 }}>
           <div className="container mx-auto max-w-6xl">
             <div className="flex items-end justify-between">
               <div>
