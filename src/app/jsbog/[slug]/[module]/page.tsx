@@ -1,17 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
 import { getSeasonBySlug, getModuleBySlug, SEASON_COLOR_CLASSES, JsSeason, JsModule } from '@/lib/js-seasons-config';
+import UnlockModal from '@/components/UnlockModal';
 
 interface Exercise {
   index: number;
   title: string;
   slug: string;
   status: 'completed' | 'current' | 'locked';
+  gemUnlocked?: boolean;
 }
 
 // Skeleton components
@@ -68,6 +70,8 @@ export default function ModuleDetailPage() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [completedCount, setCompletedCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -94,33 +98,40 @@ export default function ModuleDetailPage() {
       setSeason(foundSeason);
       setModule(foundModule);
 
-      // Charger les exercices et la progression en parallèle
+      // Charger les exercices, la progression et les unlocks gems en parallèle
       try {
         const jwt = await getJWT();
         const headers: Record<string, string> = jwt ? { 'Authorization': `Bearer ${jwt}` } : {};
 
-        const [exercisesResponse, progressResponse] = await Promise.all([
+        const [exercisesResponse, progressResponse, unlocksResponse] = await Promise.all([
           fetch(`/api/jsbog/exercises?season=${seasonSlug}&module=${moduleSlug}`, { headers }),
-          fetch(`/api/jsbog/submissions?season=${seasonSlug}&module=${moduleSlug}`, { headers })
+          fetch(`/api/jsbog/submissions?season=${seasonSlug}&module=${moduleSlug}`, { headers }),
+          fetch(`/api/gems/unlocks?exerciseType=js`, { headers })
         ]);
 
         const exercisesData = await exercisesResponse.json();
         const progressData = await progressResponse.json();
+        const unlocksData = unlocksResponse.ok ? await unlocksResponse.json() : { unlocks: [] };
 
         // Créer un Set des exercices complétés pour une recherche rapide
         const completedSet = new Set<string>(progressData.completedExercises || []);
+        // Créer un Set des exercices débloqués avec gems
+        const gemUnlockedSet = new Set<string>(
+          (unlocksData.unlocks || []).map((u: { exerciseSlug: string }) => u.exerciseSlug)
+        );
 
         if (exercisesData.exercises && exercisesData.exercises.length > 0) {
           // Déterminer le statut de chaque exercice
           const exerciseList: Exercise[] = exercisesData.exercises.map(
             (ex: { index: number; slug: string; title: string }, idx: number) => {
               let status: 'completed' | 'current' | 'locked';
+              const isGemUnlocked = gemUnlockedSet.has(ex.slug);
 
               if (completedSet.has(ex.slug)) {
                 // Exercice déjà réussi
                 status = 'completed';
-              } else if (unlockAll || idx === 0) {
-                // Admin/Moderator ou premier exercice toujours accessible
+              } else if (unlockAll || idx === 0 || isGemUnlocked) {
+                // Admin/Moderator, premier exercice, ou débloqué avec gems
                 status = 'current';
               } else {
                 // Vérifie si l'exercice précédent est complété
@@ -132,7 +143,8 @@ export default function ModuleDetailPage() {
                 index: ex.index + 1,
                 title: ex.title,
                 slug: ex.slug,
-                status
+                status,
+                gemUnlocked: isGemUnlocked
               };
             }
           );
@@ -182,7 +194,13 @@ export default function ModuleDetailPage() {
     };
 
     loadModuleData();
-  }, [user, seasonSlug, moduleSlug, router, getJWT, unlockAll]);
+  }, [user, seasonSlug, moduleSlug, router, getJWT, unlockAll, refreshKey]);
+
+  // Callback appelé quand un exercice est débloqué avec gems
+  const handleUnlocked = useCallback(() => {
+    setSelectedExercise(null);
+    setRefreshKey(k => k + 1); // Force le rechargement des données
+  }, []);
 
   if (isLoading || !user || loading || !season || !module) {
     return <PageSkeleton />;
@@ -342,6 +360,7 @@ export default function ModuleDetailPage() {
               moduleSlug={module.slug}
               colorClass={colors?.border || 'border-gray-500'}
               accentColor={season.colors.primary}
+              onUnlockClick={() => setSelectedExercise(exercise)}
             />
           ))}
         </div>
@@ -357,6 +376,18 @@ export default function ModuleDetailPage() {
           </Link>
         </div>
       </div>
+
+      {/* Modal de déblocage avec gems */}
+      {selectedExercise && (
+        <UnlockModal
+          isOpen={true}
+          onClose={() => setSelectedExercise(null)}
+          exerciseSlug={selectedExercise.slug}
+          exerciseType="js"
+          exerciseTitle={selectedExercise.title}
+          onUnlocked={handleUnlocked}
+        />
+      )}
     </div>
   );
 }
@@ -368,17 +399,66 @@ interface ExerciseCardProps {
   moduleSlug: string;
   colorClass: string;
   accentColor: string;
+  onUnlockClick: () => void;
 }
 
-function ExerciseCard({ exercise, seasonSlug, moduleSlug, colorClass, accentColor }: ExerciseCardProps) {
+function ExerciseCard({ exercise, seasonSlug, moduleSlug, colorClass, accentColor, onUnlockClick }: ExerciseCardProps) {
   const isLocked = exercise.status === 'locked';
   const isCompleted = exercise.status === 'completed';
   const isCurrent = exercise.status === 'current';
 
+  // Si l'exercice est verrouillé, on affiche une carte cliquable pour débloquer
+  if (isLocked) {
+    return (
+      <div
+        onClick={onUnlockClick}
+        className="
+          group relative block cursor-pointer
+          bg-[#1a1a2e]
+          border-4 border-black
+          shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]
+          rounded-lg
+          overflow-hidden
+          transition-all duration-200
+          hover:border-purple-500/50 hover:shadow-[4px_4px_0px_0px_rgba(168,85,247,0.3)]
+        "
+      >
+        <div className="flex items-center gap-4 p-4">
+          {/* Exercise number */}
+          <div className="w-12 h-12 rounded-lg flex items-center justify-center font-mono font-bold text-lg border-2 bg-gray-800 border-gray-700 text-gray-500">
+            {exercise.index.toString().padStart(2, '0')}
+          </div>
+
+          {/* Exercise info */}
+          <div className="flex-1 min-w-0">
+            <h3 className="font-mono font-bold truncate text-gray-500">
+              {exercise.title}
+            </h3>
+            <p className="text-xs text-purple-400 font-mono flex items-center gap-1">
+              <span>💎</span>
+              <span>Débloquer avec gems</span>
+            </p>
+          </div>
+
+          {/* Unlock button */}
+          <div className="flex-shrink-0">
+            <div className="px-3 py-1.5 bg-purple-600/20 border border-purple-500 rounded-lg flex items-center gap-1.5 group-hover:bg-purple-600/30 transition-colors">
+              <span className="text-sm">💎</span>
+              <span className="text-purple-300 font-mono text-sm font-bold">DÉBLOQUER</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Purple accent bar on hover */}
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-purple-500/0 group-hover:bg-purple-500 transition-colors" />
+      </div>
+    );
+  }
+
   return (
     <Link
-      href={isLocked ? '#' : `/jsbog/${seasonSlug}/${moduleSlug}/${exercise.slug}`}
-      className={`
+      href={`/jsbog/${seasonSlug}/${moduleSlug}/${exercise.slug}`}
+      className="
         group relative block
         bg-[#1a1a2e]
         border-4 border-black
@@ -386,11 +466,8 @@ function ExerciseCard({ exercise, seasonSlug, moduleSlug, colorClass, accentColo
         rounded-lg
         overflow-hidden
         transition-all duration-200
-        ${isLocked
-          ? 'opacity-50 cursor-not-allowed'
-          : 'hover:translate-x-1 hover:translate-y-1 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
-        }
-      `}
+        hover:translate-x-1 hover:translate-y-1 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]
+      "
     >
       <div className="flex items-center gap-4 p-4">
         {/* Exercise number */}
@@ -400,9 +477,7 @@ function ExerciseCard({ exercise, seasonSlug, moduleSlug, colorClass, accentColo
           border-2
           ${isCompleted
             ? 'bg-green-500/20 border-green-500 text-green-400'
-            : isCurrent
-              ? `bg-black/50 ${colorClass} text-white`
-              : 'bg-gray-800 border-gray-700 text-gray-500'
+            : `bg-black/50 ${colorClass} text-white`
           }
         `}>
           {isCompleted ? '✓' : exercise.index.toString().padStart(2, '0')}
@@ -410,11 +485,14 @@ function ExerciseCard({ exercise, seasonSlug, moduleSlug, colorClass, accentColo
 
         {/* Exercise info */}
         <div className="flex-1 min-w-0">
-          <h3 className={`font-mono font-bold truncate ${isLocked ? 'text-gray-500' : 'text-white'}`}>
+          <h3 className="font-mono font-bold truncate text-white">
             {exercise.title}
           </h3>
           <p className="text-xs text-gray-500 font-mono">
-            {isCompleted ? 'Complété' : isCurrent ? 'En cours' : 'Verrouillé'}
+            {isCompleted ? 'Complété' : isCurrent ? 'En cours' : 'Accessible'}
+            {exercise.gemUnlocked && !isCompleted && (
+              <span className="ml-2 text-purple-400">💎 Débloqué</span>
+            )}
           </p>
         </div>
 
@@ -431,11 +509,6 @@ function ExerciseCard({ exercise, seasonSlug, moduleSlug, colorClass, accentColo
               style={{ borderColor: accentColor, backgroundColor: `${accentColor}20` }}
             >
               <span style={{ color: accentColor }}>▶</span>
-            </div>
-          )}
-          {isLocked && (
-            <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center">
-              <span className="text-gray-600">🔒</span>
             </div>
           )}
         </div>
