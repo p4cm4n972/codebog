@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { databases } from '@/lib/appwrite/client';
 import { Query } from 'appwrite';
+import UnlockModal from '@/components/UnlockModal';
 
 // Skeleton component for loading state
 function WeekPageSkeleton() {
@@ -109,8 +110,11 @@ export default function WeekDetailPage() {
 
     const [exercises, setExercises] = useState<CExercise[]>([]);
     const [completedSlugs, setCompletedSlugs] = useState<Set<string>>(new Set());
+    const [gemUnlockedSlugs, setGemUnlockedSlugs] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [selectedExercise, setSelectedExercise] = useState<CExercise | null>(null);
+    const [refreshKey, setRefreshKey] = useState(0);
 
     // Get week config
     const weekConfig = WEEKS_CONFIG[weekSlug] || {
@@ -137,7 +141,12 @@ export default function WeekDetailPage() {
                 setLoading(true);
                 setError('');
 
-                const [exercisesResponse, submissionsResponse] = await Promise.all([
+                // Fetch gem unlocks too
+                const unlocksPromise = fetch('/api/gems/unlocks?exerciseType=c')
+                    .then(res => res.ok ? res.json() : { unlocks: [] })
+                    .catch(() => ({ unlocks: [] }));
+
+                const [exercisesResponse, submissionsResponse, unlocksData] = await Promise.all([
                     databases.listDocuments(DATABASE_ID, C_EXERCISES_COLLECTION_ID, [
                         Query.equal('week', weekDbKey),
                         Query.orderAsc('order'),
@@ -148,6 +157,7 @@ export default function WeekDetailPage() {
                         Query.equal('passed', true),
                         Query.limit(500),
                     ]).catch(() => ({ documents: [] })),
+                    unlocksPromise,
                 ]);
 
                 if (exercisesResponse.documents.length === 0) {
@@ -159,6 +169,9 @@ export default function WeekDetailPage() {
                 setCompletedSlugs(new Set(
                     (submissionsResponse.documents as unknown as Submission[]).map(s => s.exerciseSlug)
                 ));
+                setGemUnlockedSlugs(new Set(
+                    (unlocksData.unlocks || []).map((u: { exerciseSlug: string }) => u.exerciseSlug)
+                ));
             } catch (err) {
                 console.error('Failed to fetch data:', err);
                 setError('Erreur lors du chargement');
@@ -168,7 +181,13 @@ export default function WeekDetailPage() {
         };
 
         fetchData();
-    }, [user, weekSlug, weekDbKey]);
+    }, [user, weekSlug, weekDbKey, refreshKey]);
+
+    // Callback appelé quand un exercice est débloqué avec gems
+    const handleUnlocked = useCallback(() => {
+        setSelectedExercise(null);
+        setRefreshKey(k => k + 1);
+    }, []);
 
     // Show skeleton during auth loading OR when user is logged in but data is loading
     if (isLoading || (user && loading)) {
@@ -233,8 +252,9 @@ export default function WeekDetailPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {exercises.map((exercise, index) => {
                                 const isCompleted = completedSlugs.has(exercise.slug);
-                                // Lock if previous exercise not completed (unless admin/mod)
-                                const isLocked = !unlockAll && index > 0 && !completedSlugs.has(exercises[index - 1].slug) && !isCompleted;
+                                const isGemUnlocked = gemUnlockedSlugs.has(exercise.slug);
+                                // Lock if previous exercise not completed (unless admin/mod or gem unlocked)
+                                const isLocked = !unlockAll && !isGemUnlocked && index > 0 && !completedSlugs.has(exercises[index - 1].slug) && !isCompleted;
 
                                 return (
                                     <div
@@ -242,20 +262,21 @@ export default function WeekDetailPage() {
                                         className="relative group"
                                     >
                                         {isLocked ? (
-                                            <Link href={`/cbog/${exercise.slug}`}>
-                                                <div className="bg-gray-800 border-4 border-purple-500/50 rounded-lg p-4 flex items-center gap-4 hover:border-purple-400 hover:bg-gray-700 transition-all duration-150 cursor-pointer">
-                                                    <div className="w-12 h-12 bg-purple-900/50 rounded-full flex items-center justify-center">
-                                                        <span className="text-2xl">🔒</span>
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <div className="text-gray-500 font-mono text-sm">Exercice {index + 1}</div>
-                                                        <div className="text-gray-400 font-bold">{exercise.title}</div>
-                                                    </div>
-                                                    <div className="text-purple-400 text-sm font-bold">
-                                                        💎 Débloquer
-                                                    </div>
+                                            <div
+                                                onClick={() => setSelectedExercise(exercise)}
+                                                className="bg-gray-800 border-4 border-purple-500/50 rounded-lg p-4 flex items-center gap-4 hover:border-purple-400 hover:bg-gray-700 transition-all duration-150 cursor-pointer"
+                                            >
+                                                <div className="w-12 h-12 bg-purple-900/50 rounded-full flex items-center justify-center">
+                                                    <span className="text-2xl">🔒</span>
                                                 </div>
-                                            </Link>
+                                                <div className="flex-1">
+                                                    <div className="text-gray-500 font-mono text-sm">Exercice {index + 1}</div>
+                                                    <div className="text-gray-400 font-bold">{exercise.title}</div>
+                                                </div>
+                                                <div className="text-purple-400 text-sm font-bold">
+                                                    💎 Débloquer
+                                                </div>
+                                            </div>
                                         ) : (
                                             <Link href={`/cbog/${exercise.slug}`}>
                                                 <div className={`
@@ -285,6 +306,9 @@ export default function WeekDetailPage() {
                                                         {isCompleted && (
                                                             <span className="text-cyan-400 text-xs">Complété</span>
                                                         )}
+                                                        {isGemUnlocked && !isCompleted && (
+                                                            <span className="text-purple-400 text-xs">💎 Débloqué</span>
+                                                        )}
                                                     </div>
 
                                                     {/* Arrow */}
@@ -308,6 +332,19 @@ export default function WeekDetailPage() {
                     </>
                 )}
             </div>
+
+            {/* Modal de déblocage avec gems */}
+            {selectedExercise && (
+                <UnlockModal
+                    isOpen={true}
+                    onClose={() => setSelectedExercise(null)}
+                    exerciseSlug={selectedExercise.slug}
+                    exerciseType="c"
+                    exerciseTitle={selectedExercise.title}
+                    week={weekSlug}
+                    onUnlocked={handleUnlocked}
+                />
+            )}
         </div>
     );
 }

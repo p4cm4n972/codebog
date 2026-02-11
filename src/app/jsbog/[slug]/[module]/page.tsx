@@ -407,7 +407,7 @@ function ExerciseCard({ exercise, seasonSlug, moduleSlug, colorClass, accentColo
   const isCompleted = exercise.status === 'completed';
   const isCurrent = exercise.status === 'current';
 
-  // Si l'exercice est verrouillé, on affiche une carte cliquable pour débloquer
+  // Si l'exercice est verrouillé, on affiche une carte cliquable pour débloquer (style CBOG)
   if (isLocked) {
     return (
       <div
@@ -415,42 +415,33 @@ function ExerciseCard({ exercise, seasonSlug, moduleSlug, colorClass, accentColo
         className="
           group relative block cursor-pointer
           bg-[#1a1a2e]
-          border-4 border-black
+          border-4 border-purple-500/50
           shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]
           rounded-lg
           overflow-hidden
           transition-all duration-200
-          hover:border-purple-500/50 hover:shadow-[4px_4px_0px_0px_rgba(168,85,247,0.3)]
+          hover:border-purple-400 hover:bg-[#1a1a3e]
         "
       >
         <div className="flex items-center gap-4 p-4">
-          {/* Exercise number */}
-          <div className="w-12 h-12 rounded-lg flex items-center justify-center font-mono font-bold text-lg border-2 bg-gray-800 border-gray-700 text-gray-500">
-            {exercise.index.toString().padStart(2, '0')}
+          {/* Lock icon instead of exercise number */}
+          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-purple-900/50">
+            <span className="text-2xl">🔒</span>
           </div>
 
           {/* Exercise info */}
           <div className="flex-1 min-w-0">
-            <h3 className="font-mono font-bold truncate text-gray-500">
+            <div className="text-gray-500 font-mono text-sm">Exercice {exercise.index}</div>
+            <h3 className="font-mono font-bold truncate text-gray-400">
               {exercise.title}
             </h3>
-            <p className="text-xs text-purple-400 font-mono flex items-center gap-1">
-              <span>💎</span>
-              <span>Débloquer avec gems</span>
-            </p>
           </div>
 
           {/* Unlock button */}
-          <div className="flex-shrink-0">
-            <div className="px-3 py-1.5 bg-purple-600/20 border border-purple-500 rounded-lg flex items-center gap-1.5 group-hover:bg-purple-600/30 transition-colors">
-              <span className="text-sm">💎</span>
-              <span className="text-purple-300 font-mono text-sm font-bold">DÉBLOQUER</span>
-            </div>
+          <div className="flex-shrink-0 text-purple-400 text-sm font-bold">
+            💎 Débloquer
           </div>
         </div>
-
-        {/* Purple accent bar on hover */}
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-purple-500/0 group-hover:bg-purple-500 transition-colors" />
       </div>
     );
   }
