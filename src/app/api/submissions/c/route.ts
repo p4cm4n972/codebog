@@ -302,13 +302,11 @@ export async function POST(request: NextRequest) {
             userId: userInfo.userId,
             exerciseId: exercise.$id,
             exerciseSlug,
-            week: exercise.week,
             code,
             submittedAt: new Date().toISOString(),
             passed: true,
             compiled: true,
             testResults: JSON.stringify(result),
-            xpEarned: isFirstCompletion ? (exercise.xpReward || 50) : 0,
         });
 
         return NextResponse.json({
@@ -317,7 +315,6 @@ export async function POST(request: NextRequest) {
             submission: {
                 created: true,
                 isFirstCompletion,
-                xpEarned: isFirstCompletion ? (exercise.xpReward || 50) : 0,
             },
         });
 

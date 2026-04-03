@@ -112,4 +112,85 @@ void\tft_comb(int max, int current, char *str)
         // Le bouton soumettre doit être actif : les tests ont passé via Judge0
         expect(isEnabled).toBe(true);
     });
+
+    test('soumet le code et reçoit une validation serveur (Judge0 + anti-cheat)', async ({ page }) => {
+        test.setTimeout(300_000);
+
+        await page.goto(EXERCISE_URL);
+        await page.waitForSelector('.monaco-editor', { timeout: 15000 });
+        await page.waitForTimeout(2000);
+
+        // Injecter la solution correcte
+        await page.evaluate(() => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const monaco = (window as any).monaco;
+            if (monaco) {
+                const editor = monaco.editor.getEditors()[0];
+                if (editor) {
+                    editor.setValue(`#include <unistd.h>
+
+void\tft_comb(int max, int current, char *str)
+{
+    int\ti;
+
+    if (current == max)
+    {
+        write(1, str, max);
+        write(1, "\\n", 1);
+        return ;
+    }
+    i = (current == 0) ? '0' : str[current - 1] + 1;
+    while (i <= '9' - (max - current - 1))
+    {
+        str[current] = i;
+        ft_comb(max, current + 1, str);
+        i++;
+    }
+}`);
+                }
+            }
+        });
+
+        // ── Étape 1 : dry run ─────────────────────────────────────────────
+        await page.click('button:has-text("run_tests")');
+
+        await page.waitForFunction(
+            () => {
+                const submit = document.querySelector('button[disabled=false]');
+                const btns = document.querySelectorAll('button');
+                for (const btn of btns) {
+                    if (btn.textContent?.includes('SOUMETTRE') && !btn.disabled) return true;
+                }
+                return !!submit;
+            },
+            { timeout: 60_000 }
+        );
+
+        const submitBtn = page.locator('button:has-text("SOUMETTRE")');
+        await expect(submitBtn).toBeEnabled({ timeout: 5000 });
+
+        // ── Étape 2 : soumission réelle ───────────────────────────────────
+        // Intercepter la réponse API avant de cliquer (Judge0 peut prendre 30s+)
+        const submissionResponsePromise = page.waitForResponse(
+            resp => resp.url().includes('/api/submissions/c') && resp.request().method() === 'POST',
+            { timeout: 120_000 }
+        );
+
+        await page.click('button:has-text("SOUMETTRE")');
+
+        const submissionResponse = await submissionResponsePromise;
+        const submissionData = await submissionResponse.json();
+
+        console.log('Submit status:', submissionResponse.status());
+        console.log('Submit success:', submissionData.success);
+        console.log('Submit result:', JSON.stringify(submissionData.results ?? submissionData.error));
+
+        await page.screenshot({ path: 'test-results/cbog-after-submit.png' });
+
+        // La soumission doit réussir : compiled=true + passed=true + créée en DB
+        expect(submissionResponse.status()).toBe(200);
+        expect(submissionData.success).toBe(true);
+        expect(submissionData.results?.compiled).toBe(true);
+        expect(submissionData.results?.passed).toBe(true);
+    });
 });
