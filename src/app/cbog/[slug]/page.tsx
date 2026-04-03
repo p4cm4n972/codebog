@@ -87,7 +87,9 @@ export default function CExerciseDetailPage() {
   const [exerciseWeek, setExerciseWeek] = useState('');
   const [hasExistingSubmission, setHasExistingSubmission] = useState(false);
   const [lastSubmissionPassed, setLastSubmissionPassed] = useState(false);
+  const [testing, setTesting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [lastTestPassed, setLastTestPassed] = useState(false);
   const [submitResult, setSubmitResult] = useState<{
     success: boolean;
     message: string;
@@ -191,6 +193,64 @@ export default function CExerciseDetailPage() {
     fetchExerciseAndSubmission();
   }, [user, slug, getJWT]);
 
+  const callSubmissionsApi = async (dryRun: boolean) => {
+    const jwt = await getJWT();
+    if (!jwt) throw new Error('ERR: authentification requise');
+
+    const response = await fetch('/api/submissions/c', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${jwt}`,
+      },
+      body: JSON.stringify({
+        code: userCode,
+        exerciseSlug: exercise!.slug,
+        testCode: exercise!.testCode,
+        dryRun,
+      }),
+    });
+
+    return { data: await response.json(), status: response.status };
+  };
+
+  const handleTest = async () => {
+    if (!user || !exercise) return;
+
+    setTesting(true);
+    setSubmitResult(null);
+    setLastTestPassed(false);
+
+    try {
+      const { data, status } = await callSubmissionsApi(true);
+
+      if (status === 403) {
+        setSubmitResult({ success: false, message: `[403] ${data.reason || 'Accès refusé'}` });
+        return;
+      }
+      if (status !== 200) {
+        setSubmitResult({
+          success: false,
+          message: data.results?.compiled === false ? 'ERR: échec de compilation' : (data.error || 'ERR: exécution impossible'),
+          results: data.results,
+        });
+        return;
+      }
+
+      const passed = data.results?.passed || false;
+      setLastTestPassed(passed);
+      setSubmitResult({
+        success: passed,
+        message: passed ? '[OK] Tests passés — prêt à soumettre' : '[FAIL] Certains tests ont échoué',
+        results: data.results,
+      });
+    } catch (err: unknown) {
+      setSubmitResult({ success: false, message: err instanceof Error ? err.message : 'ERR: exécution impossible' });
+    } finally {
+      setTesting(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!user || !exercise) return;
 
@@ -198,34 +258,13 @@ export default function CExerciseDetailPage() {
     setSubmitResult(null);
 
     try {
-      const jwt = await getJWT();
-      if (!jwt) {
-        setSubmitResult({ success: false, message: 'ERR: authentification requise' });
-        setSubmitting(false);
-        return;
-      }
+      const { data, status } = await callSubmissionsApi(false);
 
-      const response = await fetch('/api/submissions/c', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${jwt}`,
-        },
-        body: JSON.stringify({
-          code: userCode,
-          exerciseSlug: exercise.slug,
-          testCode: exercise.testCode,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.status === 403) {
+      if (status === 403) {
         setSubmitResult({ success: false, message: `[403] ${data.reason || 'Accès refusé'}` });
         return;
       }
-
-      if (response.status !== 200) {
+      if (status !== 200) {
         setSubmitResult({
           success: false,
           message: data.results?.compiled === false ? 'ERR: échec de compilation' : (data.error || 'ERR: soumission impossible'),
@@ -237,6 +276,7 @@ export default function CExerciseDetailPage() {
       if (data.results?.passed) {
         setLastSubmissionPassed(true);
         setHasExistingSubmission(true);
+        setLastTestPassed(false);
       }
 
       const xpMessage = data.submission?.isFirstCompletion ? ` +${data.submission.xpEarned} XP` : '';
@@ -244,7 +284,7 @@ export default function CExerciseDetailPage() {
       setSubmitResult({
         success: data.results?.passed || false,
         message: data.results?.passed
-          ? `[OK] Tous les tests sont passés !${xpMessage}`
+          ? `[OK] Soumission validée !${xpMessage}`
           : '[FAIL] Certains tests ont échoué',
         results: data.results,
       });
@@ -456,24 +496,49 @@ export default function CExerciseDetailPage() {
               />
             </div>
 
-            {/* Submit */}
-            <div className="p-4 border-t border-green-900 flex-shrink-0">
+            {/* Actions */}
+            <div className="p-4 border-t border-green-900 flex-shrink-0 flex gap-3">
+              {/* Test button — dry run, no save */}
               <button
-                onClick={handleSubmit}
-                disabled={submitting}
-                className="w-full px-6 py-3 border-2 border-green-500 text-green-400 text-sm font-bold tracking-widest uppercase hover:bg-green-950/30 hover:text-green-300 hover:border-green-400 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150 flex items-center justify-center gap-3"
-                style={{ boxShadow: submitting ? 'none' : '0 0 8px rgba(74,222,128,0.15)' }}
+                onClick={handleTest}
+                disabled={testing || submitting}
+                className="flex-1 px-4 py-3 border border-green-700 text-green-600 text-xs font-bold tracking-widest uppercase hover:border-green-500 hover:text-green-400 hover:bg-green-950/20 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150 flex items-center justify-center gap-2"
               >
-                {submitting ? (
+                {testing ? (
                   <>
-                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                    <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
-                    $ gcc -o solution.c | ./run_tests...
+                    compilation...
                   </>
                 ) : (
-                  '$ gcc && ./run_tests'
+                  '$ ./run_tests'
+                )}
+              </button>
+
+              {/* Submit button — only saves, enabled once tests pass */}
+              <button
+                onClick={handleSubmit}
+                disabled={submitting || testing || !lastTestPassed}
+                className={`flex-1 px-4 py-3 border-2 text-xs font-bold tracking-widest uppercase transition-all duration-150 flex items-center justify-center gap-2
+                  ${lastTestPassed
+                    ? 'border-green-500 text-green-400 hover:bg-green-950/30 hover:border-green-400 cursor-pointer'
+                    : 'border-green-900 text-green-900 cursor-not-allowed'
+                  }
+                  disabled:opacity-40 disabled:cursor-not-allowed`}
+                style={{ boxShadow: lastTestPassed && !submitting ? '0 0 8px rgba(74,222,128,0.2)' : 'none' }}
+              >
+                {submitting ? (
+                  <>
+                    <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    envoi...
+                  </>
+                ) : (
+                  lastTestPassed ? '[SOUMETTRE]' : '[SOUMETTRE]'
                 )}
               </button>
             </div>

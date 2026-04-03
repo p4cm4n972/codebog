@@ -141,7 +141,7 @@ async function executeWithPiston(sourceCode: string): Promise<PistonResponse> {
 
 export async function POST(request: NextRequest) {
     try {
-        const { code, exerciseSlug, testCode } = await request.json();
+        const { code, exerciseSlug, testCode, dryRun = false } = await request.json();
 
         if (!code || !exerciseSlug) {
             return NextResponse.json(
@@ -264,8 +264,8 @@ export async function POST(request: NextRequest) {
             result.totalTests = testResults.total;
             result.passed = testResults.failed === 0 && testResults.passed > 0;
 
-            // Only create submission if tests passed
-            if (result.passed) {
+            // Only create submission if tests passed AND not a dry run
+            if (result.passed && !dryRun) {
                 // Check for existing passing submission (anti-farming)
                 const existingSubmission = await databases.listDocuments(DATABASE_ID, C_SUBMISSIONS_COLLECTION, [
                     Query.equal('userId', userInfo.userId),
@@ -303,6 +303,15 @@ export async function POST(request: NextRequest) {
                         isFirstCompletion,
                         xpEarned: isFirstCompletion ? (exercise.xpReward || 50) : 0,
                     }
+                });
+            }
+
+            // Dry run with passing tests — return success without saving
+            if (result.passed && dryRun) {
+                return NextResponse.json({
+                    success: true,
+                    results: result,
+                    submission: { created: false, reason: 'Dry run' }
                 });
             }
 
