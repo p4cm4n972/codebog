@@ -16,7 +16,15 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "setup:gems": "ts-node -r dotenv/config scripts/setup-gems-collections.ts dotenv_config_path=.env.local"
+    "setup:gems": "ts-node -r dotenv/config scripts/setup-gems-collections.ts dotenv_config_path=.env.local",
+    "test:e2e": "playwright test",
+    "test:e2e:cbog": "playwright test tests/cbog-wasm.spec.ts",
+    "test:e2e:jsbog": "playwright test tests/jsbog.spec.ts",
+    "test:e2e:algobog": "playwright test tests/algobog.spec.ts",
+    "validate:exercises": "npx tsx scripts/validate-all-exercises.ts",
+    "validate:cbog": "npx tsx scripts/validate-all-exercises.ts --platform cbog",
+    "validate:jsbog": "npx tsx scripts/validate-all-exercises.ts --platform jsbog",
+    "validate:algobog": "npx tsx scripts/validate-all-exercises.ts --platform algobog"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
