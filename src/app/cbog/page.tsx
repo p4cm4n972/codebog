@@ -25,7 +25,7 @@ interface WeekData {
     slug: string;
     name: string;
     description: string;
-    icon: string;
+    tag: string;
     totalExercises: number;
     completedExercises: number;
     order: number;
@@ -35,120 +35,50 @@ const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
 const C_EXERCISES_COLLECTION_ID = 'c-exercises';
 const C_SUBMISSIONS_COLLECTION_ID = 'c-submissions';
 
-// Week configurations
-const WEEKS_CONFIG: Record<string, { name: string; description: string; icon: string }> = {
+const WEEKS_CONFIG: Record<string, { name: string; description: string; tag: string }> = {
     'Semaine1': {
-        name: 'Semaine 1',
-        description: 'Les fondamentaux du C : variables, types, printf, conditions',
-        icon: '🌱',
+        name: 'SEMAINE_01',
+        description: 'Variables, types, printf, conditions',
+        tag: 'S1',
     },
     'Semaine2': {
-        name: 'Semaine 2',
-        description: 'Boucles, fonctions, tableaux et pointeurs',
-        icon: '🌿',
+        name: 'SEMAINE_02',
+        description: 'Boucles, fonctions, tableaux, pointeurs',
+        tag: 'S2',
     },
     'Semaine3': {
-        name: 'Semaine 3',
-        description: 'Chaînes de caractères, structures et allocation mémoire',
-        icon: '🌲',
+        name: 'SEMAINE_03',
+        description: 'Chaînes, structures, allocation mémoire',
+        tag: 'S3',
     },
     'Semaine4': {
-        name: 'Semaine 4',
-        description: 'Fichiers, préprocesseur et projets avancés',
-        icon: '🏔️',
+        name: 'SEMAINE_04',
+        description: 'Fichiers, préprocesseur, projets avancés',
+        tag: 'S4',
     },
 };
 
-// Skeleton components for loading state
-function ProgressBarSkeleton() {
-    return (
-        <div className="max-w-md mx-auto animate-pulse">
-            <div className="flex justify-between mb-1">
-                <div className="h-4 w-24 bg-blue-900/50 rounded" />
-                <div className="h-4 w-8 bg-blue-900/50 rounded" />
-            </div>
-            <div className="h-3 bg-blue-900/50 rounded-full border border-blue-800" />
-        </div>
-    );
-}
-
-function TimelineSkeleton() {
-    return (
-        <div className="hidden md:flex justify-center items-center gap-4 mb-8">
-            {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="flex items-center">
-                    <div className="flex flex-col items-center">
-                        <div className="w-12 h-12 rounded-full border-4 border-blue-800 bg-blue-900/30 animate-pulse" />
-                        <div className="w-6 h-3 bg-blue-900/50 rounded mt-1 animate-pulse" />
-                    </div>
-                    {i < 4 && (
-                        <div className="w-16 h-1 mx-2 rounded bg-blue-900/50 animate-pulse" />
-                    )}
-                </div>
-            ))}
-        </div>
-    );
-}
-
-function WeekCardSkeleton() {
-    return (
-        <div className="relative overflow-hidden rounded-xl p-6 border-4 border-blue-800/50 bg-gradient-to-br from-blue-900/20 to-gray-900/30 animate-pulse">
-            {/* Icon & Title */}
-            <div className="flex items-start gap-4 mb-4">
-                <div className="w-16 h-16 rounded-full bg-blue-800/50" />
-                <div className="flex-1">
-                    <div className="h-6 w-32 bg-blue-800/50 rounded mb-2" />
-                    <div className="h-4 w-full bg-blue-900/30 rounded" />
-                    <div className="h-4 w-2/3 bg-blue-900/30 rounded mt-1" />
-                </div>
-            </div>
-
-            {/* Progress */}
-            <div className="mt-4">
-                <div className="flex justify-between mb-1">
-                    <div className="h-4 w-24 bg-blue-900/30 rounded" />
-                    <div className="h-4 w-8 bg-blue-900/30 rounded" />
-                </div>
-                <div className="h-2 bg-blue-900/50 rounded-full" />
-            </div>
-
-            {/* Arrow placeholder */}
-            <div className="absolute bottom-4 right-4 w-6 h-6 bg-blue-900/30 rounded" />
-        </div>
-    );
+function asciiBar(percent: number, width = 20): string {
+    const filled = Math.round((percent / 100) * width);
+    return '█'.repeat(filled) + '░'.repeat(width - filled);
 }
 
 function PageSkeleton() {
     return (
-        <div className="min-h-screen bg-[#0a0f0a] py-8 px-4">
-            <div className="container mx-auto max-w-5xl">
-                {/* Header */}
-                <div className="text-center mb-8">
-                    <h1 className="text-4xl md:text-5xl font-bold text-cyan-400 mb-2">
-                        CBOG
-                    </h1>
-                    <p className="text-blue-300 text-lg mb-4">
-                        4 semaines pour maîtriser le C
-                    </p>
-
-                    {/* Progress skeleton */}
-                    <ProgressBarSkeleton />
+        <div className="min-h-screen bg-black font-mono py-8 px-4">
+            <div className="container mx-auto max-w-4xl">
+                <div className="text-center mb-10 animate-pulse">
+                    <div className="h-8 w-64 bg-green-900/40 rounded mx-auto mb-2" />
+                    <div className="h-5 w-48 bg-green-900/20 rounded mx-auto" />
                 </div>
-
-                {/* Timeline skeleton */}
-                <TimelineSkeleton />
-
-                {/* Week Cards Grid skeleton */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <WeekCardSkeleton />
-                    <WeekCardSkeleton />
-                    <WeekCardSkeleton />
-                    <WeekCardSkeleton />
-                </div>
-
-                {/* Legend skeleton */}
-                <div className="mt-8 text-center">
-                    <div className="h-4 w-64 bg-blue-900/30 rounded mx-auto animate-pulse" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className="border border-green-800 bg-green-950/10 p-5 animate-pulse">
+                            <div className="h-5 w-32 bg-green-900/30 rounded mb-3" />
+                            <div className="h-4 w-full bg-green-900/20 rounded mb-4" />
+                            <div className="h-3 w-full bg-green-900/20 rounded" />
+                        </div>
+                    ))}
                 </div>
             </div>
         </div>
@@ -194,7 +124,6 @@ export default function CbogPage() {
                     (submissionsResponse.documents as unknown as Submission[]).map(s => s.exerciseSlug)
                 );
 
-                // Group by week
                 const weekMap = new Map<string, { total: number; completed: number }>();
                 for (const ex of exercises) {
                     if (!weekMap.has(ex.week)) {
@@ -207,7 +136,6 @@ export default function CbogPage() {
                     }
                 }
 
-                // Build week data
                 const weeksData: WeekData[] = [];
                 let order = 1;
                 for (const [weekKey, config] of Object.entries(WEEKS_CONFIG)) {
@@ -216,7 +144,7 @@ export default function CbogPage() {
                         slug: weekKey.toLowerCase(),
                         name: config.name,
                         description: config.description,
-                        icon: config.icon,
+                        tag: config.tag,
                         totalExercises: stats.total,
                         completedExercises: stats.completed,
                         order: order++,
@@ -226,7 +154,7 @@ export default function CbogPage() {
                 setWeeks(weeksData);
             } catch (err) {
                 console.error('Failed to fetch data:', err);
-                setError('Erreur lors du chargement');
+                setError('ERR: chargement impossible');
             } finally {
                 setLoading(false);
             }
@@ -235,7 +163,6 @@ export default function CbogPage() {
         fetchData();
     }, [user]);
 
-    // Show skeleton during auth loading or data loading
     if (isLoading || !user || loading) {
         return <PageSkeleton />;
     }
@@ -245,74 +172,74 @@ export default function CbogPage() {
     const progressPercent = totalExercises > 0 ? Math.round((totalCompleted / totalExercises) * 100) : 0;
 
     return (
-        <div className="min-h-screen bg-[#0a0f0a] py-8 px-4">
-            <div className="container mx-auto max-w-5xl">
-                {/* Header */}
-                <div className="text-center mb-8">
-                    <h1 className="text-4xl md:text-5xl font-bold text-cyan-400 mb-2">
-                        CBOG
-                    </h1>
-                    <p className="text-blue-300 text-lg mb-4">
-                        4 semaines pour maîtriser le C
-                    </p>
+        <div
+            className="min-h-screen bg-black font-mono text-green-400 py-8 px-4"
+            style={{
+                backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,65,0.012) 2px, rgba(0,255,65,0.012) 4px)',
+            }}
+        >
+            <div className="container mx-auto max-w-4xl">
 
-                    {/* Global Progress */}
+                {/* Header */}
+                <div className="text-center mb-10">
+                    <div className="text-green-600 text-xs mb-2 tracking-widest">
+                        ┌──────────────────────────────────┐
+                    </div>
+                    <h1 className="text-5xl font-bold text-green-400 tracking-widest">
+                        CBOG
+                        <span className="inline-block w-1 h-10 bg-green-400 ml-2 align-middle animate-pulse" />
+                    </h1>
+                    <p className="text-green-600 text-sm mt-2 tracking-widest">
+                        $ ./piscine-c --semaines 4 --exercices {totalExercises}
+                    </p>
+                    <div className="text-green-600 text-xs mt-2 tracking-widest">
+                        └──────────────────────────────────┘
+                    </div>
+
+                    {/* Global progress */}
                     {totalExercises > 0 && (
-                        <div className="max-w-md mx-auto">
-                            <div className="flex justify-between text-sm text-blue-400 mb-1">
-                                <span>{totalCompleted}/{totalExercises} exercices</span>
-                                <span>{progressPercent}%</span>
+                        <div className="mt-6 max-w-sm mx-auto text-left">
+                            <div className="flex justify-between text-xs text-green-600 mb-1">
+                                <span>PROGRESSION GLOBALE</span>
+                                <span>{totalCompleted}/{totalExercises}</span>
                             </div>
-                            <div className="h-3 bg-blue-900/50 rounded-full overflow-hidden border border-blue-700">
-                                <div
-                                    className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 transition-all duration-500"
-                                    style={{ width: `${progressPercent}%` }}
-                                />
+                            <div className="text-green-400 text-sm tracking-wider">
+                                [{asciiBar(progressPercent, 28)}] {progressPercent}%
                             </div>
                         </div>
                     )}
                 </div>
 
                 {error ? (
-                    <div className="text-center text-red-500 font-mono border-4 border-red-500 bg-red-500/10 rounded-lg p-8">
-                        <h2 className="text-2xl font-bold mb-4">ERREUR</h2>
+                    <div className="border border-red-500 bg-red-950/20 p-6 text-red-400">
+                        <p className="text-lg font-bold mb-1">[ERREUR]</p>
                         <p>{error}</p>
                     </div>
                 ) : (
                     <>
-                        {/* Timeline visualization */}
-                        <div className="hidden md:flex justify-center items-center gap-4 mb-8">
+                        {/* Timeline ASCII */}
+                        <div className="hidden md:flex justify-center items-center gap-0 mb-8 text-green-600 text-sm">
                             {weeks.map((week, index) => {
-                                const progress = week.totalExercises > 0
-                                    ? (week.completedExercises / week.totalExercises) * 100
-                                    : 0;
-                                const isComplete = progress === 100;
-
+                                const isComplete = week.completedExercises === week.totalExercises && week.totalExercises > 0;
                                 return (
                                     <div key={week.slug} className="flex items-center">
                                         <div className="flex flex-col items-center">
-                                            <div className={`w-12 h-12 rounded-full border-4 flex items-center justify-center text-xl
-                                                ${isComplete
-                                                    ? 'border-cyan-400 bg-cyan-900/50'
-                                                    : 'border-blue-600 bg-blue-900/30'
-                                                }`}
-                                            >
-                                                {isComplete ? '✓' : week.icon}
-                                            </div>
-                                            <span className="text-xs text-blue-400 mt-1">S{week.order}</span>
+                                            <span className={`px-2 py-1 border text-xs ${isComplete ? 'border-green-400 text-green-400' : 'border-green-800 text-green-700'}`}>
+                                                {isComplete ? '[✓]' : `[${week.tag}]`}
+                                            </span>
                                         </div>
                                         {index < weeks.length - 1 && (
-                                            <div className={`w-16 h-1 mx-2 rounded ${
-                                                isComplete ? 'bg-cyan-500' : 'bg-blue-800'
-                                            }`} />
+                                            <span className={`mx-1 ${isComplete ? 'text-green-400' : 'text-green-800'}`}>
+                                                ──►
+                                            </span>
                                         )}
                                     </div>
                                 );
                             })}
                         </div>
 
-                        {/* Week Cards Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Week Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {weeks.map((week) => {
                                 const progress = week.totalExercises > 0
                                     ? Math.round((week.completedExercises / week.totalExercises) * 100)
@@ -328,72 +255,50 @@ export default function CbogPage() {
                                         onMouseLeave={() => setHoveredWeek(null)}
                                     >
                                         <div className={`
-                                            relative overflow-hidden rounded-xl p-6
-                                            border-4 transition-all duration-300
+                                            relative border p-5 transition-all duration-150
                                             ${isComplete
-                                                ? 'border-cyan-500 bg-gradient-to-br from-cyan-900/40 to-blue-900/40'
-                                                : 'border-blue-600 bg-gradient-to-br from-blue-900/30 to-gray-900/50'
+                                                ? 'border-green-400 bg-green-950/20'
+                                                : 'border-green-800 bg-black hover:border-green-600'
                                             }
-                                            ${isHovered ? 'scale-[1.02] shadow-lg shadow-blue-500/20' : ''}
+                                            ${isHovered ? 'shadow-[0_0_12px_rgba(74,222,128,0.2)]' : ''}
                                         `}>
-                                            {/* Icon & Title */}
-                                            <div className="flex items-start gap-4 mb-4">
-                                                <div className={`
-                                                    w-16 h-16 rounded-full flex items-center justify-center text-3xl
-                                                    ${isComplete
-                                                        ? 'bg-cyan-600'
-                                                        : 'bg-blue-700'
-                                                    }
-                                                `}>
-                                                    {week.icon}
-                                                </div>
-                                                <div className="flex-1">
-                                                    <h3 className="text-xl font-bold text-white mb-1">
+                                            {/* Title row */}
+                                            <div className="flex items-center justify-between mb-3">
+                                                <div className="flex items-center gap-3">
+                                                    <span className={`text-xs px-2 py-0.5 border ${isComplete ? 'border-green-400 text-green-400' : 'border-green-700 text-green-600'}`}>
+                                                        {week.tag}
+                                                    </span>
+                                                    <span className={`text-sm font-bold tracking-widest ${isComplete ? 'text-green-300' : 'text-green-500'}`}>
                                                         {week.name}
-                                                    </h3>
-                                                    <p className="text-blue-300 text-sm">
-                                                        {week.description}
-                                                    </p>
+                                                    </span>
                                                 </div>
+                                                {isComplete && (
+                                                    <span className="text-xs text-green-400 border border-green-400 px-1">[OK]</span>
+                                                )}
                                             </div>
+
+                                            {/* Description */}
+                                            <p className="text-green-700 text-xs mb-4 leading-relaxed">
+                                                # {week.description}
+                                            </p>
 
                                             {/* Progress */}
-                                            <div className="mt-4">
-                                                <div className="flex justify-between text-sm mb-1">
-                                                    <span className="text-blue-400">
-                                                        {week.completedExercises}/{week.totalExercises} exercices
-                                                    </span>
-                                                    <span className={isComplete ? 'text-cyan-400' : 'text-blue-400'}>
-                                                        {progress}%
-                                                    </span>
+                                            <div>
+                                                <div className="flex justify-between text-xs text-green-700 mb-1">
+                                                    <span>{week.completedExercises}/{week.totalExercises} exercices</span>
+                                                    <span>{progress}%</span>
                                                 </div>
-                                                <div className="h-2 bg-blue-900/50 rounded-full overflow-hidden">
-                                                    <div
-                                                        className={`h-full transition-all duration-500 ${
-                                                            isComplete
-                                                                ? 'bg-cyan-400'
-                                                                : 'bg-blue-500'
-                                                        }`}
-                                                        style={{ width: `${progress}%` }}
-                                                    />
+                                                <div className={`text-xs tracking-wider ${isComplete ? 'text-green-400' : 'text-green-700'}`}>
+                                                    [{asciiBar(progress, 22)}]
                                                 </div>
                                             </div>
 
-                                            {/* Status badge */}
-                                            {isComplete && (
-                                                <div className="absolute top-4 right-4">
-                                                    <span className="px-2 py-1 bg-cyan-500 text-black text-xs font-bold rounded">
-                                                        COMPLÉTÉ
-                                                    </span>
-                                                </div>
-                                            )}
-
-                                            {/* Arrow indicator */}
+                                            {/* Arrow */}
                                             <div className={`
-                                                absolute bottom-4 right-4 text-2xl transition-transform
-                                                ${isHovered ? 'translate-x-1 text-cyan-400' : 'text-blue-500'}
+                                                absolute bottom-4 right-4 text-sm transition-all
+                                                ${isHovered ? 'text-green-400 translate-x-1' : 'text-green-800'}
                                             `}>
-                                                →
+                                                {isHovered ? '──►' : '──>'}
                                             </div>
                                         </div>
                                     </Link>
@@ -401,9 +306,9 @@ export default function CbogPage() {
                             })}
                         </div>
 
-                        {/* Legend */}
-                        <div className="mt-8 text-center text-blue-400/60 font-mono text-sm">
-                            <p>Clique sur une semaine pour voir ses exercices</p>
+                        {/* Footer hint */}
+                        <div className="mt-8 text-center text-green-800 text-xs">
+                            $ cd ./semaine_xx &amp;&amp; ls exercices/
                         </div>
                     </>
                 )}

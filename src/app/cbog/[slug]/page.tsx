@@ -12,72 +12,35 @@ import UnlockModal from '@/components/UnlockModal';
 const Editor = dynamic(() => import('@monaco-editor/react'), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full bg-[#1e1e1e] flex items-center justify-center text-gray-400">
-      Chargement de l&apos;éditeur...
+    <div className="w-full h-full bg-[#0a0a00] flex items-center justify-center text-green-700 font-mono text-sm">
+      initialisation éditeur...
+      <span className="inline-block w-1 h-4 bg-green-600 ml-1 animate-pulse" />
     </div>
   ),
 });
 
-// Skeleton components for loading state
 function CExercisePageSkeleton() {
   return (
-    <div className="min-h-screen bg-[#0a0f0a] text-white p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header skeleton */}
-        <div className="mb-8">
-          <div className="mb-4 w-44 h-10 bg-blue-900/30 rounded animate-pulse" />
-          <div className="h-10 w-64 bg-cyan-900/30 rounded animate-pulse mb-2" />
-          <div className="flex gap-4 mt-2">
-            <div className="h-5 w-24 bg-blue-900/20 rounded animate-pulse" />
-            <div className="h-5 w-32 bg-gray-800/50 rounded animate-pulse" />
-          </div>
+    <div className="min-h-screen bg-black font-mono text-green-400 p-4 md:p-8"
+      style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,65,0.012) 2px, rgba(0,255,65,0.012) 4px)' }}>
+      <div className="max-w-7xl mx-auto animate-pulse">
+        <div className="mb-6">
+          <div className="h-8 w-44 bg-green-900/30 rounded mb-3" />
+          <div className="h-7 w-72 bg-green-900/20 rounded mb-2" />
+          <div className="h-4 w-48 bg-green-900/10 rounded" />
         </div>
-
-        {/* Two Column Layout skeleton */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Instructions Section skeleton - Left */}
-          <div className="lg:col-span-4 bg-black border-4 border-blue-500/50 p-6 md:p-8 max-h-[calc(100vh-200px)]">
-            <div className="space-y-4 animate-pulse">
-              <div className="h-8 w-40 bg-cyan-900/30 rounded" />
-              <div className="h-4 w-full bg-blue-900/20 rounded" />
-              <div className="h-4 w-5/6 bg-blue-900/20 rounded" />
-              <div className="h-4 w-4/5 bg-blue-900/20 rounded" />
-              <div className="h-6 w-32 bg-blue-900/30 rounded mt-6" />
-              <div className="h-4 w-full bg-blue-900/20 rounded" />
-              <div className="h-4 w-3/4 bg-blue-900/20 rounded" />
-              <div className="h-20 w-full bg-blue-900/10 rounded border-2 border-blue-800/30" />
-              <div className="h-4 w-2/3 bg-blue-900/20 rounded" />
+          <div className="lg:col-span-4 border border-green-900 bg-black p-6">
+            <div className="space-y-3">
+              {[40, 100, 80, 60, 100, 70].map((w, i) => (
+                <div key={i} className={`h-3 bg-green-900/20 rounded`} style={{ width: `${w}%` }} />
+              ))}
             </div>
           </div>
-
-          {/* Code Editor Section skeleton - Right */}
-          <div className="lg:col-span-8 bg-black border-4 border-cyan-400/50 p-6 md:p-8 flex flex-col max-h-[calc(100vh-200px)]">
-            {/* Editor header skeleton */}
-            <div className="mb-4 flex items-center justify-between">
-              <div className="h-6 w-36 bg-cyan-900/30 rounded animate-pulse" />
-              <div className="flex gap-2">
-                <div className="w-3 h-3 rounded-full bg-gray-700" />
-                <div className="w-3 h-3 rounded-full bg-gray-700" />
-                <div className="w-3 h-3 rounded-full bg-gray-700" />
-              </div>
-            </div>
-
-            {/* Monaco Editor skeleton */}
-            <div className="flex-grow border-2 border-blue-700/50 rounded overflow-hidden bg-[#1e1e1e] animate-pulse">
-              <div className="p-4 space-y-2">
-                <div className="h-4 w-32 bg-gray-700/50 rounded" />
-                <div className="h-4 w-48 bg-gray-700/50 rounded" />
-                <div className="h-4 w-24 bg-gray-700/50 rounded" />
-                <div className="h-4 w-56 bg-gray-700/50 rounded" />
-                <div className="h-4 w-40 bg-gray-700/50 rounded" />
-                <div className="h-4 w-20 bg-gray-700/50 rounded" />
-              </div>
-            </div>
-
-            {/* Submit Button skeleton */}
-            <div className="mt-4">
-              <div className="w-full h-14 bg-blue-900/30 rounded animate-pulse" />
-            </div>
+          <div className="lg:col-span-8 border border-green-800 bg-black p-6 flex flex-col gap-4" style={{ minHeight: 400 }}>
+            <div className="h-6 w-40 bg-green-900/30 rounded" />
+            <div className="flex-1 bg-[#0a0a00] rounded" />
+            <div className="h-14 bg-green-900/20 rounded" />
           </div>
         </div>
       </div>
@@ -155,7 +118,6 @@ export default function CExerciseDetailPage() {
         setError('');
         setAccessDenied(false);
 
-        // Check access first
         const jwt = await getJWT();
         if (jwt) {
           const accessResponse = await fetch('/api/access/c-exercise', {
@@ -170,7 +132,6 @@ export default function CExerciseDetailPage() {
           const accessData = await accessResponse.json();
 
           if (!accessData.hasAccess) {
-            // Fetch exercise info for the unlock modal
             try {
               const exerciseInfoResponse = await databases.listDocuments(DATABASE_ID, C_EXERCISES_COLLECTION_ID, [
                 Query.equal('slug', slug),
@@ -182,7 +143,7 @@ export default function CExerciseDetailPage() {
                 setExerciseWeek(exerciseInfo.week as string);
               }
             } catch {
-              // Ignore errors fetching exercise info
+              // ignore
             }
             setAccessDenied(true);
             setAccessReason(accessData.reason || 'Cet exercice est verrouillé');
@@ -191,7 +152,6 @@ export default function CExerciseDetailPage() {
           }
         }
 
-        // Fetch exercise and user's last submission in parallel
         const [exerciseResponse, submissionsResponse] = await Promise.all([
           databases.listDocuments(DATABASE_ID, C_EXERCISES_COLLECTION_ID, [Query.equal('slug', slug)]),
           databases.listDocuments(DATABASE_ID, C_SUBMISSIONS_COLLECTION_ID, [
@@ -203,31 +163,26 @@ export default function CExerciseDetailPage() {
         ]);
 
         if (exerciseResponse.documents.length === 0) {
-          setError('Exercise not found');
+          setError('Exercice introuvable');
           return;
         }
 
         const exerciseData = exerciseResponse.documents[0] as unknown as CExercise;
         setExercise(exerciseData);
 
-        // Check if user has a previous submission
         if (submissionsResponse.documents.length > 0) {
           const lastSubmission = submissionsResponse.documents[0] as unknown as Submission;
           setUserCode(lastSubmission.code);
           setHasExistingSubmission(true);
           setLastSubmissionPassed(lastSubmission.passed);
         } else {
-          setUserCode(exerciseData.starterCode || '// Écrivez votre code C ici\n');
+          setUserCode(exerciseData.starterCode || '/* Écrivez votre code C ici */\n');
           setHasExistingSubmission(false);
           setLastSubmissionPassed(false);
         }
       } catch (err: unknown) {
         console.error('Failed to fetch exercise:', err);
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError('Failed to load exercise');
-        }
+        setError(err instanceof Error ? err.message : 'Erreur de chargement');
       } finally {
         setLoading(false);
       }
@@ -243,18 +198,13 @@ export default function CExerciseDetailPage() {
     setSubmitResult(null);
 
     try {
-      // Get JWT for authentication
       const jwt = await getJWT();
       if (!jwt) {
-        setSubmitResult({
-          success: false,
-          message: 'Erreur d\'authentification. Veuillez vous reconnecter.',
-        });
+        setSubmitResult({ success: false, message: 'ERR: authentification requise' });
         setSubmitting(false);
         return;
       }
 
-      // Submit code - server validates tests AND creates submission
       const response = await fetch('/api/submissions/c', {
         method: 'POST',
         headers: {
@@ -270,85 +220,68 @@ export default function CExerciseDetailPage() {
 
       const data = await response.json();
 
-      // Handle access denied
       if (response.status === 403) {
-        setSubmitResult({
-          success: false,
-          message: `Accès refusé: ${data.reason || 'Cet exercice est verrouillé'}`,
-        });
+        setSubmitResult({ success: false, message: `[403] ${data.reason || 'Accès refusé'}` });
         return;
       }
 
-      // Handle errors
       if (response.status !== 200) {
         setSubmitResult({
           success: false,
-          message: data.results?.compiled === false
-            ? 'Erreur de compilation'
-            : (data.error || 'Erreur lors de la soumission'),
+          message: data.results?.compiled === false ? 'ERR: échec de compilation' : (data.error || 'ERR: soumission impossible'),
           results: data.results,
         });
         return;
       }
 
-      // Update local state
       if (data.results?.passed) {
         setLastSubmissionPassed(true);
         setHasExistingSubmission(true);
       }
 
-      // Show results
-      const xpMessage = data.submission?.isFirstCompletion
-        ? `+${data.submission.xpEarned} XP`
-        : '(déjà complété)';
+      const xpMessage = data.submission?.isFirstCompletion ? ` +${data.submission.xpEarned} XP` : '';
 
       setSubmitResult({
         success: data.results?.passed || false,
         message: data.results?.passed
-          ? `✅ Tous les tests sont passés ! ${xpMessage}`
-          : '❌ Certains tests ont échoué',
+          ? `[OK] Tous les tests sont passés !${xpMessage}`
+          : '[FAIL] Certains tests ont échoué',
         results: data.results,
       });
     } catch (err: unknown) {
-      console.error('Submission failed:', err);
       setSubmitResult({
         success: false,
-        message: err instanceof Error ? err.message : 'Erreur lors de la soumission',
+        message: err instanceof Error ? err.message : 'ERR: soumission impossible',
       });
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Show skeleton during auth loading OR when user is logged in but data is loading
-  if (isLoading || (user && loading)) {
-    return <CExercisePageSkeleton />;
-  }
+  if (isLoading || (user && loading)) return <CExercisePageSkeleton />;
+  if (!user) return null;
 
-  // If not logged in (and auth is done), return null - redirect happens via useEffect
-  if (!user) {
-    return null;
-  }
-
+  /* ── Access denied ── */
   if (accessDenied) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-[#0a0f0a] font-mono text-white p-4">
-        <div className="text-center border-4 border-yellow-500 bg-yellow-900/20 p-8 max-w-md">
-          <div className="text-6xl mb-4">🔒</div>
-          <h2 className="text-2xl font-bold text-yellow-400 mb-4">EXERCICE VERROUILLÉ</h2>
-          <p className="text-yellow-200 mb-6">{accessReason}</p>
+      <div className="flex min-h-screen flex-col items-center justify-center bg-black font-mono text-green-400 p-4"
+        style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,65,0.012) 2px, rgba(0,255,65,0.012) 4px)' }}>
+        <div className="border border-amber-700 bg-amber-950/10 p-8 max-w-md w-full">
+          <p className="text-amber-600 text-xs mb-4">$ ./cbog/{slug}</p>
+          <p className="text-amber-500 text-lg font-bold mb-2">[PERMISSION DENIED]</p>
+          <p className="text-amber-700 text-sm mb-6">{accessReason}</p>
           <div className="flex flex-col gap-3">
             <button
               onClick={() => setShowUnlockModal(true)}
-              className="px-6 py-3 bg-purple-600 text-white font-bold border-4 border-black rounded hover:bg-purple-500 transition-colors flex items-center justify-center gap-2"
+              className="w-full px-4 py-3 border border-purple-600 text-purple-400 text-sm hover:bg-purple-950/20 transition-colors"
             >
               💎 DÉBLOQUER AVEC GEMMES
             </button>
             <button
               onClick={() => router.push('/cbog')}
-              className="px-6 py-3 bg-blue-500 text-black font-bold border-4 border-black hover:bg-blue-400 transition-colors"
+              className="w-full px-4 py-3 border border-green-800 text-green-700 text-sm hover:border-green-600 hover:text-green-400 transition-colors"
             >
-              RETOUR AUX EXERCICES
+              ◄ cd ../
             </button>
           </div>
         </div>
@@ -359,85 +292,105 @@ export default function CExerciseDetailPage() {
           exerciseType="c"
           exerciseTitle={exerciseTitle || slug}
           week={exerciseWeek}
-          onUnlocked={() => {
-            setShowUnlockModal(false);
-            window.location.reload();
-          }}
+          onUnlocked={() => { setShowUnlockModal(false); window.location.reload(); }}
         />
       </div>
     );
   }
 
+  /* ── Error ── */
   if (error || !exercise) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-[#0a0f0a] font-mono text-white p-4">
-        <div className="text-center text-red-500 border-4 border-red-500 p-8">
-          <h2 className="text-3xl font-bold mb-4">ERREUR</h2>
-          <p>{error || 'Exercise not found'}</p>
+      <div className="flex min-h-screen flex-col items-center justify-center bg-black font-mono text-green-400 p-4">
+        <div className="border border-red-700 bg-red-950/10 p-8 max-w-md w-full">
+          <p className="text-red-400 font-bold mb-2">[ERREUR]</p>
+          <p className="text-red-600 text-sm mb-6">{error || 'Exercice introuvable'}</p>
           <button
             onClick={() => router.push('/cbog')}
-            className="mt-6 px-6 py-3 bg-blue-500 text-black font-bold border-4 border-black hover:bg-blue-400"
+            className="px-4 py-2 border border-green-800 text-green-700 text-sm hover:border-green-600 hover:text-green-400 transition-colors"
           >
-            RETOUR AUX MISSIONS
+            ◄ cd ../
           </button>
         </div>
       </div>
     );
   }
 
+  /* ── Main page ── */
   return (
-    <div className="min-h-screen bg-[#0a0f0a] text-white p-4 md:p-8">
+    <div
+      className="min-h-screen bg-black font-mono text-green-400 p-4 md:p-8"
+      style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,65,0.012) 2px, rgba(0,255,65,0.012) 4px)' }}
+    >
       <div className="max-w-7xl mx-auto">
+
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6">
           <button
             onClick={() => router.push(`/cbog/week/${exercise.week.toLowerCase()}`)}
-            className="mb-4 px-4 py-2 bg-blue-500 text-black font-mono font-bold border-4 border-black hover:bg-blue-400 transition-colors"
+            className="mb-4 text-green-700 hover:text-green-400 text-sm transition-colors"
           >
-            ← RETOUR AUX EXERCICES
+            ◄ cd ../{exercise.week.toLowerCase()}/
           </button>
-          <h1 className="text-4xl font-bold text-cyan-400 font-mono">
+          <h1 className="text-3xl font-bold text-green-300 tracking-wide">
             {exercise.title}
+            <span className="inline-block w-0.5 h-7 bg-green-400 ml-2 align-middle animate-pulse" />
           </h1>
-          <div className="flex gap-4 mt-2">
-            <span className="text-blue-400 font-mono">/{exercise.slug}</span>
-            <span className="text-gray-500 font-mono">{exercise.week} / {exercise.day}</span>
+          <div className="flex gap-4 mt-1 text-xs text-green-700">
+            <span>$ ./{exercise.slug}</span>
+            <span>|</span>
+            <span>{exercise.week} / {exercise.day}</span>
           </div>
         </div>
 
-        {/* Two Column Layout */}
+        {/* Two-column layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Instructions Section - Left */}
-          <div className="lg:col-span-4 bg-black border-4 border-blue-500 p-6 md:p-8 overflow-y-auto max-h-[calc(100vh-200px)]">
-            <div className="prose prose-invert prose-blue max-w-none font-mono">
+
+          {/* Instructions — left */}
+          <div className="lg:col-span-4 border border-green-800 bg-black overflow-y-auto max-h-[calc(100vh-200px)]">
+            {/* Terminal title bar */}
+            <div className="flex items-center gap-2 px-4 py-2 border-b border-green-900 bg-green-950/10">
+              <span className="w-2.5 h-2.5 rounded-full bg-red-700" />
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-700" />
+              <span className="w-2.5 h-2.5 rounded-full bg-green-700" />
+              <span className="ml-2 text-xs text-green-700">README.md</span>
+            </div>
+            <div className="p-5 prose prose-invert max-w-none">
               <ReactMarkdown
                 components={{
                   h2: ({ children }) => (
-                    <h2 className="text-2xl font-bold text-cyan-400 mb-4 mt-6">{children}</h2>
+                    <h2 className="text-base font-bold text-green-300 mb-3 mt-5 flex items-center gap-2">
+                      <span className="text-green-700">##</span> {children}
+                    </h2>
                   ),
                   h3: ({ children }) => (
-                    <h3 className="text-xl font-bold text-blue-400 mb-3 mt-4">{children}</h3>
+                    <h3 className="text-sm font-bold text-green-400 mb-2 mt-4 flex items-center gap-2">
+                      <span className="text-green-700">###</span> {children}
+                    </h3>
                   ),
                   p: ({ children }) => (
-                    <p className="text-blue-300 mb-4 leading-relaxed">{children}</p>
+                    <p className="text-green-600 text-sm mb-3 leading-relaxed">{children}</p>
                   ),
                   ul: ({ children }) => (
-                    <ul className="list-disc list-inside text-blue-300 mb-4 space-y-2">{children}</ul>
+                    <ul className="text-green-600 text-sm mb-3 space-y-1 list-none pl-0">{children}</ul>
+                  ),
+                  li: ({ children }) => (
+                    <li className="flex gap-2"><span className="text-green-800">▸</span><span>{children}</span></li>
                   ),
                   ol: ({ children }) => (
-                    <ol className="list-decimal list-inside text-blue-300 mb-4 space-y-2">{children}</ol>
+                    <ol className="text-green-600 text-sm mb-3 space-y-1 list-decimal list-inside">{children}</ol>
                   ),
                   code: ({ className, children }) => {
                     const isBlock = className?.includes('language-');
                     if (isBlock) {
                       return (
-                        <pre className="bg-black border-2 border-blue-700 p-4 rounded overflow-x-auto mb-4">
-                          <code className="text-blue-400 text-sm">{children}</code>
+                        <pre className="bg-[#0a0a00] border border-green-900 p-3 overflow-x-auto mb-3 text-xs">
+                          <code className="text-green-400">{children}</code>
                         </pre>
                       );
                     }
                     return (
-                      <code className="bg-blue-900/30 text-cyan-400 px-2 py-1 rounded text-sm">
+                      <code className="bg-green-950/30 text-green-300 px-1.5 py-0.5 text-xs border border-green-900">
                         {children}
                       </code>
                     );
@@ -449,47 +402,42 @@ export default function CExerciseDetailPage() {
             </div>
           </div>
 
-          {/* Code Editor Section - Right */}
-          <div className="lg:col-span-8 bg-black border-4 border-cyan-400 p-6 md:p-8 flex flex-col max-h-[calc(100vh-200px)]">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-cyan-400 font-mono">CODE_EDITOR_C</h2>
-              <div className="flex gap-2">
-                <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-              </div>
+          {/* Editor — right */}
+          <div className="lg:col-span-8 border border-green-700 bg-black flex flex-col max-h-[calc(100vh-200px)]">
+            {/* Terminal title bar */}
+            <div className="flex items-center gap-2 px-4 py-2 border-b border-green-800 bg-green-950/10 flex-shrink-0">
+              <span className="w-2.5 h-2.5 rounded-full bg-red-700" />
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-700" />
+              <span className="w-2.5 h-2.5 rounded-full bg-green-700" />
+              <span className="ml-2 text-xs text-green-500 font-bold tracking-widest">
+                {exercise.slug}.c
+              </span>
             </div>
 
-            {/* Submission Status Banner */}
+            {/* Submission status */}
             {hasExistingSubmission && (
-              <div className={`mb-4 p-3 border-2 rounded flex items-center justify-between ${lastSubmissionPassed ? 'border-blue-500 bg-blue-900/20' : 'border-yellow-500 bg-yellow-900/20'}`}>
-                <div className="flex items-center gap-2">
-                  {lastSubmissionPassed ? (
-                    <>
-                      <span className="text-blue-400 text-lg">✓</span>
-                      <span className="text-blue-400 text-sm font-mono">Dernière solution validée</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-yellow-400 text-lg">⏳</span>
-                      <span className="text-yellow-400 text-sm font-mono">Dernière tentative chargée</span>
-                    </>
-                  )}
-                </div>
+              <div className={`px-4 py-2 border-b flex items-center justify-between text-xs flex-shrink-0 ${
+                lastSubmissionPassed
+                  ? 'border-green-800 bg-green-950/10 text-green-600'
+                  : 'border-amber-900 bg-amber-950/10 text-amber-700'
+              }`}>
+                <span>
+                  {lastSubmissionPassed ? '[OK] Dernière soumission validée' : '[WARN] Tentative précédente chargée'}
+                </span>
                 <button
                   onClick={() => {
-                    setUserCode(exercise?.starterCode || '// Écrivez votre code C ici\n');
+                    setUserCode(exercise?.starterCode || '/* Écrivez votre code C ici */\n');
                     setHasExistingSubmission(false);
                   }}
-                  className="px-3 py-1 text-xs font-mono text-gray-400 hover:text-white border border-gray-600 hover:border-gray-400 rounded transition-colors"
+                  className="text-green-800 hover:text-green-500 border border-green-900 hover:border-green-700 px-2 py-0.5 transition-colors"
                 >
                   RESET
                 </button>
               </div>
             )}
 
-            {/* Monaco Editor */}
-            <div className="flex-grow border-2 border-blue-700 rounded overflow-hidden">
+            {/* Monaco editor */}
+            <div className="flex-grow overflow-hidden">
               <Editor
                 height="100%"
                 defaultLanguage="c"
@@ -503,96 +451,103 @@ export default function CExerciseDetailPage() {
                   scrollBeyondLastLine: false,
                   automaticLayout: true,
                   tabSize: 4,
+                  fontFamily: 'monospace',
                 }}
               />
             </div>
 
-            {/* Submit Button */}
-            <div className="mt-4">
+            {/* Submit */}
+            <div className="p-4 border-t border-green-900 flex-shrink-0">
               <button
                 onClick={handleSubmit}
                 disabled={submitting}
-                className="w-full px-6 py-4 bg-[#3498db] text-black text-xl font-bold uppercase border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] active:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] transition-all duration-150 rounded-none disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+                className="w-full px-6 py-3 border-2 border-green-500 text-green-400 text-sm font-bold tracking-widest uppercase hover:bg-green-950/30 hover:text-green-300 hover:border-green-400 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150 flex items-center justify-center gap-3"
+                style={{ boxShadow: submitting ? 'none' : '0 0 8px rgba(74,222,128,0.15)' }}
               >
                 {submitting ? (
                   <>
-                    <svg className="animate-spin h-6 w-6" viewBox="0 0 24 24">
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
-                    COMPILATION EN COURS...
+                    $ gcc -o solution.c | ./run_tests...
                   </>
-                ) : 'COMPILER & TESTER'}
+                ) : (
+                  '$ gcc && ./run_tests'
+                )}
               </button>
             </div>
 
-            {/* Results - Inside Editor Section */}
+            {/* Results */}
             {submitResult && (
-              <div className={`mt-4 p-4 border-2 ${submitResult.results?.passed ? 'border-blue-500 bg-blue-900/20' : submitResult.results?.compiled === false ? 'border-orange-500 bg-orange-900/20' : 'border-red-500 bg-red-900/20'} rounded`}>
+              <div className={`mx-4 mb-4 border p-4 flex-shrink-0 ${
+                submitResult.results?.passed
+                  ? 'border-green-600 bg-green-950/20'
+                  : submitResult.results?.compiled === false
+                    ? 'border-amber-700 bg-amber-950/10'
+                    : 'border-red-800 bg-red-950/10'
+              }`}>
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className={`text-lg font-bold font-mono ${submitResult.results?.passed ? 'text-blue-400' : submitResult.results?.compiled === false ? 'text-orange-400' : 'text-red-400'}`}>
-                    {submitResult.results?.compiled === false ? '⚠️ ERREUR DE COMPILATION' : submitResult.results?.passed ? '✅ MISSION RÉUSSIE' : '❌ MISSION ÉCHOUÉE'}
-                  </h3>
+                  <span className={`text-sm font-bold ${
+                    submitResult.results?.passed ? 'text-green-400'
+                      : submitResult.results?.compiled === false ? 'text-amber-400'
+                      : 'text-red-400'
+                  }`}>
+                    {submitResult.message}
+                  </span>
                   <button
                     onClick={() => setSubmitResult(null)}
-                    className="w-6 h-6 flex items-center justify-center text-lg text-gray-400 hover:text-white hover:bg-white/10 rounded transition-colors"
+                    className="text-green-800 hover:text-green-500 text-xs px-2 py-0.5 border border-green-900 hover:border-green-700 transition-colors"
                   >
-                    ✕
+                    [✕]
                   </button>
                 </div>
 
-                {submitResult.results && (
-                  <>
-                    {submitResult.results.compileError && (
-                      <div className="mb-3 p-3 bg-orange-900/30 border border-orange-700 rounded">
-                        <p className="text-orange-400 font-mono text-xs whitespace-pre-wrap">
-                          {submitResult.results.compileError}
-                        </p>
-                      </div>
-                    )}
+                {submitResult.results?.compileError && (
+                  <div className="mb-3 p-3 border border-amber-900 bg-black">
+                    <p className="text-amber-600 text-xs whitespace-pre-wrap leading-relaxed">
+                      {submitResult.results.compileError}
+                    </p>
+                  </div>
+                )}
 
-                    {submitResult.results.compiled !== false && (
-                      <div className="flex gap-4 text-sm font-mono mb-3">
-                        <span className="text-blue-400">
-                          ✓ Réussis: {submitResult.results.passedTests}/{submitResult.results.totalTests}
-                        </span>
-                        {submitResult.results.failedTests > 0 && (
-                          <span className="text-red-400">
-                            ✗ Échoués: {submitResult.results.failedTests}
-                          </span>
-                        )}
-                      </div>
+                {submitResult.results?.compiled !== false && (
+                  <div className="flex gap-4 text-xs mb-3">
+                    <span className="text-green-600">
+                      [PASS] {submitResult.results?.passedTests}/{submitResult.results?.totalTests}
+                    </span>
+                    {(submitResult.results?.failedTests ?? 0) > 0 && (
+                      <span className="text-red-600">
+                        [FAIL] {submitResult.results?.failedTests}
+                      </span>
                     )}
+                  </div>
+                )}
 
-                    {submitResult.results.output && (
-                      <div className="max-h-48 overflow-y-auto p-3 bg-black/50 border border-gray-700 rounded">
-                        <div className="text-xs font-mono space-y-1">
-                          {submitResult.results.output.split('\n').map((line, index) => {
-                            const isPass = line.includes('✓') || line.includes('PASS');
-                            const isFail = line.includes('✗') || line.includes('FAIL');
-                            const colorClass = isPass
-                              ? 'text-blue-400'
-                              : isFail
-                                ? 'text-red-400'
-                                : 'text-gray-400';
-                            return (
-                              <div key={index} className={colorClass}>
-                                {line}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
+                {submitResult.results?.output && (
+                  <div className="max-h-40 overflow-y-auto bg-black border border-green-900 p-3">
+                    <div className="text-xs space-y-0.5">
+                      {submitResult.results.output.split('\n').map((line, i) => {
+                        const isPass = line.includes('✓') || line.includes('PASS');
+                        const isFail = line.includes('✗') || line.includes('FAIL');
+                        return (
+                          <div key={i} className={
+                            isPass ? 'text-green-500'
+                              : isFail ? 'text-red-500'
+                              : 'text-green-800'
+                          }>
+                            {line ? `> ${line}` : ''}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
-                    {submitResult.results.error && (
-                      <div className="mt-3 p-3 bg-red-900/30 border border-red-700 rounded">
-                        <p className="text-red-400 font-mono text-xs whitespace-pre-wrap">
-                          {submitResult.results.error}
-                        </p>
-                      </div>
-                    )}
-                  </>
+                {submitResult.results?.error && (
+                  <div className="mt-3 p-3 border border-red-900 bg-black">
+                    <p className="text-red-600 text-xs whitespace-pre-wrap">{submitResult.results.error}</p>
+                  </div>
                 )}
               </div>
             )}
