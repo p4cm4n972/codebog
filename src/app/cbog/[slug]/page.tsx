@@ -196,34 +196,22 @@ export default function CExerciseDetailPage() {
   const callSubmissionsApi = async (dryRun: boolean) => {
     const jwt = await getJWT();
     if (!jwt) throw new Error('ERR: authentification requise');
-
     const response = await fetch('/api/submissions/c', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${jwt}`,
-      },
-      body: JSON.stringify({
-        code: userCode,
-        exerciseSlug: exercise!.slug,
-        testCode: exercise!.testCode,
-        dryRun,
-      }),
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${jwt}` },
+      body: JSON.stringify({ code: userCode, exerciseSlug: exercise!.slug, dryRun }),
     });
-
     return { data: await response.json(), status: response.status };
   };
 
+  /** Test — exécute via Judge0 (dry run, pas de sauvegarde en DB) */
   const handleTest = async () => {
     if (!user || !exercise) return;
-
     setTesting(true);
     setSubmitResult(null);
     setLastTestPassed(false);
-
     try {
       const { data, status } = await callSubmissionsApi(true);
-
       if (status === 403) {
         setSubmitResult({ success: false, message: `[403] ${data.reason || 'Accès refusé'}` });
         return;
@@ -236,7 +224,6 @@ export default function CExerciseDetailPage() {
         });
         return;
       }
-
       const passed = data.results?.passed || false;
       setLastTestPassed(passed);
       setSubmitResult({
@@ -251,17 +238,19 @@ export default function CExerciseDetailPage() {
     }
   };
 
+  /** Soumission — exécute via Judge0 + anti-cheat + sauvegarde en DB */
   const handleSubmit = async () => {
     if (!user || !exercise) return;
-
     setSubmitting(true);
     setSubmitResult(null);
-
     try {
       const { data, status } = await callSubmissionsApi(false);
-
       if (status === 403) {
         setSubmitResult({ success: false, message: `[403] ${data.reason || 'Accès refusé'}` });
+        return;
+      }
+      if (data.cheatDetected) {
+        setSubmitResult({ success: false, message: '[CHEAT] Triche détectée — soumission refusée', results: data.results });
         return;
       }
       if (status !== 200) {
@@ -272,27 +261,19 @@ export default function CExerciseDetailPage() {
         });
         return;
       }
-
       if (data.results?.passed) {
         setLastSubmissionPassed(true);
         setHasExistingSubmission(true);
         setLastTestPassed(false);
       }
-
       const xpMessage = data.submission?.isFirstCompletion ? ` +${data.submission.xpEarned} XP` : '';
-
       setSubmitResult({
         success: data.results?.passed || false,
-        message: data.results?.passed
-          ? `[OK] Soumission validée !${xpMessage}`
-          : '[FAIL] Certains tests ont échoué',
+        message: data.results?.passed ? `[OK] Soumission validée !${xpMessage}` : '[FAIL] Certains tests ont échoué',
         results: data.results,
       });
     } catch (err: unknown) {
-      setSubmitResult({
-        success: false,
-        message: err instanceof Error ? err.message : 'ERR: soumission impossible',
-      });
+      setSubmitResult({ success: false, message: err instanceof Error ? err.message : 'ERR: soumission impossible' });
     } finally {
       setSubmitting(false);
     }
