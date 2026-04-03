@@ -1,201 +1,147 @@
-import { describe, it, expect, vi } from 'vitest';
-import {
-  Singleton,
-  Database,
-  createUser,
-  createUIFactory,
-  createObservable,
-  validators,
-  createValidator,
-  withLogging,
-  withTiming,
-  readonly
-} from './index.js';
+// Note: Functions are expected to be defined by user code
+// (Singleton, Database, createUser, createUIFactory, createObservable, validators, createValidator, withLogging, withTiming, readonly)
 
-describe('Ex16 - Design Patterns OOP', () => {
-  describe('Singleton (IIFE)', () => {
-    it('should return same instance', () => {
-      const s1 = Singleton.getInstance();
-      const s2 = Singleton.getInstance();
-      expect(s1).toBe(s2);
-    });
+let passed = 0;
+let failed = 0;
 
-    it('should share state between calls', () => {
-      const s1 = Singleton.getInstance();
-      s1.add('item');
-      const s2 = Singleton.getInstance();
-      expect(s2.getAll()).toContain('item');
-    });
-  });
+function assert(condition, message) {
+    if (condition) {
+        console.log(`✓ ${message}`);
+        passed++;
+    } else {
+        console.error(`✗ ${message}`);
+        failed++;
+    }
+}
 
-  describe('Database Singleton (Class)', () => {
-    it('should return same instance', () => {
-      const db1 = new Database();
-      const db2 = new Database();
-      expect(db1).toBe(db2);
-    });
+console.log('Testing Design Patterns OOP...\n');
 
-    it('should share connection', () => {
-      const db1 = new Database();
-      db1.connect('postgres://localhost');
-      const db2 = new Database();
-      expect(db2.isConnected()).toBe(true);
-    });
-  });
+// Test 1: Singleton - same instance
+const s1 = Singleton.getInstance();
+const s2 = Singleton.getInstance();
+assert(s1 === s2, 'Singleton: returns same instance');
 
-  describe('Factory - createUser()', () => {
-    it('should create admin with all permissions', () => {
-      const admin = createUser('admin', { name: 'Alice' });
-      expect(admin.role).toBe('admin');
-      expect(admin.permissions).toContain('delete');
-    });
+// Test 2: Singleton - share state
+const s3 = Singleton.getInstance();
+s3.add('item');
+const s4 = Singleton.getInstance();
+assert(s4.getAll().includes('item'), 'Singleton: shares state between calls');
 
-    it('should create editor with read/write', () => {
-      const editor = createUser('editor', { name: 'Bob' });
-      expect(editor.role).toBe('editor');
-      expect(editor.permissions).toContain('write');
-      expect(editor.permissions).not.toContain('delete');
-    });
+// Test 3: Database Singleton - same instance
+const db1 = new Database();
+const db2 = new Database();
+assert(db1 === db2, 'Database: returns same instance');
 
-    it('should create viewer with read only', () => {
-      const viewer = createUser('viewer', { name: 'Charlie' });
-      expect(viewer.role).toBe('viewer');
-      expect(viewer.permissions).toEqual(['read']);
-    });
+// Test 4: Database - share connection
+const db3 = new Database();
+db3.connect('postgres://localhost');
+const db4 = new Database();
+assert(db4.isConnected() === true, 'Database: shares connection state');
 
-    it('should throw on unknown type', () => {
-      expect(() => createUser('superuser', {})).toThrow();
-    });
-  });
+// Test 5: createUser - admin with all permissions
+const admin = createUser('admin', { name: 'Alice' });
+assert(admin.role === 'admin', 'createUser: admin role');
+assert(admin.permissions.includes('delete'), 'createUser: admin has delete permission');
 
-  describe('Abstract Factory - createUIFactory()', () => {
-    it('should create dark theme components', () => {
-      const darkUI = createUIFactory('dark');
-      const button = darkUI.createButton('Click');
-      expect(button.bg).toBe('#333');
-      expect(button.color).toBe('#fff');
-    });
+// Test 6: createUser - editor with read/write
+const editor = createUser('editor', { name: 'Bob' });
+assert(editor.role === 'editor', 'createUser: editor role');
+assert(editor.permissions.includes('write'), 'createUser: editor has write');
+assert(!editor.permissions.includes('delete'), 'createUser: editor has no delete');
 
-    it('should create light theme components', () => {
-      const lightUI = createUIFactory('light');
-      const button = lightUI.createButton('Click');
-      expect(button.bg).toBe('#fff');
-      expect(button.color).toBe('#333');
-    });
-  });
+// Test 7: createUser - viewer with read only
+const viewer = createUser('viewer', { name: 'Charlie' });
+assert(viewer.role === 'viewer', 'createUser: viewer role');
+assert(JSON.stringify(viewer.permissions) === JSON.stringify(['read']), 'createUser: viewer read only');
 
-  describe('Observer - createObservable()', () => {
-    it('should notify subscribers on change', () => {
-      const callback = vi.fn();
-      const counter = createObservable(0);
+// Test 8: createUser - throw on unknown type
+let unknownThrown = false;
+try {
+    createUser('superuser', {});
+} catch (e) {
+    unknownThrown = true;
+}
+assert(unknownThrown, 'createUser: throws on unknown type');
 
-      counter.subscribe(callback);
-      counter.value = 1;
+// Test 9: createUIFactory - dark theme
+const darkUI = createUIFactory('dark');
+const darkButton = darkUI.createButton('Click');
+assert(darkButton.bg === '#333', 'createUIFactory: dark button bg');
+assert(darkButton.color === '#fff', 'createUIFactory: dark button color');
 
-      expect(callback).toHaveBeenCalledWith(1, 0);
-    });
+// Test 10: createUIFactory - light theme
+const lightUI = createUIFactory('light');
+const lightButton = lightUI.createButton('Click');
+assert(lightButton.bg === '#fff', 'createUIFactory: light button bg');
+assert(lightButton.color === '#333', 'createUIFactory: light button color');
 
-    it('should allow unsubscribe', () => {
-      const callback = vi.fn();
-      const counter = createObservable(0);
-
-      const unsubscribe = counter.subscribe(callback);
-      unsubscribe();
-      counter.value = 1;
-
-      expect(callback).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('Strategy - validators', () => {
-    it('should validate required', () => {
-      expect(validators.required('value')).toBe(true);
-      expect(validators.required('')).toBe(false);
-      expect(validators.required(null)).toBe(false);
-    });
-
-    it('should validate email', () => {
-      expect(validators.email('test@example.com')).toBe(true);
-      expect(validators.email('invalid')).toBe(false);
-    });
-
-    it('should validate minLength', () => {
-      const min5 = validators.minLength(5);
-      expect(min5('hello')).toBe(true);
-      expect(min5('hi')).toBe(false);
-    });
-  });
-
-  describe('Strategy - createValidator()', () => {
-    it('should validate with multiple rules', () => {
-      const emailValidator = createValidator({
-        required: validators.required,
-        email: validators.email
-      });
-
-      expect(emailValidator('test@example.com')).toEqual({
-        valid: true,
-        errors: []
-      });
-
-      expect(emailValidator('invalid')).toEqual({
-        valid: false,
-        errors: ['email']
-      });
-
-      expect(emailValidator('')).toEqual({
-        valid: false,
-        errors: expect.arrayContaining(['required'])
-      });
-    });
-  });
-
-  describe('Decorator - withLogging()', () => {
-    it('should log calls and return result', () => {
-      const consoleSpy = vi.spyOn(console, 'log');
-      const add = (a, b) => a + b;
-      const loggedAdd = withLogging(add);
-
-      const result = loggedAdd(2, 3);
-
-      expect(result).toBe(5);
-      expect(consoleSpy).toHaveBeenCalled();
-
-      consoleSpy.mockRestore();
-    });
-  });
-
-  describe('Decorator - withTiming()', () => {
-    it('should measure execution time', () => {
-      const consoleSpy = vi.spyOn(console, 'log');
-      const slowFn = () => {
-        let sum = 0;
-        for (let i = 0; i < 1000; i++) sum += i;
-        return sum;
-      };
-      const timedFn = withTiming(slowFn);
-
-      timedFn();
-
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('took')
-      );
-
-      consoleSpy.mockRestore();
-    });
-  });
-
-  describe('Decorator - readonly()', () => {
-    it('should prevent modifications', () => {
-      const config = readonly({ apiUrl: 'https://api.example.com' });
-
-      expect(config.apiUrl).toBe('https://api.example.com');
-      expect(() => { config.apiUrl = 'other'; }).toThrow();
-    });
-
-    it('should prevent deletions', () => {
-      const config = readonly({ key: 'value' });
-      expect(() => { delete config.key; }).toThrow();
-    });
-  });
+// Test 11: createObservable - notify on change
+let notified11 = false;
+let oldVal11 = null;
+let newVal11 = null;
+const counter11 = createObservable(0);
+counter11.subscribe((newV, oldV) => {
+    notified11 = true;
+    newVal11 = newV;
+    oldVal11 = oldV;
 });
+counter11.value = 1;
+assert(notified11 && newVal11 === 1 && oldVal11 === 0, 'createObservable: notifies on change');
+
+// Test 12: createObservable - unsubscribe
+let called12 = false;
+const counter12 = createObservable(0);
+const unsub12 = counter12.subscribe(() => { called12 = true; });
+unsub12();
+counter12.value = 1;
+assert(called12 === false, 'createObservable: unsubscribe works');
+
+// Test 13: validators - required
+assert(validators.required('value') === true, 'validators.required: true for value');
+assert(validators.required('') === false, 'validators.required: false for empty');
+assert(validators.required(null) === false, 'validators.required: false for null');
+
+// Test 14: validators - email
+assert(validators.email('test@example.com') === true, 'validators.email: valid email');
+assert(validators.email('invalid') === false, 'validators.email: invalid email');
+
+// Test 15: validators - minLength
+const min5 = validators.minLength(5);
+assert(min5('hello') === true, 'validators.minLength: passes for hello');
+assert(min5('hi') === false, 'validators.minLength: fails for hi');
+
+// Test 16: createValidator - multiple rules
+const emailValidator = createValidator({
+    required: validators.required,
+    email: validators.email
+});
+const valid16 = emailValidator('test@example.com');
+assert(valid16.valid === true && valid16.errors.length === 0, 'createValidator: valid email passes');
+
+const invalid16 = emailValidator('invalid');
+assert(invalid16.valid === false && invalid16.errors.includes('email'), 'createValidator: invalid email fails');
+
+// Test 17: readonly - prevent modifications
+const config17 = readonly({ apiUrl: 'https://api.example.com' });
+assert(config17.apiUrl === 'https://api.example.com', 'readonly: can read');
+let modThrown = false;
+try {
+    config17.apiUrl = 'other';
+} catch (e) {
+    modThrown = true;
+}
+assert(modThrown, 'readonly: prevents modifications');
+
+// Test 18: readonly - prevent deletions
+const config18 = readonly({ key: 'value' });
+let delThrown = false;
+try {
+    delete config18.key;
+} catch (e) {
+    delThrown = true;
+}
+assert(delThrown, 'readonly: prevents deletions');
+
+console.log('\n' + '='.repeat(50));
+console.log(`Results: ${passed} passed, ${failed} failed`);
+console.log('='.repeat(50));

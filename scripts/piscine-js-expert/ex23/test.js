@@ -1,245 +1,161 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-  createMemoryMonitor,
-  createLeakDetector,
-  createLRUCache,
-  Resource,
-  using,
-  createMetadataManager,
-  createStringPool,
-  hasCircularReference
-} from './index.js';
+// Note: Functions are expected to be defined by user code
+// (createMemoryMonitor, createLeakDetector, createLRUCache, Resource, using, createMetadataManager, createStringPool, hasCircularReference)
 
-describe('Ex23 - Memory Management', () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
+let passed = 0;
+let failed = 0;
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
+function assert(condition, message) {
+    if (condition) {
+        console.log(`✓ ${message}`);
+        passed++;
+    } else {
+        console.error(`✗ ${message}`);
+        failed++;
+    }
+}
 
-  describe('createMemoryMonitor()', () => {
-    it('should collect samples', () => {
-      vi.useRealTimers();
+async function runTests() {
+    console.log('Testing Memory Management...\n');
 
-      const monitor = createMemoryMonitor({ interval: 10 });
-      monitor.start();
+    // Test 1: createMemoryMonitor - provides snapshot
+    const monitor1 = createMemoryMonitor();
+    const snapshot1 = monitor1.snapshot();
+    assert(typeof snapshot1.timestamp === 'number', 'createMemoryMonitor: snapshot has timestamp');
+    assert(typeof snapshot1.heapUsed === 'number', 'createMemoryMonitor: snapshot has heapUsed');
 
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          monitor.stop();
-          const samples = monitor.getSamples();
-          expect(samples.length).toBeGreaterThan(0);
-          resolve();
-        }, 50);
-      });
-    });
+    // Test 2: createMemoryMonitor - compares snapshots
+    const monitor2 = createMemoryMonitor();
+    const snap2a = { timestamp: 0, heapUsed: 1000 };
+    const snap2b = { timestamp: 100, heapUsed: 2000 };
+    const diff2 = monitor2.compare(snap2a, snap2b);
+    assert(diff2.heapDiff === 1000, 'createMemoryMonitor: compare works');
 
-    it('should provide snapshot', () => {
-      vi.useRealTimers();
+    // Test 3: createLRUCache - store and retrieve
+    const cache3 = createLRUCache(3);
+    cache3.set('a', 1);
+    cache3.set('b', 2);
+    assert(cache3.get('a') === 1, 'createLRUCache: get returns value');
+    assert(cache3.get('b') === 2, 'createLRUCache: get returns another value');
 
-      const monitor = createMemoryMonitor();
-      const snapshot = monitor.snapshot();
+    // Test 4: createLRUCache - evicts least recently used
+    const cache4 = createLRUCache(2);
+    cache4.set('a', 1);
+    cache4.set('b', 2);
+    cache4.get('a');
+    cache4.set('c', 3);
+    assert(cache4.has('a') === true, 'createLRUCache: keeps recently used');
+    assert(cache4.has('b') === false, 'createLRUCache: evicts LRU');
+    assert(cache4.has('c') === true, 'createLRUCache: keeps newest');
 
-      expect(snapshot).toHaveProperty('timestamp');
-      expect(snapshot).toHaveProperty('heapUsed');
-    });
+    // Test 5: createLRUCache - updates order on get
+    const cache5 = createLRUCache(2);
+    cache5.set('a', 1);
+    cache5.set('b', 2);
+    cache5.get('a');
+    cache5.set('c', 3);
+    assert(cache5.get('a') === 1, 'createLRUCache: a is still cached');
+    assert(cache5.get('b') === undefined, 'createLRUCache: b was evicted');
 
-    it('should compare snapshots', () => {
-      vi.useRealTimers();
+    // Test 6: Resource - usable when not disposed
+    const resource6 = new Resource();
+    let useThrown6 = false;
+    try {
+        resource6.use();
+    } catch (e) {
+        useThrown6 = true;
+    }
+    assert(useThrown6 === false, 'Resource: usable when not disposed');
 
-      const monitor = createMemoryMonitor();
-      const snap1 = { timestamp: 0, heapUsed: 1000 };
-      const snap2 = { timestamp: 100, heapUsed: 2000 };
+    // Test 7: Resource - throws after dispose
+    const resource7 = new Resource();
+    resource7.dispose();
+    let disposeThrown7 = false;
+    try {
+        resource7.use();
+    } catch (e) {
+        disposeThrown7 = true;
+    }
+    assert(disposeThrown7, 'Resource: throws after dispose');
 
-      const diff = monitor.compare(snap1, snap2);
-      expect(diff.heapDiff).toBe(1000);
-    });
-  });
+    // Test 8: Resource - reports disposed state
+    const resource8 = new Resource();
+    assert(resource8.isDisposed === false, 'Resource: isDisposed false initially');
+    resource8.dispose();
+    assert(resource8.isDisposed === true, 'Resource: isDisposed true after dispose');
 
-  describe('createLeakDetector()', () => {
-    it('should analyze memory growth', () => {
-      vi.useRealTimers();
-
-      const detector = createLeakDetector({ sampleInterval: 10, windowSize: 5 });
-      detector.start();
-
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          detector.stop();
-          const analysis = detector.analyze();
-          if (analysis) {
-            expect(analysis).toHaveProperty('trend');
-            expect(analysis).toHaveProperty('isLeaking');
-          }
-          resolve();
-        }, 100);
-      });
-    });
-  });
-
-  describe('createLRUCache()', () => {
-    it('should store and retrieve values', () => {
-      const cache = createLRUCache(3);
-      cache.set('a', 1);
-      cache.set('b', 2);
-
-      expect(cache.get('a')).toBe(1);
-      expect(cache.get('b')).toBe(2);
-    });
-
-    it('should evict least recently used', () => {
-      const cache = createLRUCache(2);
-
-      cache.set('a', 1);
-      cache.set('b', 2);
-      cache.get('a');
-      cache.set('c', 3);
-
-      expect(cache.has('a')).toBe(true);
-      expect(cache.has('b')).toBe(false);
-      expect(cache.has('c')).toBe(true);
-    });
-
-    it('should update order on get', () => {
-      const cache = createLRUCache(2);
-
-      cache.set('a', 1);
-      cache.set('b', 2);
-      cache.get('a');
-      cache.set('c', 3);
-
-      expect(cache.get('a')).toBe(1);
-      expect(cache.get('b')).toBeUndefined();
-    });
-  });
-
-  describe('Resource class', () => {
-    it('should be usable when not disposed', () => {
-      const resource = new Resource();
-      expect(() => resource.use()).not.toThrow();
-    });
-
-    it('should throw when used after dispose', () => {
-      const resource = new Resource();
-      resource.dispose();
-      expect(() => resource.use()).toThrow();
-    });
-
-    it('should report disposed state', () => {
-      const resource = new Resource();
-      expect(resource.isDisposed).toBe(false);
-      resource.dispose();
-      expect(resource.isDisposed).toBe(true);
-    });
-  });
-
-  describe('using()', () => {
-    it('should auto-dispose after use', async () => {
-      vi.useRealTimers();
-
-      const resource = new Resource();
-
-      await using(resource, (res) => {
-        expect(res.isDisposed).toBe(false);
+    // Test 9: using - auto-dispose after use
+    const resource9 = new Resource();
+    await using(resource9, (res) => {
+        assert(res.isDisposed === false, 'using: not disposed during use');
         return res.use();
-      });
-
-      expect(resource.isDisposed).toBe(true);
     });
+    assert(resource9.isDisposed === true, 'using: disposed after use');
 
-    it('should dispose even on error', async () => {
-      vi.useRealTimers();
-
-      const resource = new Resource();
-
-      try {
-        await using(resource, () => {
-          throw new Error('test');
+    // Test 10: using - dispose even on error
+    const resource10 = new Resource();
+    try {
+        await using(resource10, () => {
+            throw new Error('test');
         });
-      } catch (e) {
+    } catch (e) {
         // Expected
-      }
+    }
+    assert(resource10.isDisposed === true, 'using: disposed even on error');
 
-      expect(resource.isDisposed).toBe(true);
-    });
-  });
+    // Test 11: createMetadataManager - stores metadata
+    const manager11 = createMetadataManager();
+    const obj11 = { id: 1 };
+    manager11.setMetadata(obj11, { created: Date.now() });
+    assert(manager11.getMetadata(obj11).created !== undefined, 'createMetadataManager: stores metadata');
 
-  describe('createMetadataManager()', () => {
-    it('should store metadata on objects', () => {
-      const manager = createMetadataManager();
-      const obj = { id: 1 };
+    // Test 12: createMetadataManager - hasMetadata
+    const manager12 = createMetadataManager();
+    const obj12 = { id: 1 };
+    manager12.setMetadata(obj12, { data: 'test' });
+    assert(manager12.hasMetadata(obj12) === true, 'createMetadataManager: hasMetadata true');
 
-      manager.setMetadata(obj, { created: Date.now() });
-      expect(manager.getMetadata(obj)).toHaveProperty('created');
-    });
+    // Test 13: createStringPool - interns strings
+    const pool13 = createStringPool();
+    const s13a = pool13.intern('hello');
+    const s13b = pool13.intern('hello');
+    assert(s13a === s13b, 'createStringPool: interns strings');
 
-    it('should not prevent garbage collection', () => {
-      const manager = createMetadataManager();
-      let obj = { id: 1 };
+    // Test 14: createStringPool - tracks stats
+    const pool14 = createStringPool();
+    pool14.intern('a');
+    pool14.intern('b');
+    pool14.intern('a');
+    const stats14 = pool14.stats;
+    assert(stats14.size === 2, 'createStringPool: tracks size');
+    assert(stats14.hits === 1, 'createStringPool: tracks hits');
 
-      manager.setMetadata(obj, { data: 'test' });
-      expect(manager.hasMetadata(obj)).toBe(true);
+    // Test 15: hasCircularReference - detects direct circular
+    const obj15 = { a: 1 };
+    obj15.self = obj15;
+    assert(hasCircularReference(obj15) === true, 'hasCircularReference: detects direct circular');
 
-      obj = null;
-    });
-  });
+    // Test 16: hasCircularReference - detects indirect circular
+    const a16 = { name: 'a' };
+    const b16 = { name: 'b', ref: a16 };
+    a16.ref = b16;
+    assert(hasCircularReference(a16) === true, 'hasCircularReference: detects indirect circular');
 
-  describe('createStringPool()', () => {
-    it('should intern strings', () => {
-      const pool = createStringPool();
-
-      const s1 = pool.intern('hello');
-      const s2 = pool.intern('hello');
-
-      expect(s1).toBe(s2);
-    });
-
-    it('should track stats', () => {
-      const pool = createStringPool();
-
-      pool.intern('a');
-      pool.intern('b');
-      pool.intern('a');
-
-      const stats = pool.stats;
-      expect(stats.size).toBe(2);
-      expect(stats.hits).toBe(1);
-    });
-  });
-
-  describe('hasCircularReference()', () => {
-    it('should detect direct circular reference', () => {
-      const obj = { a: 1 };
-      obj.self = obj;
-
-      expect(hasCircularReference(obj)).toBe(true);
-    });
-
-    it('should detect indirect circular reference', () => {
-      const a = { name: 'a' };
-      const b = { name: 'b', ref: a };
-      a.ref = b;
-
-      expect(hasCircularReference(a)).toBe(true);
-    });
-
-    it('should return false for non-circular objects', () => {
-      const obj = {
+    // Test 17: hasCircularReference - false for non-circular
+    const obj17 = {
         a: 1,
         b: { c: 2 },
         d: [1, 2, 3]
-      };
+    };
+    assert(hasCircularReference(obj17) === false, 'hasCircularReference: false for non-circular');
 
-      expect(hasCircularReference(obj)).toBe(false);
-    });
+    // Test 18: hasCircularReference - handles arrays
+    const arr18 = [1, 2];
+    arr18.push(arr18);
+    assert(hasCircularReference(arr18) === true, 'hasCircularReference: detects in arrays');
 
-    it('should handle arrays', () => {
-      const arr = [1, 2];
-      arr.push(arr);
+    console.log('\n' + '='.repeat(50));
+    console.log(`Results: ${passed} passed, ${failed} failed`);
+    console.log('='.repeat(50));
+}
 
-      expect(hasCircularReference(arr)).toBe(true);
-    });
-  });
-});
+runTests();

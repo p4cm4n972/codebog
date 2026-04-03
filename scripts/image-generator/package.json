@@ -1,0 +1,16 @@
+{
+  "name": "codebog-image-generator",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "generate": "node generate-replicate.js",
+    "generate:icons": "node generate-replicate.js --icons-only",
+    "generate:banners": "node generate-replicate.js --banners-only",
+    "generate:dalle": "node generate.js",
+    "generate:dalle:icons": "node generate.js --icons-only"
+  },
+  "dependencies": {
+    "openai": "^4.0.0",
+    "replicate": "^0.25.2"
+  }
+}

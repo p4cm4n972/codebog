@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 // District configuration with positions for the city map
 const DISTRICTS = [
@@ -10,6 +11,8 @@ const DISTRICTS = [
     name: 'Downtown',
     subtitle: 'Phase 1 - Fondamentaux',
     icon: '🏛️',
+    image: '/images/algobog/icons/algobog-downtown-icon.png',
+    banner: '/images/algobog/banners/algobog-downtown-banner.png',
     description: 'Arrays, Strings, Hash Maps, Two Pointers, Binary Search, Sliding Window, Sorting, Stack',
     color: 'green',
     modules: 8,
@@ -23,6 +26,8 @@ const DISTRICTS = [
     name: 'Industrial Zone',
     subtitle: 'Phase 2 - Structures',
     icon: '🏭',
+    image: '/images/algobog/icons/algobog-industrial-icon.png',
+    banner: '/images/algobog/banners/algobog-industrial-banner.png',
     description: 'Linked Lists, Queues, Trees, BST, Heaps, Tries',
     color: 'orange',
     modules: 6,
@@ -36,6 +41,8 @@ const DISTRICTS = [
     name: 'Transit Hub',
     subtitle: 'Phase 3 - Graphes',
     icon: '🚇',
+    image: '/images/algobog/icons/algobog-transit-icon.png',
+    banner: '/images/algobog/banners/algobog-transit-banner.png',
     description: 'BFS, DFS, Topological Sort, Union Find, Shortest Paths',
     color: 'cyan',
     modules: 5,
@@ -49,6 +56,8 @@ const DISTRICTS = [
     name: 'Tech Park',
     subtitle: 'Phase 4 - Algo Avancés',
     icon: '🏢',
+    image: '/images/algobog/icons/algobog-techpark-icon.png',
+    banner: '/images/algobog/banners/algobog-techpark-banner.png',
     description: 'Backtracking, Dynamic Programming, Segment Trees, Fenwick Trees',
     color: 'purple',
     modules: 5,
@@ -62,6 +71,8 @@ const DISTRICTS = [
     name: 'Research Campus',
     subtitle: 'Phase 5 - Spécialisation',
     icon: '🔬',
+    image: '/images/algobog/icons/algobog-research-icon.png',
+    banner: '/images/algobog/banners/algobog-research-banner.png',
     description: 'Greedy, Bit Manipulation, Math, System Design, Concurrency',
     color: 'pink',
     modules: 5,
@@ -75,6 +86,8 @@ const DISTRICTS = [
     name: 'Skyline Tower',
     subtitle: 'Phase 6 - Expert',
     icon: '🗼',
+    image: '/images/algobog/icons/algobog-skyline-icon.png',
+    banner: '/images/algobog/banners/algobog-skyline-banner.png',
     description: 'Advanced DP, Hard Graphs, String Algorithms, Contest Problems',
     color: 'amber',
     modules: 4,
@@ -203,31 +216,33 @@ export default function CityMap({ userProgress, unlockAll }: CityMapProps) {
   };
 
   return (
-    <div className="relative w-full min-h-[600px] md:min-h-[700px] bg-gradient-to-b from-[#0a0a1a] via-[#0f0f2a] to-[#0a0a1a] rounded-xl border-4 border-black overflow-hidden">
-      {/* Animated city grid background */}
-      <div className="absolute inset-0 opacity-20">
-        <div className="absolute inset-0" style={{
-          backgroundImage: `
-            linear-gradient(rgba(139, 92, 246, 0.1) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(139, 92, 246, 0.1) 1px, transparent 1px)
-          `,
-          backgroundSize: '50px 50px',
-        }} />
+    <div className="relative w-full min-h-[600px] md:min-h-[700px] rounded-xl border-4 border-black overflow-hidden">
+      {/* Worldmap background image */}
+      <div className="absolute inset-0">
+        <Image
+          src="/images/algobog/worldmaps/algobog-worldmap.png"
+          alt="ALGOBOG City Map"
+          fill
+          className="object-cover"
+          priority
+        />
+        {/* Dark overlay for better contrast with UI elements */}
+        <div className="absolute inset-0 bg-black/40" />
       </div>
 
-      {/* Floating city lights */}
+      {/* Floating city lights - kept for extra ambiance */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(30)].map((_, i) => (
+        {[...Array(20)].map((_, i) => (
           <div
             key={i}
             className="absolute rounded-full animate-pulse"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
-              width: `${2 + Math.random() * 4}px`,
-              height: `${2 + Math.random() * 4}px`,
+              width: `${2 + Math.random() * 3}px`,
+              height: `${2 + Math.random() * 3}px`,
               backgroundColor: ['#22c55e', '#f97316', '#06b6d4', '#a855f7', '#ec4899', '#f59e0b'][Math.floor(Math.random() * 6)],
-              opacity: 0.3 + Math.random() * 0.4,
+              opacity: 0.2 + Math.random() * 0.3,
               animationDelay: `${Math.random() * 3}s`,
               animationDuration: `${2 + Math.random() * 2}s`,
             }}
@@ -318,57 +333,55 @@ export default function CityMap({ userProgress, unlockAll }: CityMapProps) {
             onMouseEnter={() => setHoveredDistrict(district.slug)}
             onMouseLeave={() => setHoveredDistrict(null)}
           >
-            {/* District building */}
+            {/* District building with generated image */}
             <button
               onClick={() => unlocked && setSelectedDistrict(district)}
               disabled={!unlocked}
               className={`
                 relative group
-                w-24 h-24 md:w-32 md:h-32
-                ${colors.bg}
+                w-20 h-20 md:w-28 md:h-28
+                rounded-lg overflow-hidden
                 border-4 ${unlocked ? colors.border : 'border-gray-600'}
-                ${unlocked ? `shadow-lg shadow-${district.color}-500/30 hover:shadow-xl hover:scale-110` : 'opacity-50 grayscale'}
+                ${unlocked ? `shadow-lg shadow-${district.color}-500/50 hover:shadow-xl hover:scale-110` : 'opacity-50 grayscale'}
                 transition-all duration-300
-                flex flex-col items-center justify-center
-                clip-path-building
                 ${isHovered && unlocked ? 'scale-110' : ''}
               `}
-              style={{
-                clipPath: 'polygon(10% 0%, 90% 0%, 100% 10%, 100% 100%, 0% 100%, 0% 10%)',
-              }}
             >
-              {/* Neon border effect */}
+              {/* District icon image */}
+              <Image
+                src={district.image}
+                alt={district.name}
+                fill
+                className="object-cover"
+              />
+
+              {/* Neon border glow effect */}
               {unlocked && (
                 <div
-                  className="absolute inset-0 opacity-50"
+                  className="absolute inset-0 opacity-60"
                   style={{
-                    boxShadow: `inset 0 0 20px ${colors.neon}`,
+                    boxShadow: `inset 0 0 15px ${colors.neon}`,
                   }}
                 />
               )}
 
               {/* Lock overlay */}
               {!unlocked && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/60 z-10">
-                  <span className="text-4xl">🔒</span>
+                <div className="absolute inset-0 flex items-center justify-center bg-black/70 z-10">
+                  <span className="text-3xl">🔒</span>
                 </div>
               )}
 
-              {/* District icon */}
-              <span className={`text-4xl md:text-5xl ${!unlocked ? 'opacity-30' : ''} mb-1`}>
-                {district.icon}
-              </span>
-
-              {/* Phase number */}
-              <span className={`text-xs font-mono font-bold ${unlocked ? 'text-white/80' : 'text-gray-500'}`}>
+              {/* Phase badge */}
+              <div className={`absolute bottom-1 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded text-[10px] font-mono font-bold ${unlocked ? 'bg-black/70 text-white' : 'bg-gray-800/80 text-gray-500'}`}>
                 PHASE {district.order}
-              </span>
+              </div>
 
               {/* Progress bar inside building */}
               {unlocked && progress > 0 && (
-                <div className="absolute bottom-2 left-2 right-2 h-1 bg-black/50 rounded-full overflow-hidden">
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/50">
                   <div
-                    className="h-full bg-white/80 transition-all duration-500"
+                    className={`h-full ${colors.bg} transition-all duration-500`}
                     style={{ width: `${progress}%` }}
                   />
                 </div>
@@ -376,8 +389,8 @@ export default function CityMap({ userProgress, unlockAll }: CityMapProps) {
 
               {/* Completion badge */}
               {progress === 100 && (
-                <div className="absolute -top-2 -right-2 w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center border-2 border-yellow-600 shadow-lg">
-                  <span className="text-sm">⭐</span>
+                <div className="absolute -top-1 -right-1 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center border-2 border-yellow-600 shadow-lg z-20">
+                  <span className="text-xs">⭐</span>
                 </div>
               )}
             </button>
@@ -405,7 +418,7 @@ export default function CityMap({ userProgress, unlockAll }: CityMapProps) {
             {isHovered && unlocked && (
               <div
                 className={`
-                  absolute w-56 p-4
+                  absolute w-64 overflow-hidden
                   bg-black/95 backdrop-blur-sm
                   border-2 ${colors.border}
                   rounded-lg text-sm z-40
@@ -416,19 +429,30 @@ export default function CityMap({ userProgress, unlockAll }: CityMapProps) {
                   boxShadow: `0 0 30px ${colors.neon}40`,
                 }}
               >
-                <div className={`font-bold ${colors.text} mb-1 flex items-center gap-2`}>
-                  <span>{district.icon}</span>
-                  {district.name}
+                {/* Mini banner preview */}
+                <div className="relative h-16 w-full">
+                  <Image
+                    src={district.banner}
+                    alt={district.name}
+                    fill
+                    className="object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent" />
+                  <div className={`absolute bottom-2 left-3 font-bold ${colors.text} flex items-center gap-2`}>
+                    {district.name}
+                  </div>
                 </div>
-                <div className="text-gray-500 text-xs mb-2">{district.subtitle}</div>
-                <div className="text-gray-400 text-xs mb-3">{district.description}</div>
-                <div className="flex justify-between text-xs border-t border-gray-700 pt-2">
-                  <span className="text-gray-500">
-                    🏢 {district.modules} modules
-                  </span>
-                  <span className={colors.text}>
-                    {progress}% complété
-                  </span>
+                <div className="p-3">
+                  <div className="text-gray-500 text-xs mb-2">{district.subtitle}</div>
+                  <div className="text-gray-400 text-xs mb-3">{district.description}</div>
+                  <div className="flex justify-between text-xs border-t border-gray-700 pt-2">
+                    <span className="text-gray-500">
+                      🏢 {district.modules} modules
+                    </span>
+                    <span className={colors.text}>
+                      {progress}% complété
+                    </span>
+                  </div>
                 </div>
               </div>
             )}
@@ -455,19 +479,32 @@ export default function CityMap({ userProgress, unlockAll }: CityMapProps) {
             }}
             onClick={e => e.stopPropagation()}
           >
-            {/* Header with gradient */}
-            <div className={`h-32 bg-gradient-to-r ${COLOR_CLASSES[selectedDistrict.color].gradient} relative`}>
-              <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a2e] via-transparent to-transparent" />
+            {/* Header with banner image */}
+            <div className="h-36 relative">
+              <Image
+                src={selectedDistrict.banner}
+                alt={selectedDistrict.name}
+                fill
+                className="object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a2e] via-black/40 to-transparent" />
               <div className="absolute bottom-4 left-6 flex items-center gap-4">
-                <span className="text-5xl">{selectedDistrict.icon}</span>
+                <div className="relative w-14 h-14 rounded-lg overflow-hidden border-2 border-white/30">
+                  <Image
+                    src={selectedDistrict.image}
+                    alt={selectedDistrict.name}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-white font-mono">{selectedDistrict.name}</h2>
-                  <div className={`text-sm ${COLOR_CLASSES[selectedDistrict.color].text}`}>
+                  <h2 className="text-2xl font-bold text-white font-mono drop-shadow-lg">{selectedDistrict.name}</h2>
+                  <div className={`text-sm ${COLOR_CLASSES[selectedDistrict.color].text} drop-shadow`}>
                     {selectedDistrict.subtitle}
                   </div>
                 </div>
               </div>
-              <div className="absolute top-4 right-4 bg-black/50 px-3 py-1 rounded font-mono text-sm text-white/80">
+              <div className="absolute top-4 right-4 bg-black/60 px-3 py-1 rounded font-mono text-sm text-white/90 backdrop-blur-sm">
                 PHASE {selectedDistrict.order}
               </div>
             </div>

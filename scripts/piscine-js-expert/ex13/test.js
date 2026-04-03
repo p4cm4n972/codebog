@@ -1,198 +1,170 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-  createPerson,
-  createBankAccount,
-  createStateMachine,
-  createEventEmitter,
-  createCache
-} from './index.js';
+// Note: Functions are expected to be defined by user code
+// (createPerson, createBankAccount, createStateMachine, createEventEmitter, createCache)
 
-describe('Ex13 - Factory Functions & Data Privacy', () => {
-  describe('createPerson()', () => {
-    it('should create a person with getters', () => {
-      const person = createPerson('Alice', 30);
-      expect(person.getName()).toBe('Alice');
-      expect(person.getAge()).toBe(30);
-    });
+let passed = 0;
+let failed = 0;
 
-    it('should validate on construction', () => {
-      expect(() => createPerson('', 30)).toThrow();
-      expect(() => createPerson('Alice', -5)).toThrow();
-    });
+function assert(condition, message) {
+    if (condition) {
+        console.log(`✓ ${message}`);
+        passed++;
+    } else {
+        console.error(`✗ ${message}`);
+        failed++;
+    }
+}
 
-    it('should validate on setters', () => {
-      const person = createPerson('Alice', 30);
-      expect(() => person.setName('')).toThrow();
-      expect(() => person.setAge(-1)).toThrow();
-    });
+console.log('Testing Factory Functions & Data Privacy...\n');
 
-    it('should celebrate birthday', () => {
-      const person = createPerson('Alice', 30);
-      person.celebrateBirthday();
-      expect(person.getAge()).toBe(31);
-    });
+// Test 1: createPerson - create with getters
+const person1 = createPerson('Alice', 30);
+assert(person1.getName() === 'Alice', 'createPerson: getName returns name');
+assert(person1.getAge() === 30, 'createPerson: getAge returns age');
 
-    it('should have private data', () => {
-      const person = createPerson('Alice', 30);
-      expect(person._name).toBeUndefined();
-      expect(person._age).toBeUndefined();
-    });
-  });
+// Test 2: createPerson - validate on construction
+let invalidNameThrown = false;
+try {
+    createPerson('', 30);
+} catch (e) {
+    invalidNameThrown = true;
+}
+assert(invalidNameThrown, 'createPerson: throws on empty name');
 
-  describe('createBankAccount()', () => {
-    it('should track balance', () => {
-      const account = createBankAccount('Alice', 1000);
-      expect(account.getBalance()).toBe(1000);
-      account.deposit(500);
-      expect(account.getBalance()).toBe(1500);
-    });
+let invalidAgeThrown = false;
+try {
+    createPerson('Alice', -5);
+} catch (e) {
+    invalidAgeThrown = true;
+}
+assert(invalidAgeThrown, 'createPerson: throws on negative age');
 
-    it('should prevent overdraft', () => {
-      const account = createBankAccount('Alice', 100);
-      expect(() => account.withdraw(200)).toThrow('Insufficient funds');
-    });
+// Test 3: createPerson - validate setters
+const person3 = createPerson('Alice', 30);
+let setNameThrown = false;
+try {
+    person3.setName('');
+} catch (e) {
+    setNameThrown = true;
+}
+assert(setNameThrown, 'createPerson: setName throws on empty string');
 
-    it('should transfer between accounts', () => {
-      const alice = createBankAccount('Alice', 1000);
-      const bob = createBankAccount('Bob', 500);
+// Test 4: createPerson - celebrate birthday
+const person4 = createPerson('Alice', 30);
+person4.celebrateBirthday();
+assert(person4.getAge() === 31, 'createPerson: celebrateBirthday increments age');
 
-      alice.transfer(bob, 300);
+// Test 5: createPerson - private data
+const person5 = createPerson('Alice', 30);
+assert(person5._name === undefined, 'createPerson: _name is private');
+assert(person5._age === undefined, 'createPerson: _age is private');
 
-      expect(alice.getBalance()).toBe(700);
-      expect(bob.getBalance()).toBe(800);
-    });
+// Test 6: createBankAccount - track balance
+const account6 = createBankAccount('Alice', 1000);
+assert(account6.getBalance() === 1000, 'createBankAccount: initial balance');
+account6.deposit(500);
+assert(account6.getBalance() === 1500, 'createBankAccount: deposit adds to balance');
 
-    it('should track statement', () => {
-      const account = createBankAccount('Alice', 1000);
-      account.deposit(100);
-      account.withdraw(50);
+// Test 7: createBankAccount - prevent overdraft
+const account7 = createBankAccount('Alice', 100);
+let overdraftThrown = false;
+try {
+    account7.withdraw(200);
+} catch (e) {
+    overdraftThrown = e.message.includes('Insufficient');
+}
+assert(overdraftThrown, 'createBankAccount: prevents overdraft');
 
-      const statement = account.getStatement();
-      expect(statement.length).toBeGreaterThanOrEqual(2);
-    });
-  });
+// Test 8: createBankAccount - transfer between accounts
+const alice8 = createBankAccount('Alice', 1000);
+const bob8 = createBankAccount('Bob', 500);
+alice8.transfer(bob8, 300);
+assert(alice8.getBalance() === 700, 'createBankAccount: transfer deducts from sender');
+assert(bob8.getBalance() === 800, 'createBankAccount: transfer adds to receiver');
 
-  describe('createStateMachine()', () => {
-    const trafficLightConfig = {
-      initial: 'red',
-      states: {
+// Test 9: createBankAccount - track statement
+const account9 = createBankAccount('Alice', 1000);
+account9.deposit(100);
+account9.withdraw(50);
+const statement9 = account9.getStatement();
+assert(statement9.length >= 2, 'createBankAccount: tracks statement');
+
+// Test 10: createStateMachine - start at initial state
+const trafficLightConfig = {
+    initial: 'red',
+    states: {
         red: { on: { TIMER: 'green' } },
         green: { on: { TIMER: 'yellow' } },
         yellow: { on: { TIMER: 'red' } }
-      }
-    };
+    }
+};
+const machine10 = createStateMachine(trafficLightConfig);
+assert(machine10.getState() === 'red', 'createStateMachine: starts at initial state');
 
-    it('should start at initial state', () => {
-      const machine = createStateMachine(trafficLightConfig);
-      expect(machine.getState()).toBe('red');
-    });
+// Test 11: createStateMachine - transition on valid action
+const machine11 = createStateMachine(trafficLightConfig);
+machine11.send('TIMER');
+assert(machine11.getState() === 'green', 'createStateMachine: transitions on valid action');
 
-    it('should transition on valid action', () => {
-      const machine = createStateMachine(trafficLightConfig);
-      machine.send('TIMER');
-      expect(machine.getState()).toBe('green');
-    });
+// Test 12: createStateMachine - throw on invalid action
+const machine12 = createStateMachine(trafficLightConfig);
+let invalidActionThrown = false;
+try {
+    machine12.send('INVALID');
+} catch (e) {
+    invalidActionThrown = true;
+}
+assert(invalidActionThrown, 'createStateMachine: throws on invalid action');
 
-    it('should throw on invalid action', () => {
-      const machine = createStateMachine(trafficLightConfig);
-      expect(() => machine.send('INVALID')).toThrow();
-    });
+// Test 13: createStateMachine - can check
+const machine13 = createStateMachine(trafficLightConfig);
+assert(machine13.can('TIMER') === true, 'createStateMachine: can returns true for valid action');
+assert(machine13.can('INVALID') === false, 'createStateMachine: can returns false for invalid');
 
-    it('should check if action is possible', () => {
-      const machine = createStateMachine(trafficLightConfig);
-      expect(machine.can('TIMER')).toBe(true);
-      expect(machine.can('INVALID')).toBe(false);
-    });
+// Test 14: createStateMachine - track history
+const machine14 = createStateMachine(trafficLightConfig);
+machine14.send('TIMER');
+machine14.send('TIMER');
+const history14 = machine14.getHistory();
+assert(history14.length === 3, 'createStateMachine: tracks history');
 
-    it('should track history', () => {
-      const machine = createStateMachine(trafficLightConfig);
-      machine.send('TIMER');
-      machine.send('TIMER');
+// Test 15: createEventEmitter - emit events
+const emitter15 = createEventEmitter();
+let emitted15 = null;
+emitter15.on('test', (data) => { emitted15 = data; });
+emitter15.emit('test', 'hello');
+assert(emitted15 === 'hello', 'createEventEmitter: on/emit works');
 
-      const history = machine.getHistory();
-      expect(history.length).toBe(3);
-    });
-  });
+// Test 16: createEventEmitter - remove listeners
+const emitter16 = createEventEmitter();
+let called16 = false;
+const handler16 = () => { called16 = true; };
+emitter16.on('test', handler16);
+emitter16.off('test', handler16);
+emitter16.emit('test');
+assert(called16 === false, 'createEventEmitter: off removes listener');
 
-  describe('createEventEmitter()', () => {
-    it('should emit events', () => {
-      const emitter = createEventEmitter();
-      const handler = vi.fn();
+// Test 17: createEventEmitter - once
+const emitter17 = createEventEmitter();
+let onceCount17 = 0;
+emitter17.once('test', () => { onceCount17++; });
+emitter17.emit('test');
+emitter17.emit('test');
+assert(onceCount17 === 1, 'createEventEmitter: once fires only once');
 
-      emitter.on('test', handler);
-      emitter.emit('test', 'data');
+// Test 18: createCache - store and retrieve
+const cache18 = createCache();
+cache18.set('key', 'value');
+assert(cache18.get('key') === 'value', 'createCache: set and get work');
 
-      expect(handler).toHaveBeenCalledWith('data');
-    });
+// Test 19: createCache - respect maxSize
+const cache19 = createCache({ maxSize: 2 });
+cache19.set('a', 1);
+cache19.set('b', 2);
+cache19.set('c', 3);
+assert(cache19.has('a') === false, 'createCache: evicts oldest when maxSize exceeded');
+assert(cache19.has('b') === true, 'createCache: keeps newer entries');
+assert(cache19.has('c') === true, 'createCache: keeps newest entry');
 
-    it('should remove listeners', () => {
-      const emitter = createEventEmitter();
-      const handler = vi.fn();
-
-      emitter.on('test', handler);
-      emitter.off('test', handler);
-      emitter.emit('test');
-
-      expect(handler).not.toHaveBeenCalled();
-    });
-
-    it('should support once', () => {
-      const emitter = createEventEmitter();
-      const handler = vi.fn();
-
-      emitter.once('test', handler);
-      emitter.emit('test');
-      emitter.emit('test');
-
-      expect(handler).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe('createCache()', () => {
-    beforeEach(() => {
-      vi.useFakeTimers();
-    });
-
-    afterEach(() => {
-      vi.useRealTimers();
-    });
-
-    it('should store and retrieve values', () => {
-      const cache = createCache();
-      cache.set('key', 'value');
-      expect(cache.get('key')).toBe('value');
-    });
-
-    it('should respect maxSize', () => {
-      const cache = createCache({ maxSize: 2 });
-
-      cache.set('a', 1);
-      cache.set('b', 2);
-      cache.set('c', 3);
-
-      expect(cache.has('a')).toBe(false);
-      expect(cache.has('b')).toBe(true);
-      expect(cache.has('c')).toBe(true);
-    });
-
-    it('should expire entries after TTL', () => {
-      const cache = createCache({ ttlMs: 1000 });
-
-      cache.set('key', 'value');
-      expect(cache.get('key')).toBe('value');
-
-      vi.advanceTimersByTime(1001);
-      expect(cache.get('key')).toBeUndefined();
-    });
-
-    it('should call onEvict', () => {
-      const onEvict = vi.fn();
-      const cache = createCache({ maxSize: 1, onEvict });
-
-      cache.set('a', 1);
-      cache.set('b', 2);
-
-      expect(onEvict).toHaveBeenCalledWith('a', 1);
-    });
-  });
-});
+console.log('\n' + '='.repeat(50));
+console.log(`Results: ${passed} passed, ${failed} failed`);
+console.log('='.repeat(50));

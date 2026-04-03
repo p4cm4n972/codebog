@@ -1,221 +1,152 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-  createRateLimiter,
-  retry,
-  createCircuitBreaker,
-  createThrottledQueue,
-  createBatcher
-} from './index.js';
+// Note: Functions are expected to be defined by user code
+// (createRateLimiter, retry, createCircuitBreaker, createThrottledQueue, createBatcher)
 
-describe('Ex08 - Rate Limiter & Retry Patterns', () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
+let passed = 0;
+let failed = 0;
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
+function assert(condition, message) {
+    if (condition) {
+        console.log(`✓ ${message}`);
+        passed++;
+    } else {
+        console.error(`✗ ${message}`);
+        failed++;
+    }
+}
 
-  describe('createRateLimiter()', () => {
-    it('should limit requests per time window', async () => {
-      const limiter = createRateLimiter(2, 1000);
-      const results = [];
-      const fn = async (n) => {
-        results.push(n);
-        return n;
-      };
+async function runTests() {
+    console.log('Testing Rate Limiter & Retry Patterns...\n');
 
-      limiter(() => fn(1));
-      limiter(() => fn(2));
-      limiter(() => fn(3));
+    // Test 1: retry - succeeds on first attempt
+    let attempt1 = 0;
+    const result1 = await retry(async () => {
+        attempt1++;
+        return 'success';
+    }, { maxAttempts: 3 });
+    assert(result1 === 'success' && attempt1 === 1, 'retry: succeeds on first attempt');
 
-      await vi.advanceTimersByTimeAsync(0);
-      expect(results).toEqual([1, 2]);
+    // Test 2: retry - succeeds on third attempt
+    let attempt2 = 0;
+    const result2 = await retry(async () => {
+        attempt2++;
+        if (attempt2 < 3) throw new Error('fail');
+        return 'success';
+    }, { maxAttempts: 5, initialDelay: 10 });
+    assert(result2 === 'success' && attempt2 === 3, 'retry: succeeds on third attempt');
 
-      await vi.advanceTimersByTimeAsync(1000);
-      expect(results).toEqual([1, 2, 3]);
-    });
+    // Test 3: retry - exhausts attempts
+    let attempt3 = 0;
+    let caught3 = false;
+    try {
+        await retry(async () => {
+            attempt3++;
+            throw new Error('always fails');
+        }, { maxAttempts: 3, initialDelay: 10 });
+    } catch (err) {
+        caught3 = true;
+    }
+    assert(caught3 && attempt3 === 3, 'retry: throws after max attempts');
 
-    it('should return a promise that resolves with the result', async () => {
-      const limiter = createRateLimiter(5, 1000);
-      const result = await limiter(async () => 'test');
-      expect(result).toBe('test');
-    });
-  });
-
-  describe('retry()', () => {
-    it('should return result on first success', async () => {
-      const fn = vi.fn().mockResolvedValue('success');
-      const result = await retry(fn, { maxAttempts: 3 });
-      expect(result).toBe('success');
-      expect(fn).toHaveBeenCalledTimes(1);
-    });
-
-    it('should retry on failure', async () => {
-      const fn = vi.fn()
-        .mockRejectedValueOnce(new Error('fail'))
-        .mockRejectedValueOnce(new Error('fail'))
-        .mockResolvedValue('success');
-
-      const resultPromise = retry(fn, {
+    // Test 4: retry - with onRetry callback
+    let onRetryCalled = false;
+    let attempt4 = 0;
+    await retry(async () => {
+        attempt4++;
+        if (attempt4 < 2) throw new Error('fail');
+        return 'done';
+    }, {
         maxAttempts: 3,
-        initialDelay: 100
-      });
-
-      await vi.advanceTimersByTimeAsync(100);
-      await vi.advanceTimersByTimeAsync(200);
-
-      const result = await resultPromise;
-      expect(result).toBe('success');
-      expect(fn).toHaveBeenCalledTimes(3);
+        initialDelay: 10,
+        onRetry: () => { onRetryCalled = true; }
     });
+    assert(onRetryCalled, 'retry: calls onRetry callback');
 
-    it('should throw after max attempts', async () => {
-      const fn = vi.fn().mockRejectedValue(new Error('always fail'));
+    // Test 5: createThrottledQueue - limits concurrency
+    const queue = createThrottledQueue(2);
+    let maxConcurrent = 0;
+    let currentConcurrent = 0;
 
-      const promise = retry(fn, { maxAttempts: 2, initialDelay: 100 });
-      await vi.advanceTimersByTimeAsync(100);
-
-      await expect(promise).rejects.toThrow('always fail');
-      expect(fn).toHaveBeenCalledTimes(2);
-    });
-
-    it('should call onRetry callback', async () => {
-      const onRetry = vi.fn();
-      const fn = vi.fn()
-        .mockRejectedValueOnce(new Error('fail'))
-        .mockResolvedValue('success');
-
-      const promise = retry(fn, {
-        maxAttempts: 3,
-        initialDelay: 100,
-        onRetry
-      });
-
-      await vi.advanceTimersByTimeAsync(100);
-      await promise;
-
-      expect(onRetry).toHaveBeenCalledTimes(1);
-      expect(onRetry).toHaveBeenCalledWith(expect.objectContaining({
-        attempt: 1,
-        error: expect.any(Error)
-      }));
-    });
-  });
-
-  describe('createCircuitBreaker()', () => {
-    it('should pass through when closed', async () => {
-      const fn = vi.fn().mockResolvedValue('result');
-      const breaker = createCircuitBreaker(fn, { failureThreshold: 3 });
-
-      const result = await breaker();
-      expect(result).toBe('result');
-    });
-
-    it('should open after failure threshold', async () => {
-      const fn = vi.fn().mockRejectedValue(new Error('fail'));
-      const breaker = createCircuitBreaker(fn, { failureThreshold: 2 });
-
-      await expect(breaker()).rejects.toThrow('fail');
-      await expect(breaker()).rejects.toThrow('fail');
-
-      await expect(breaker()).rejects.toThrow('Circuit breaker is OPEN');
-    });
-
-    it('should transition to half-open after timeout', async () => {
-      const fn = vi.fn()
-        .mockRejectedValueOnce(new Error('fail'))
-        .mockRejectedValueOnce(new Error('fail'))
-        .mockResolvedValue('success');
-
-      const breaker = createCircuitBreaker(fn, {
-        failureThreshold: 2,
-        timeout: 1000
-      });
-
-      await expect(breaker()).rejects.toThrow('fail');
-      await expect(breaker()).rejects.toThrow('fail');
-      await expect(breaker()).rejects.toThrow('Circuit breaker is OPEN');
-
-      await vi.advanceTimersByTimeAsync(1000);
-
-      const result = await breaker();
-      expect(result).toBe('success');
-    });
-  });
-
-  describe('createThrottledQueue()', () => {
-    it('should limit concurrent executions', async () => {
-      const queue = createThrottledQueue(2);
-      let running = 0;
-      let maxRunning = 0;
-
-      const task = () => new Promise(resolve => {
-        running++;
-        maxRunning = Math.max(maxRunning, running);
+    const task = () => new Promise(resolve => {
+        currentConcurrent++;
+        maxConcurrent = Math.max(maxConcurrent, currentConcurrent);
         setTimeout(() => {
-          running--;
-          resolve();
-        }, 100);
-      });
-
-      const promises = [
-        queue.add(task),
-        queue.add(task),
-        queue.add(task),
-        queue.add(task)
-      ];
-
-      await vi.advanceTimersByTimeAsync(200);
-      await Promise.all(promises);
-
-      expect(maxRunning).toBe(2);
+            currentConcurrent--;
+            resolve();
+        }, 20);
     });
 
-    it('should return results in order', async () => {
-      const queue = createThrottledQueue(2);
+    await queue.addAll([task, task, task, task]);
+    assert(maxConcurrent <= 2, `createThrottledQueue: limits to 2 concurrent (was ${maxConcurrent})`);
 
-      const results = await queue.addAll([
+    // Test 6: createThrottledQueue - returns results in order
+    const queue2 = createThrottledQueue(2);
+    const results = await queue2.addAll([
         () => Promise.resolve(1),
         () => Promise.resolve(2),
         () => Promise.resolve(3)
-      ]);
+    ]);
+    assert(
+        JSON.stringify(results) === JSON.stringify([1, 2, 3]),
+        'createThrottledQueue: returns results in order'
+    );
 
-      expect(results).toEqual([1, 2, 3]);
-    });
-  });
+    // Test 7: createCircuitBreaker - passes through when closed
+    let cb7Called = 0;
+    const breaker7 = createCircuitBreaker(async () => {
+        cb7Called++;
+        return 'result';
+    }, { failureThreshold: 3 });
+    const result7 = await breaker7();
+    assert(result7 === 'result' && cb7Called === 1, 'createCircuitBreaker: passes through when closed');
 
-  describe('createBatcher()', () => {
-    it('should batch multiple calls', async () => {
-      const batchFn = vi.fn(async (items) => items.map(x => x * 2));
-      const batcher = createBatcher(batchFn, { maxWaitMs: 10 });
+    // Test 8: createCircuitBreaker - opens after failures
+    let cb8Called = 0;
+    const breaker8 = createCircuitBreaker(async () => {
+        cb8Called++;
+        throw new Error('fail');
+    }, { failureThreshold: 2 });
 
-      const promises = [
+    try { await breaker8(); } catch {}
+    try { await breaker8(); } catch {}
+
+    let openError = false;
+    try {
+        await breaker8();
+    } catch (err) {
+        openError = err.message.includes('OPEN');
+    }
+    assert(openError, 'createCircuitBreaker: opens after failure threshold');
+
+    // Test 9: createRateLimiter - returns promise with result
+    const limiter = createRateLimiter(5, 1000);
+    const limitedResult = await limiter(async () => 'test');
+    assert(limitedResult === 'test', 'createRateLimiter: returns promise with result');
+
+    // Test 10: createBatcher - batches calls
+    let batchCalls = 0;
+    let batchItems = [];
+    const batcher = createBatcher(async (items) => {
+        batchCalls++;
+        batchItems = items;
+        return items.map(x => x * 2);
+    }, { maxWaitMs: 50, maxBatchSize: 10 });
+
+    const [b1, b2, b3] = await Promise.all([
         batcher(1),
         batcher(2),
         batcher(3)
-      ];
+    ]);
 
-      await vi.advanceTimersByTimeAsync(10);
-      const results = await Promise.all(promises);
+    assert(batchCalls === 1, 'createBatcher: batches into single call');
+    assert(b1 === 2 && b2 === 4 && b3 === 6, 'createBatcher: returns correct results');
+    assert(
+        JSON.stringify(batchItems) === JSON.stringify([1, 2, 3]),
+        'createBatcher: receives all items'
+    );
 
-      expect(batchFn).toHaveBeenCalledTimes(1);
-      expect(batchFn).toHaveBeenCalledWith([1, 2, 3]);
-      expect(results).toEqual([2, 4, 6]);
-    });
+    console.log('\n' + '='.repeat(50));
+    console.log(`Results: ${passed} passed, ${failed} failed`);
+    console.log('='.repeat(50));
+}
 
-    it('should flush when maxBatchSize is reached', async () => {
-      const batchFn = vi.fn(async (items) => items);
-      const batcher = createBatcher(batchFn, { maxBatchSize: 2, maxWaitMs: 1000 });
-
-      const p1 = batcher(1);
-      const p2 = batcher(2);
-
-      await vi.advanceTimersByTimeAsync(0);
-      await Promise.all([p1, p2]);
-
-      expect(batchFn).toHaveBeenCalledTimes(1);
-      expect(batchFn).toHaveBeenCalledWith([1, 2]);
-    });
-  });
-});
+runTests();

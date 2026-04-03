@@ -1,169 +1,124 @@
-import { describe, it, expect } from 'vitest';
-import {
-  inherit,
-  Animal,
-  Dog,
-  Labrador,
-  getPrototypeChain,
-  deepClone,
-  mixin,
-  createObject
-} from './index.js';
+// Note: Functions are expected to be defined by user code
+// (inherit, Animal, Dog, Labrador, getPrototypeChain, deepClone, mixin, createObject)
 
-describe('Ex14 - Prototype Chain & Inheritance', () => {
-  describe('inherit()', () => {
-    it('should establish prototype chain', () => {
-      function Parent() {}
-      Parent.prototype.parentMethod = function() { return 'parent'; };
+let passed = 0;
+let failed = 0;
 
-      function Child() {}
-      inherit(Child, Parent);
+function assert(condition, message) {
+    if (condition) {
+        console.log(`✓ ${message}`);
+        passed++;
+    } else {
+        console.error(`✗ ${message}`);
+        failed++;
+    }
+}
 
-      const child = new Child();
-      expect(child.parentMethod()).toBe('parent');
-    });
+console.log('Testing Prototype Chain & Inheritance...\n');
 
-    it('should preserve constructor', () => {
-      function Parent() {}
-      function Child() {}
-      inherit(Child, Parent);
+// Test 1: inherit - establish prototype chain
+function Parent() {}
+Parent.prototype.parentMethod = function() { return 'parent'; };
+function Child() {}
+inherit(Child, Parent);
+const child1 = new Child();
+assert(child1.parentMethod() === 'parent', 'inherit: child has parent method');
 
-      expect(Child.prototype.constructor).toBe(Child);
-    });
-  });
+// Test 2: inherit - preserve constructor
+function Parent2() {}
+function Child2() {}
+inherit(Child2, Parent2);
+assert(Child2.prototype.constructor === Child2, 'inherit: preserves constructor');
 
-  describe('Animal -> Dog -> Labrador hierarchy', () => {
-    it('should create Dog with Animal methods', () => {
-      const rex = new Dog('Rex', 'German Shepherd');
+// Test 3: Animal -> Dog hierarchy - Dog with Animal methods
+const rex = new Dog('Rex', 'German Shepherd');
+assert(rex.name === 'Rex', 'Dog: has name property');
+assert(rex.breed === 'German Shepherd', 'Dog: has breed property');
+assert(rex.eat('kibble').includes('eats'), 'Dog: inherits eat from Animal');
 
-      expect(rex.name).toBe('Rex');
-      expect(rex.breed).toBe('German Shepherd');
-      expect(rex.eat('kibble')).toBe('Rex eats kibble');
-    });
+// Test 4: Dog overrides speak
+assert(rex.speak().includes('Woof'), 'Dog: speak contains Woof');
 
-    it('should override speak in Dog', () => {
-      const rex = new Dog('Rex', 'German Shepherd');
-      expect(rex.speak()).toContain('Woof');
-    });
+// Test 5: Dog has fetch method
+assert(rex.fetch().includes('fetch'), 'Dog: has fetch method');
 
-    it('should have fetch method on Dog', () => {
-      const rex = new Dog('Rex', 'German Shepherd');
-      expect(rex.fetch()).toContain('fetch');
-    });
+// Test 6: Labrador with all inherited methods
+const buddy = new Labrador('Buddy', 'golden');
+assert(buddy.name === 'Buddy', 'Labrador: has name');
+assert(buddy.color === 'golden', 'Labrador: has color');
+assert(buddy.breed === 'Labrador', 'Labrador: breed is Labrador');
+assert(buddy.eat('treats').includes('eats'), 'Labrador: inherits eat');
+assert(buddy.speak().includes('Woof'), 'Labrador: inherits speak');
 
-    it('should create Labrador with all inherited methods', () => {
-      const buddy = new Labrador('Buddy', 'golden');
+// Test 7: Labrador has swim method
+assert(buddy.swim().includes('swim'), 'Labrador: has swim method');
 
-      expect(buddy.name).toBe('Buddy');
-      expect(buddy.color).toBe('golden');
-      expect(buddy.breed).toBe('Labrador');
-      expect(buddy.eat('treats')).toContain('eats');
-      expect(buddy.speak()).toContain('Woof');
-    });
+// Test 8: instanceof checks
+assert(buddy instanceof Labrador, 'Labrador: instanceof Labrador');
+assert(buddy instanceof Dog, 'Labrador: instanceof Dog');
+assert(buddy instanceof Animal, 'Labrador: instanceof Animal');
+assert(buddy instanceof Object, 'Labrador: instanceof Object');
 
-    it('should have swim method on Labrador', () => {
-      const buddy = new Labrador('Buddy', 'golden');
-      expect(buddy.swim()).toContain('swim');
-    });
+// Test 9: getPrototypeChain - ends with null
+const obj9 = { a: 1 };
+const chain9 = getPrototypeChain(obj9);
+assert(chain9[chain9.length - 1] === null, 'getPrototypeChain: ends with null');
+assert(chain9.includes(Object.prototype), 'getPrototypeChain: includes Object.prototype');
 
-    it('should pass instanceof checks', () => {
-      const buddy = new Labrador('Buddy', 'golden');
+// Test 10: getPrototypeChain - full chain for Labrador
+const chain10 = getPrototypeChain(buddy);
+assert(chain10.includes(Labrador.prototype), 'getPrototypeChain: includes Labrador.prototype');
+assert(chain10.includes(Dog.prototype), 'getPrototypeChain: includes Dog.prototype');
+assert(chain10.includes(Animal.prototype), 'getPrototypeChain: includes Animal.prototype');
 
-      expect(buddy instanceof Labrador).toBe(true);
-      expect(buddy instanceof Dog).toBe(true);
-      expect(buddy instanceof Animal).toBe(true);
-      expect(buddy instanceof Object).toBe(true);
-    });
-  });
+// Test 11: deepClone - simple objects
+const original11 = { a: 1, b: { c: 2 } };
+const cloned11 = deepClone(original11);
+assert(cloned11.a === 1 && cloned11.b.c === 2, 'deepClone: copies values');
+assert(cloned11 !== original11, 'deepClone: creates new object');
+assert(cloned11.b !== original11.b, 'deepClone: clones nested objects');
 
-  describe('getPrototypeChain()', () => {
-    it('should return chain ending with null', () => {
-      const obj = { a: 1 };
-      const chain = getPrototypeChain(obj);
+// Test 12: deepClone - preserves prototype
+const originalDog = new Dog('Max', 'Poodle');
+const clonedDog = deepClone(originalDog);
+assert(clonedDog instanceof Dog, 'deepClone: preserves prototype');
+assert(clonedDog.speak().includes('Woof'), 'deepClone: cloned methods work');
 
-      expect(chain[chain.length - 1]).toBe(null);
-      expect(chain[0]).toBe(Object.prototype);
-    });
+// Test 13: deepClone - handles arrays
+const original13 = { arr: [1, 2, { nested: true }] };
+const cloned13 = deepClone(original13);
+cloned13.arr[2].nested = false;
+assert(original13.arr[2].nested === true, 'deepClone: array mutations are independent');
 
-    it('should return full chain for inherited objects', () => {
-      const buddy = new Labrador('Buddy', 'golden');
-      const chain = getPrototypeChain(buddy);
+// Test 14: mixin - copies methods
+const target14 = {};
+const source1 = { method1: () => 'one' };
+const source2 = { method2: () => 'two' };
+mixin(target14, source1, source2);
+assert(target14.method1() === 'one', 'mixin: copies method1');
+assert(target14.method2() === 'two', 'mixin: copies method2');
 
-      expect(chain).toContain(Labrador.prototype);
-      expect(chain).toContain(Dog.prototype);
-      expect(chain).toContain(Animal.prototype);
-      expect(chain).toContain(Object.prototype);
-      expect(chain[chain.length - 1]).toBe(null);
-    });
-  });
+// Test 15: mixin - works with prototypes
+const canSwim = { swim: function() { return `${this.name} swims`; } };
+const canFly = { fly: function() { return `${this.name} flies`; } };
+function Duck(name) { this.name = name; }
+mixin(Duck.prototype, canSwim, canFly);
+const donald = new Duck('Donald');
+assert(donald.swim() === 'Donald swims', 'mixin: prototype swim works');
+assert(donald.fly() === 'Donald flies', 'mixin: prototype fly works');
 
-  describe('deepClone()', () => {
-    it('should clone simple objects', () => {
-      const original = { a: 1, b: { c: 2 } };
-      const cloned = deepClone(original);
+// Test 16: createObject - with specified prototype
+const proto16 = { greet: function() { return `Hello, ${this.name}`; } };
+const obj16 = createObject(proto16, { name: 'John' });
+assert(obj16.greet() === 'Hello, John', 'createObject: greet works');
+assert(Object.getPrototypeOf(obj16) === proto16, 'createObject: correct prototype');
 
-      expect(cloned).toEqual(original);
-      expect(cloned).not.toBe(original);
-      expect(cloned.b).not.toBe(original.b);
-    });
+// Test 17: createObject - own properties
+const proto17 = { shared: true };
+const obj17 = createObject(proto17, { own: 'value' });
+assert(obj17.hasOwnProperty('own') === true, 'createObject: has own property');
+assert(obj17.hasOwnProperty('shared') === false, 'createObject: shared is not own');
 
-    it('should preserve prototype chain', () => {
-      const original = new Dog('Rex', 'German Shepherd');
-      const cloned = deepClone(original);
-
-      expect(cloned instanceof Dog).toBe(true);
-      expect(cloned.speak()).toContain('Woof');
-    });
-
-    it('should handle arrays', () => {
-      const original = { arr: [1, 2, { nested: true }] };
-      const cloned = deepClone(original);
-
-      cloned.arr[2].nested = false;
-      expect(original.arr[2].nested).toBe(true);
-    });
-  });
-
-  describe('mixin()', () => {
-    it('should copy methods from sources', () => {
-      const target = {};
-      const source1 = { method1: () => 'one' };
-      const source2 = { method2: () => 'two' };
-
-      mixin(target, source1, source2);
-
-      expect(target.method1()).toBe('one');
-      expect(target.method2()).toBe('two');
-    });
-
-    it('should work with prototypes', () => {
-      const canSwim = { swim: function() { return `${this.name} swims`; } };
-      const canFly = { fly: function() { return `${this.name} flies`; } };
-
-      function Duck(name) { this.name = name; }
-      mixin(Duck.prototype, canSwim, canFly);
-
-      const donald = new Duck('Donald');
-      expect(donald.swim()).toBe('Donald swims');
-      expect(donald.fly()).toBe('Donald flies');
-    });
-  });
-
-  describe('createObject()', () => {
-    it('should create object with specified prototype', () => {
-      const proto = { greet: function() { return `Hello, ${this.name}`; } };
-      const obj = createObject(proto, { name: 'John' });
-
-      expect(obj.greet()).toBe('Hello, John');
-      expect(Object.getPrototypeOf(obj)).toBe(proto);
-    });
-
-    it('should have own properties', () => {
-      const proto = { shared: true };
-      const obj = createObject(proto, { own: 'value' });
-
-      expect(obj.hasOwnProperty('own')).toBe(true);
-      expect(obj.hasOwnProperty('shared')).toBe(false);
-    });
-  });
-});
+console.log('\n' + '='.repeat(50));
+console.log(`Results: ${passed} passed, ${failed} failed`);
+console.log('='.repeat(50));

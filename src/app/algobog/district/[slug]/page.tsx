@@ -1,15 +1,62 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
+import AlgobogUnlockModal from '@/components/algobog/AlgobogUnlockModal';
+
+// Building slug to generated image mapping
+const BUILDING_IMAGES: Record<string, string> = {
+  // Downtown - Fondamentaux
+  'array-tower': '/images/algobog/icons/algobog-building-arrays.png',
+  'string-plaza': '/images/algobog/icons/algobog-building-strings.png',
+  'hash-hub': '/images/algobog/icons/algobog-building-hashmaps.png',
+  'two-pointers-bridge': '/images/algobog/icons/algobog-building-twopointers.png',
+  'binary-search-center': '/images/algobog/icons/algobog-building-binarysearch.png',
+  'sliding-window-mall': '/images/algobog/icons/algobog-building-slidingwindow.png',
+  'sorting-station': '/images/algobog/icons/algobog-building-sorting.png',
+  'stack-skyscraper': '/images/algobog/icons/algobog-building-stack.png',
+  // Industrial - Structures
+  'linked-list-factory': '/images/algobog/icons/algobog-building-linkedlists.png',
+  'queue-warehouse': '/images/algobog/icons/algobog-building-queues.png',
+  'tree-greenhouse': '/images/algobog/icons/algobog-building-trees.png',
+  'bst-laboratory': '/images/algobog/icons/algobog-building-bst.png',
+  'heap-refinery': '/images/algobog/icons/algobog-building-heaps.png',
+  'trie-telecom': '/images/algobog/icons/algobog-building-tries.png',
+  // Transit - Graphes
+  'bfs-metro': '/images/algobog/icons/algobog-building-bfs.png',
+  'dfs-tunnel': '/images/algobog/icons/algobog-building-dfs.png',
+  'topo-terminal': '/images/algobog/icons/algobog-building-topsort.png',
+  'union-junction': '/images/algobog/icons/algobog-building-unionfind.png',
+  'shortest-path-highway': '/images/algobog/icons/algobog-building-shortestpath.png',
+  // Tech Park - Algo Avancés
+  'backtrack-incubator': '/images/algobog/icons/algobog-building-backtracking.png',
+  'dp-datacenter': '/images/algobog/icons/algobog-building-dp.png',
+  'segment-server': '/images/algobog/icons/algobog-building-segtrees.png',
+  'fenwick-firewall': '/images/algobog/icons/algobog-building-fenwick.png',
+  'dp2d-mainframe': '/images/algobog/icons/algobog-building-advanceddp.png',
+  // Research - Spécialisation
+  'greedy-lab': '/images/algobog/icons/algobog-building-greedy.png',
+  'bitwise-bunker': '/images/algobog/icons/algobog-building-bits.png',
+  'math-observatory': '/images/algobog/icons/algobog-building-math.png',
+  'design-studio': '/images/algobog/icons/algobog-building-systemdesign.png',
+  'concurrency-reactor': '/images/algobog/icons/algobog-building-concurrency.png',
+  // Skyline - Expert
+  'advanced-dp-penthouse': '/images/algobog/icons/algobog-building-advanceddp.png',
+  'hard-graph-helipad': '/images/algobog/icons/algobog-building-hardgraphs.png',
+  'string-algo-antenna': '/images/algobog/icons/algobog-building-stringalgo.png',
+  'contest-crown': '/images/algobog/icons/algobog-building-contest.png',
+};
 
 // District configuration
 const DISTRICTS: Record<string, {
   name: string;
   subtitle: string;
   icon: string;
+  image: string;
+  banner: string;
   description: string;
   gradient: string;
   border: string;
@@ -30,6 +77,8 @@ const DISTRICTS: Record<string, {
     name: 'Downtown',
     subtitle: 'Phase 1 - Fondamentaux',
     icon: '🏛️',
+    image: '/images/algobog/icons/algobog-downtown-icon.png',
+    banner: '/images/algobog/banners/algobog-downtown-banner.png',
     description: 'Maîtrisez les fondations : arrays, strings, hash maps et techniques de base.',
     gradient: 'from-green-500 to-emerald-700',
     border: 'border-green-500',
@@ -50,6 +99,8 @@ const DISTRICTS: Record<string, {
     name: 'Industrial Zone',
     subtitle: 'Phase 2 - Structures',
     icon: '🏭',
+    image: '/images/algobog/icons/algobog-industrial-icon.png',
+    banner: '/images/algobog/banners/algobog-industrial-banner.png',
     description: 'Découvrez les structures de données avancées : listes chaînées, arbres et plus.',
     gradient: 'from-orange-500 to-amber-700',
     border: 'border-orange-500',
@@ -68,6 +119,8 @@ const DISTRICTS: Record<string, {
     name: 'Transit Hub',
     subtitle: 'Phase 3 - Graphes',
     icon: '🚇',
+    image: '/images/algobog/icons/algobog-transit-icon.png',
+    banner: '/images/algobog/banners/algobog-transit-banner.png',
     description: 'Naviguez dans les graphes : BFS, DFS, chemins les plus courts.',
     gradient: 'from-cyan-500 to-teal-700',
     border: 'border-cyan-500',
@@ -85,6 +138,8 @@ const DISTRICTS: Record<string, {
     name: 'Tech Park',
     subtitle: 'Phase 4 - Algo Avancés',
     icon: '🏢',
+    image: '/images/algobog/icons/algobog-techpark-icon.png',
+    banner: '/images/algobog/banners/algobog-techpark-banner.png',
     description: 'Maîtrisez la programmation dynamique et les algorithmes avancés.',
     gradient: 'from-purple-500 to-violet-700',
     border: 'border-purple-500',
@@ -102,6 +157,8 @@ const DISTRICTS: Record<string, {
     name: 'Research Campus',
     subtitle: 'Phase 5 - Spécialisation',
     icon: '🔬',
+    image: '/images/algobog/icons/algobog-research-icon.png',
+    banner: '/images/algobog/banners/algobog-research-banner.png',
     description: 'Explorez des domaines spécialisés : greedy, bit manipulation, design.',
     gradient: 'from-pink-500 to-rose-700',
     border: 'border-pink-500',
@@ -119,6 +176,8 @@ const DISTRICTS: Record<string, {
     name: 'Skyline Tower',
     subtitle: 'Phase 6 - Expert',
     icon: '🗼',
+    image: '/images/algobog/icons/algobog-skyline-icon.png',
+    banner: '/images/algobog/banners/algobog-skyline-banner.png',
     description: 'Atteignez le sommet : problèmes de niveau compétition.',
     gradient: 'from-amber-500 to-yellow-600',
     border: 'border-amber-500',
@@ -171,9 +230,18 @@ interface BuildingCardProps {
   isLocked: boolean;
   progress: number;
   completedProblems: number;
+  gemCost?: number;
+  onUnlockClick?: () => void;
 }
 
-function BuildingCard({ building, districtSlug, borderColor, textColor, isLocked, progress, completedProblems }: BuildingCardProps) {
+function BuildingCard({ building, districtSlug, borderColor, textColor, isLocked, progress, completedProblems, gemCost, onUnlockClick }: BuildingCardProps) {
+  const handleClick = (e: React.MouseEvent) => {
+    if (isLocked) {
+      e.preventDefault();
+      if (onUnlockClick) onUnlockClick();
+    }
+  };
+
   return (
     <Link
       href={isLocked ? '#' : `/algobog/district/${districtSlug}/${building.slug}`}
@@ -183,17 +251,22 @@ function BuildingCard({ building, districtSlug, borderColor, textColor, isLocked
         rounded-lg p-4
         transition-all duration-200
         ${isLocked
-          ? 'opacity-60 cursor-not-allowed'
+          ? 'opacity-60 cursor-pointer hover:opacity-80'
           : 'hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]'
         }
       `}
-      onClick={(e) => isLocked && e.preventDefault()}
+      onClick={handleClick}
     >
       <div className="flex items-center gap-3 mb-3">
-        <div className="w-12 h-12 bg-black/30 rounded-lg flex items-center justify-center text-2xl relative">
-          {building.icon}
+        <div className="w-12 h-12 rounded-lg overflow-hidden relative">
+          <Image
+            src={BUILDING_IMAGES[building.slug] || '/images/algobog/icons/algobog-downtown-icon.png'}
+            alt={building.name}
+            fill
+            className="object-cover"
+          />
           {isLocked && (
-            <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
               <span className="text-lg">🔒</span>
             </div>
           )}
@@ -206,6 +279,9 @@ function BuildingCard({ building, districtSlug, borderColor, textColor, isLocked
             {building.concepts}
           </p>
         </div>
+        {isLocked && gemCost !== undefined && gemCost > 0 && (
+          <span className="text-purple-400 text-xs font-mono whitespace-nowrap">💎 {gemCost}</span>
+        )}
       </div>
 
       {/* Difficulty breakdown */}
@@ -230,8 +306,14 @@ function BuildingCard({ building, districtSlug, borderColor, textColor, isLocked
   );
 }
 
+interface BuildingAccessInfo {
+  hasAccess: boolean;
+  cost: number;
+  needsUnlock: boolean;
+}
+
 export default function DistrictPage() {
-  const { user, isLoading, isAdmin, isModerator } = useAuth();
+  const { user, isLoading, isAdmin, isModerator, getJWT } = useAuth();
   const router = useRouter();
   const params = useParams();
   const slug = params.slug as string;
@@ -239,6 +321,8 @@ export default function DistrictPage() {
 
   const [loading, setLoading] = useState(true);
   const [buildingProgress, setBuildingProgress] = useState<Record<string, { completed: number; total: number }>>({});
+  const [buildingAccess, setBuildingAccess] = useState<Record<string, BuildingAccessInfo>>({});
+  const [unlockTarget, setUnlockTarget] = useState<{ slug: string; name: string } | null>(null);
 
   const district = DISTRICTS[slug];
 
@@ -248,30 +332,67 @@ export default function DistrictPage() {
     }
   }, [isLoading, user, router]);
 
+  const loadProgress = useCallback(async () => {
+    if (!user || !district) return;
+
+    // Initialize progress
+    const progress: Record<string, { completed: number; total: number }> = {};
+    district.buildings.forEach(b => {
+      progress[b.slug] = { completed: 0, total: b.problems };
+    });
+    setBuildingProgress(progress);
+
+    // Fetch building access statuses in parallel
+    if (!unlockAll) {
+      try {
+        const jwt = await getJWT();
+        if (!jwt) {
+          setLoading(false);
+          return;
+        }
+
+        const statuses = await Promise.all(
+          district.buildings.map(async (b) => {
+            const params = new URLSearchParams({
+              targetType: 'building',
+              targetSlug: b.slug,
+            });
+            try {
+              const res = await fetch(`/api/algobog/unlock?${params}`, {
+                headers: { Authorization: `Bearer ${jwt}` },
+              });
+              if (res.ok) {
+                const data = await res.json();
+                return { slug: b.slug, hasAccess: data.hasAccess as boolean, cost: data.cost as number, needsUnlock: data.needsUnlock as boolean };
+              }
+            } catch (err) {
+              console.error(`Error fetching access for ${b.slug}:`, err);
+            }
+            return { slug: b.slug, hasAccess: false, cost: 0, needsUnlock: true };
+          })
+        );
+
+        const accessMap: Record<string, BuildingAccessInfo> = {};
+        statuses.forEach(s => {
+          accessMap[s.slug] = { hasAccess: s.hasAccess, cost: s.cost, needsUnlock: s.needsUnlock };
+        });
+        setBuildingAccess(accessMap);
+      } catch (err) {
+        console.error('Error fetching building access:', err);
+      }
+    }
+
+    setLoading(false);
+  }, [user, district, unlockAll, getJWT]);
+
   useEffect(() => {
     if (!district) {
       router.push('/algobog');
       return;
     }
 
-    const loadProgress = async () => {
-      if (!user) return;
-
-      // TODO: Fetch actual progress from API
-      await new Promise(resolve => setTimeout(resolve, 200));
-
-      // Initialize with 0 progress
-      const progress: Record<string, { completed: number; total: number }> = {};
-      district.buildings.forEach(b => {
-        progress[b.slug] = { completed: 0, total: b.problems };
-      });
-
-      setBuildingProgress(progress);
-      setLoading(false);
-    };
-
     loadProgress();
-  }, [user, district, router]);
+  }, [district, router, loadProgress]);
 
   if (isLoading || !user || loading || !district) {
     return <PageSkeleton />;
@@ -283,22 +404,37 @@ export default function DistrictPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0f0a]">
-      {/* Banner */}
-      <div className={`h-48 bg-gradient-to-r ${district.gradient} relative`}>
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0f0a] via-transparent to-black/30" />
+      {/* Banner with generated image */}
+      <div className="h-52 relative">
+        <Image
+          src={district.banner}
+          alt={district.name}
+          fill
+          className="object-cover"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0f0a] via-black/50 to-black/30" />
         <div className="absolute bottom-0 left-0 right-0 p-6">
           <div className="container mx-auto max-w-6xl">
             <div className="flex items-end justify-between">
-              <div>
-                <span className={`inline-block text-4xl mb-2`}>
-                  {district.icon}
-                </span>
-                <h1 className="text-3xl md:text-4xl font-bold text-white font-mono">
-                  {district.name}
-                </h1>
-                <p className={`text-lg font-mono ${district.text}`}>
-                  {district.subtitle}
-                </p>
+              <div className="flex items-center gap-4">
+                {/* District icon */}
+                <div className="relative w-16 h-16 rounded-lg overflow-hidden border-2 border-white/30 shadow-lg hidden sm:block">
+                  <Image
+                    src={district.image}
+                    alt={district.name}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <div>
+                  <h1 className="text-3xl md:text-4xl font-bold text-white font-mono drop-shadow-lg">
+                    {district.name}
+                  </h1>
+                  <p className={`text-lg font-mono ${district.text} drop-shadow`}>
+                    {district.subtitle}
+                  </p>
+                </div>
               </div>
 
               {/* Progress circle */}
@@ -387,12 +523,13 @@ export default function DistrictPage() {
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
-          {district.buildings.map((building, index) => {
+          {district.buildings.map((building) => {
             const progress = buildingProgress[building.slug] || { completed: 0, total: building.problems };
             const progressPercent = Math.round((progress.completed / progress.total) * 100);
 
-            // First building always unlocked, others based on previous completion
-            const isLocked = !unlockAll && index > 0;
+            const access = buildingAccess[building.slug];
+            const isLocked = !unlockAll && access ? !access.hasAccess : false;
+            const gemCost = access?.cost;
 
             return (
               <BuildingCard
@@ -404,6 +541,8 @@ export default function DistrictPage() {
                 isLocked={isLocked}
                 progress={progressPercent}
                 completedProblems={progress.completed}
+                gemCost={gemCost}
+                onUnlockClick={() => setUnlockTarget({ slug: building.slug, name: building.name })}
               />
             );
           })}
@@ -420,6 +559,19 @@ export default function DistrictPage() {
           </Link>
         </div>
       </div>
+
+      {/* Unlock Modal */}
+      <AlgobogUnlockModal
+        isOpen={!!unlockTarget}
+        onClose={() => setUnlockTarget(null)}
+        targetType="building"
+        targetSlug={unlockTarget?.slug || ''}
+        targetTitle={unlockTarget?.name || ''}
+        onUnlocked={() => {
+          setUnlockTarget(null);
+          loadProgress();
+        }}
+      />
     </div>
   );
 }

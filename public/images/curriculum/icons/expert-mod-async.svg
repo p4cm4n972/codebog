@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="iconGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#06B6D4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#000000;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="#111"/>
+  <!-- Pixel border effect -->
+  <rect x="32" y="32" width="448" height="448" fill="none" stroke="#06B6D4" stroke-width="8"/>
+  <rect x="48" y="48" width="416" height="416" fill="none" stroke="#06B6D4" stroke-width="4" opacity="0.5"/>
+  <!-- Center icon area -->
+  <rect x="128" y="128" width="256" height="256" fill="url(#iconGrad)" rx="16"/>
+  <!-- Pixel decoration corners -->
+  <rect x="32" y="32" width="32" height="32" fill="#06B6D4"/>
+  <rect x="448" y="32" width="32" height="32" fill="#06B6D4"/>
+  <rect x="32" y="448" width="32" height="32" fill="#06B6D4"/>
+  <rect x="448" y="448" width="32" height="32" fill="#06B6D4"/>
+  <!-- Text -->
+  <text x="256" y="270" font-family="monospace" font-size="28" fill="white" text-anchor="middle" font-weight="bold">Async</text>
+  <text x="256" y="310" font-family="monospace" font-size="14" fill="rgba(255,255,255,0.5)" text-anchor="middle">[ICON]</text>
+  <!-- Size label -->
+  <rect x="200" y="420" width="112" height="24" rx="4" fill="rgba(0,0,0,0.5)"/>
+  <text x="256" y="438" font-family="monospace" font-size="12" fill="rgba(255,255,255,0.7)" text-anchor="middle">512×512</text>
+</svg>

@@ -1,256 +1,238 @@
-import { describe, it, expect, vi } from 'vitest';
-import { Person, Rectangle, BankAccount, EventEmitter, LinkedList } from './index.js';
+// Note: Functions are expected to be defined by user code
+// (Person, Rectangle, BankAccount, EventEmitter, LinkedList)
 
-describe('Ex15 - ES6+ Classes & Private Fields', () => {
-  describe('Person class', () => {
-    it('should create a person with name and age', () => {
-      const alice = new Person('Alice', 30);
-      expect(alice.name).toBe('Alice');
-      expect(alice.age).toBe(30);
-    });
+let passed = 0;
+let failed = 0;
 
-    it('should have unique id', () => {
-      const p1 = new Person('A', 20);
-      const p2 = new Person('B', 25);
-      expect(p1.id).not.toBe(p2.id);
-    });
+function assert(condition, message) {
+    if (condition) {
+        console.log(`✓ ${message}`);
+        passed++;
+    } else {
+        console.error(`✗ ${message}`);
+        failed++;
+    }
+}
 
-    it('should validate name', () => {
-      const person = new Person('Alice', 30);
-      expect(() => { person.name = ''; }).toThrow();
-    });
+console.log('Testing ES6+ Classes & Private Fields...\n');
 
-    it('should validate age', () => {
-      const person = new Person('Alice', 30);
-      expect(() => { person.age = -5; }).toThrow();
-      expect(() => { person.age = 200; }).toThrow();
-    });
+// Test 1: Person - create with name and age
+const alice = new Person('Alice', 30);
+assert(alice.name === 'Alice', 'Person: name is Alice');
+assert(alice.age === 30, 'Person: age is 30');
 
-    it('should celebrate birthday', () => {
-      const person = new Person('Alice', 30);
-      person.celebrateBirthday();
-      expect(person.age).toBe(31);
-    });
+// Test 2: Person - unique id
+const p1 = new Person('A', 20);
+const p2 = new Person('B', 25);
+assert(p1.id !== p2.id, 'Person: unique ids');
 
-    it('should greet', () => {
-      const person = new Person('Alice', 30);
-      expect(person.greet()).toContain('Alice');
-    });
+// Test 3: Person - validate name
+let nameThrown = false;
+try {
+    const person = new Person('Alice', 30);
+    person.name = '';
+} catch (e) {
+    nameThrown = true;
+}
+assert(nameThrown, 'Person: throws on empty name');
 
-    it('should create anonymous person', () => {
-      const anon = Person.createAnonymous();
-      expect(anon.name).toBe('Anonymous');
-    });
+// Test 4: Person - validate age
+const personAge = new Person('Alice', 30);
+let negAgeThrown = false;
+try {
+    personAge.age = -5;
+} catch (e) {
+    negAgeThrown = true;
+}
+assert(negAgeThrown, 'Person: throws on negative age');
 
-    it('should track total created', () => {
-      const before = Person.totalCreated;
-      new Person('Test', 20);
-      expect(Person.totalCreated).toBe(before + 1);
-    });
-  });
+let highAgeThrown = false;
+try {
+    personAge.age = 200;
+} catch (e) {
+    highAgeThrown = true;
+}
+assert(highAgeThrown, 'Person: throws on age > 150');
 
-  describe('Rectangle class', () => {
-    it('should calculate area', () => {
-      const rect = new Rectangle(4, 5);
-      expect(rect.area).toBe(20);
-    });
+// Test 5: Person - celebrate birthday
+const person5 = new Person('Alice', 30);
+person5.celebrateBirthday();
+assert(person5.age === 31, 'Person: celebrateBirthday increments age');
 
-    it('should calculate perimeter', () => {
-      const rect = new Rectangle(4, 5);
-      expect(rect.perimeter).toBe(18);
-    });
+// Test 6: Person - greet
+const person6 = new Person('Alice', 30);
+assert(person6.greet().includes('Alice'), 'Person: greet contains name');
 
-    it('should detect square', () => {
-      const rect = new Rectangle(4, 5);
-      const square = new Rectangle(5, 5);
+// Test 7: Person - createAnonymous
+const anon = Person.createAnonymous();
+assert(anon.name === 'Anonymous', 'Person: createAnonymous creates Anonymous');
 
-      expect(rect.isSquare).toBe(false);
-      expect(square.isSquare).toBe(true);
-    });
+// Test 8: Person - totalCreated
+const before = Person.totalCreated;
+new Person('Test', 20);
+assert(Person.totalCreated === before + 1, 'Person: totalCreated increments');
 
-    it('should create from square', () => {
-      const square = Rectangle.fromSquare(5);
-      expect(square.width).toBe(5);
-      expect(square.height).toBe(5);
-      expect(square.isSquare).toBe(true);
-    });
+// Test 9: Rectangle - calculate area
+const rect9 = new Rectangle(4, 5);
+assert(rect9.area === 20, 'Rectangle: area is 20');
 
-    it('should scale', () => {
-      const rect = new Rectangle(2, 3);
-      const scaled = rect.scale(2);
-      expect(scaled.width).toBe(4);
-      expect(scaled.height).toBe(6);
-    });
+// Test 10: Rectangle - calculate perimeter
+const rect10 = new Rectangle(4, 5);
+assert(rect10.perimeter === 18, 'Rectangle: perimeter is 18');
 
-    it('should have toString', () => {
-      const rect = new Rectangle(4, 5);
-      expect(rect.toString()).toContain('4');
-      expect(rect.toString()).toContain('5');
-    });
-  });
+// Test 11: Rectangle - detect square
+const rectNotSquare = new Rectangle(4, 5);
+const square = new Rectangle(5, 5);
+assert(rectNotSquare.isSquare === false, 'Rectangle: 4x5 is not square');
+assert(square.isSquare === true, 'Rectangle: 5x5 is square');
 
-  describe('BankAccount class', () => {
-    it('should track balance', () => {
-      const account = new BankAccount('Alice', 1000);
-      expect(account.balance).toBe(1000);
-    });
+// Test 12: Rectangle - fromSquare
+const squareFrom = Rectangle.fromSquare(5);
+assert(squareFrom.width === 5, 'Rectangle.fromSquare: width is 5');
+assert(squareFrom.height === 5, 'Rectangle.fromSquare: height is 5');
+assert(squareFrom.isSquare === true, 'Rectangle.fromSquare: is square');
 
-    it('should not allow direct balance modification', () => {
-      const account = new BankAccount('Alice', 1000);
-      expect(() => { account.balance = 9999; }).toThrow();
-    });
+// Test 13: Rectangle - scale
+const rectScale = new Rectangle(2, 3);
+const scaled = rectScale.scale(2);
+assert(scaled.width === 4, 'Rectangle.scale: width doubled');
+assert(scaled.height === 6, 'Rectangle.scale: height doubled');
 
-    it('should deposit', () => {
-      const account = new BankAccount('Alice', 1000);
-      account.deposit(500);
-      expect(account.balance).toBe(1500);
-    });
+// Test 14: Rectangle - toString
+const rect14 = new Rectangle(4, 5);
+const str14 = rect14.toString();
+assert(str14.includes('4') && str14.includes('5'), 'Rectangle: toString contains dimensions');
 
-    it('should withdraw', () => {
-      const account = new BankAccount('Alice', 1000);
-      account.withdraw(300);
-      expect(account.balance).toBe(700);
-    });
+// Test 15: BankAccount - track balance
+const account15 = new BankAccount('Alice', 1000);
+assert(account15.balance === 1000, 'BankAccount: initial balance 1000');
+account15.deposit(500);
+assert(account15.balance === 1500, 'BankAccount: after deposit 1500');
 
-    it('should prevent overdraft', () => {
-      const account = new BankAccount('Alice', 100);
-      expect(() => account.withdraw(200)).toThrow('Insufficient');
-    });
+// Test 16: BankAccount - prevent direct modification
+const account16 = new BankAccount('Alice', 1000);
+let directModThrown = false;
+try {
+    account16.balance = 9999;
+} catch (e) {
+    directModThrown = true;
+}
+assert(directModThrown, 'BankAccount: prevents direct balance modification');
 
-    it('should transfer', () => {
-      const alice = new BankAccount('Alice', 1000);
-      const bob = new BankAccount('Bob', 500);
+// Test 17: BankAccount - withdraw
+const account17 = new BankAccount('Alice', 1000);
+account17.withdraw(300);
+assert(account17.balance === 700, 'BankAccount: withdraw works');
 
-      alice.transfer(bob, 300);
+// Test 18: BankAccount - prevent overdraft
+const account18 = new BankAccount('Alice', 100);
+let overdraftThrown = false;
+try {
+    account18.withdraw(200);
+} catch (e) {
+    overdraftThrown = e.message.includes('Insufficient');
+}
+assert(overdraftThrown, 'BankAccount: prevents overdraft');
 
-      expect(alice.balance).toBe(700);
-      expect(bob.balance).toBe(800);
-    });
+// Test 19: BankAccount - transfer
+const alice19 = new BankAccount('Alice', 1000);
+const bob19 = new BankAccount('Bob', 500);
+alice19.transfer(bob19, 300);
+assert(alice19.balance === 700, 'BankAccount: transfer deducts from sender');
+assert(bob19.balance === 800, 'BankAccount: transfer adds to receiver');
 
-    it('should track transaction history', () => {
-      const account = new BankAccount('Alice', 1000);
-      account.deposit(100);
-      account.withdraw(50);
+// Test 20: BankAccount - transaction history
+const account20 = new BankAccount('Alice', 1000);
+account20.deposit(100);
+account20.withdraw(50);
+const history20 = account20.transactionHistory;
+assert(history20.length >= 2, 'BankAccount: tracks transaction history');
 
-      const history = account.transactionHistory;
-      expect(history.length).toBeGreaterThanOrEqual(2);
-    });
-  });
+// Test 21: EventEmitter - register and emit
+const emitter21 = new EventEmitter();
+let emitReceived = null;
+emitter21.on('test', (arg1, arg2) => { emitReceived = [arg1, arg2]; });
+emitter21.emit('test', 'arg1', 'arg2');
+assert(emitReceived && emitReceived[0] === 'arg1' && emitReceived[1] === 'arg2', 'EventEmitter: on/emit works');
 
-  describe('EventEmitter class', () => {
-    it('should register and emit events', () => {
-      const emitter = new EventEmitter();
-      const handler = vi.fn();
+// Test 22: EventEmitter - remove listeners
+const emitter22 = new EventEmitter();
+let called22 = false;
+const handler22 = () => { called22 = true; };
+emitter22.on('test', handler22);
+emitter22.off('test', handler22);
+emitter22.emit('test');
+assert(called22 === false, 'EventEmitter: off removes listener');
 
-      emitter.on('test', handler);
-      emitter.emit('test', 'arg1', 'arg2');
+// Test 23: EventEmitter - once
+const emitter23 = new EventEmitter();
+let onceCount = 0;
+emitter23.once('test', () => { onceCount++; });
+emitter23.emit('test');
+emitter23.emit('test');
+assert(onceCount === 1, 'EventEmitter: once fires only once');
 
-      expect(handler).toHaveBeenCalledWith('arg1', 'arg2');
-    });
+// Test 24: EventEmitter - listenerCount
+const emitter24 = new EventEmitter();
+emitter24.on('test', () => {});
+emitter24.on('test', () => {});
+assert(emitter24.listenerCount('test') === 2, 'EventEmitter: listenerCount is 2');
 
-    it('should remove listeners', () => {
-      const emitter = new EventEmitter();
-      const handler = vi.fn();
+// Test 25: EventEmitter - removeAllListeners
+const emitter25 = new EventEmitter();
+emitter25.on('test', () => {});
+emitter25.on('test', () => {});
+emitter25.removeAllListeners('test');
+assert(emitter25.listenerCount('test') === 0, 'EventEmitter: removeAllListeners works');
 
-      emitter.on('test', handler);
-      emitter.off('test', handler);
-      emitter.emit('test');
+// Test 26: EventEmitter - method chaining
+const emitter26 = new EventEmitter();
+const result26 = emitter26.on('a', () => {}).on('b', () => {}).once('c', () => {});
+assert(result26 === emitter26, 'EventEmitter: method chaining works');
 
-      expect(handler).not.toHaveBeenCalled();
-    });
+// Test 27: LinkedList - add items
+const list27 = new LinkedList();
+list27.add(1).add(2).add(3);
+assert(list27.size === 3, 'LinkedList: size is 3 after adding');
 
-    it('should support once', () => {
-      const emitter = new EventEmitter();
-      const handler = vi.fn();
+// Test 28: LinkedList - is iterable
+const list28 = new LinkedList();
+list28.add(1).add(2).add(3);
+assert(JSON.stringify([...list28]) === JSON.stringify([1, 2, 3]), 'LinkedList: is iterable');
 
-      emitter.once('test', handler);
-      emitter.emit('test');
-      emitter.emit('test');
+// Test 29: LinkedList - toArray
+const list29 = new LinkedList();
+list29.add(1).add(2);
+assert(JSON.stringify(list29.toArray()) === JSON.stringify([1, 2]), 'LinkedList: toArray works');
 
-      expect(handler).toHaveBeenCalledTimes(1);
-    });
+// Test 30: LinkedList - remove
+const list30 = new LinkedList();
+list30.add(1).add(2).add(3);
+list30.remove(2);
+assert(JSON.stringify(list30.toArray()) === JSON.stringify([1, 3]), 'LinkedList: remove works');
 
-    it('should count listeners', () => {
-      const emitter = new EventEmitter();
+// Test 31: LinkedList - find
+const list31 = new LinkedList();
+list31.add({ id: 1 }).add({ id: 2 }).add({ id: 3 });
+const found31 = list31.find(item => item.id === 2);
+assert(found31 && found31.id === 2, 'LinkedList: find works');
 
-      emitter.on('test', () => {});
-      emitter.on('test', () => {});
+// Test 32: LinkedList - addFirst
+const list32 = new LinkedList();
+list32.add(2).add(3);
+list32.addFirst(1);
+assert(JSON.stringify(list32.toArray()) === JSON.stringify([1, 2, 3]), 'LinkedList: addFirst works');
 
-      expect(emitter.listenerCount('test')).toBe(2);
-    });
+// Test 33: LinkedList - from
+const list33 = LinkedList.from([1, 2, 3]);
+assert(JSON.stringify(list33.toArray()) === JSON.stringify([1, 2, 3]), 'LinkedList.from works');
 
-    it('should remove all listeners', () => {
-      const emitter = new EventEmitter();
+// Test 34: LinkedList - isEmpty
+const list34 = new LinkedList();
+assert(list34.isEmpty === true, 'LinkedList: isEmpty true when empty');
+list34.add(1);
+assert(list34.isEmpty === false, 'LinkedList: isEmpty false after add');
 
-      emitter.on('test', () => {});
-      emitter.on('test', () => {});
-      emitter.removeAllListeners('test');
-
-      expect(emitter.listenerCount('test')).toBe(0);
-    });
-
-    it('should allow method chaining', () => {
-      const emitter = new EventEmitter();
-
-      const result = emitter
-        .on('a', () => {})
-        .on('b', () => {})
-        .once('c', () => {});
-
-      expect(result).toBe(emitter);
-    });
-  });
-
-  describe('LinkedList class', () => {
-    it('should add items', () => {
-      const list = new LinkedList();
-      list.add(1).add(2).add(3);
-      expect(list.size).toBe(3);
-    });
-
-    it('should be iterable', () => {
-      const list = new LinkedList();
-      list.add(1).add(2).add(3);
-      expect([...list]).toEqual([1, 2, 3]);
-    });
-
-    it('should convert to array', () => {
-      const list = new LinkedList();
-      list.add(1).add(2);
-      expect(list.toArray()).toEqual([1, 2]);
-    });
-
-    it('should remove items', () => {
-      const list = new LinkedList();
-      list.add(1).add(2).add(3);
-      list.remove(2);
-      expect(list.toArray()).toEqual([1, 3]);
-    });
-
-    it('should find items', () => {
-      const list = new LinkedList();
-      list.add({ id: 1 }).add({ id: 2 }).add({ id: 3 });
-      const found = list.find(item => item.id === 2);
-      expect(found).toEqual({ id: 2 });
-    });
-
-    it('should add to beginning', () => {
-      const list = new LinkedList();
-      list.add(2).add(3);
-      list.addFirst(1);
-      expect(list.toArray()).toEqual([1, 2, 3]);
-    });
-
-    it('should create from iterable', () => {
-      const list = LinkedList.from([1, 2, 3]);
-      expect(list.toArray()).toEqual([1, 2, 3]);
-    });
-
-    it('should report isEmpty', () => {
-      const list = new LinkedList();
-      expect(list.isEmpty).toBe(true);
-      list.add(1);
-      expect(list.isEmpty).toBe(false);
-    });
-  });
-});
+console.log('\n' + '='.repeat(50));
+console.log(`Results: ${passed} passed, ${failed} failed`);
+console.log('='.repeat(50));

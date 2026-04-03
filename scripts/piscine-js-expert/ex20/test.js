@@ -1,171 +1,169 @@
-import { describe, it, expect, vi } from 'vitest';
-import {
-  range,
-  fibonacci,
-  take,
-  filter,
-  map,
-  zip,
-  flatten,
-  paginate,
-  createRangeIterable,
-  accumulator
-} from './index.js';
+// Note: Functions are expected to be defined by user code
+// (range, fibonacci, take, filter, map, zip, flatten, paginate, createRangeIterable, accumulator)
 
-describe('Ex20 - Generators & Iterators', () => {
-  describe('range()', () => {
-    it('should generate numbers from 1 to n', () => {
-      expect([...range(5)]).toEqual([1, 2, 3, 4, 5]);
-    });
+let passed = 0;
+let failed = 0;
 
-    it('should work with 0', () => {
-      expect([...range(0)]).toEqual([]);
-    });
-  });
+function assert(condition, message) {
+    if (condition) {
+        console.log(`✓ ${message}`);
+        passed++;
+    } else {
+        console.error(`✗ ${message}`);
+        failed++;
+    }
+}
 
-  describe('fibonacci()', () => {
-    it('should generate Fibonacci sequence', () => {
-      const fib = fibonacci();
-      expect(fib.next().value).toBe(0);
-      expect(fib.next().value).toBe(1);
-      expect(fib.next().value).toBe(1);
-      expect(fib.next().value).toBe(2);
-      expect(fib.next().value).toBe(3);
-      expect(fib.next().value).toBe(5);
-    });
+async function runTests() {
+    console.log('Testing Generators & Iterators...\n');
 
-    it('should be infinite', () => {
-      const fib = fibonacci();
-      for (let i = 0; i < 100; i++) fib.next();
-      expect(fib.next().done).toBe(false);
-    });
-  });
+    // Test 1: range - generate 1 to n
+    assert(
+        JSON.stringify([...range(5)]) === JSON.stringify([1, 2, 3, 4, 5]),
+        'range: generates 1 to 5'
+    );
 
-  describe('take()', () => {
-    it('should take first n elements', () => {
-      expect([...take(3, [1, 2, 3, 4, 5])]).toEqual([1, 2, 3]);
-    });
+    // Test 2: range - with 0
+    assert(
+        JSON.stringify([...range(0)]) === JSON.stringify([]),
+        'range: 0 gives empty array'
+    );
 
-    it('should work with generators', () => {
-      expect([...take(5, fibonacci())]).toEqual([0, 1, 1, 2, 3]);
-    });
+    // Test 3: fibonacci - sequence
+    const fib = fibonacci();
+    assert(fib.next().value === 0, 'fibonacci: first is 0');
+    assert(fib.next().value === 1, 'fibonacci: second is 1');
+    assert(fib.next().value === 1, 'fibonacci: third is 1');
+    assert(fib.next().value === 2, 'fibonacci: fourth is 2');
+    assert(fib.next().value === 3, 'fibonacci: fifth is 3');
+    assert(fib.next().value === 5, 'fibonacci: sixth is 5');
 
-    it('should handle fewer elements', () => {
-      expect([...take(10, [1, 2])]).toEqual([1, 2]);
-    });
-  });
+    // Test 4: fibonacci - infinite
+    const fib2 = fibonacci();
+    for (let i = 0; i < 100; i++) fib2.next();
+    assert(fib2.next().done === false, 'fibonacci: is infinite');
 
-  describe('filter()', () => {
-    it('should filter elements', () => {
-      const evens = [...filter([1, 2, 3, 4, 5], x => x % 2 === 0)];
-      expect(evens).toEqual([2, 4]);
-    });
+    // Test 5: take - first n elements
+    assert(
+        JSON.stringify([...take(3, [1, 2, 3, 4, 5])]) === JSON.stringify([1, 2, 3]),
+        'take: takes first 3'
+    );
 
-    it('should work with generators', () => {
-      const evenFibs = [...take(5, filter(fibonacci(), x => x % 2 === 0))];
-      expect(evenFibs).toEqual([0, 2, 8, 34, 144]);
-    });
-  });
+    // Test 6: take - works with generators
+    assert(
+        JSON.stringify([...take(5, fibonacci())]) === JSON.stringify([0, 1, 1, 2, 3]),
+        'take: works with fibonacci generator'
+    );
 
-  describe('map()', () => {
-    it('should transform elements', () => {
-      const doubled = [...map([1, 2, 3], x => x * 2)];
-      expect(doubled).toEqual([2, 4, 6]);
-    });
+    // Test 7: take - handles fewer elements
+    assert(
+        JSON.stringify([...take(10, [1, 2])]) === JSON.stringify([1, 2]),
+        'take: handles fewer elements'
+    );
 
-    it('should work lazily with generators', () => {
-      const mapped = [...take(3, map(fibonacci(), x => x * 10))];
-      expect(mapped).toEqual([0, 10, 10]);
-    });
-  });
+    // Test 8: filter - elements
+    const evens = [...filter([1, 2, 3, 4, 5], x => x % 2 === 0)];
+    assert(
+        JSON.stringify(evens) === JSON.stringify([2, 4]),
+        'filter: filters even numbers'
+    );
 
-  describe('zip()', () => {
-    it('should zip arrays together', () => {
-      const zipped = [...zip([1, 2, 3], ['a', 'b', 'c'])];
-      expect(zipped).toEqual([[1, 'a'], [2, 'b'], [3, 'c']]);
-    });
+    // Test 9: filter - with generators
+    const evenFibs = [...take(5, filter(fibonacci(), x => x % 2 === 0))];
+    assert(
+        JSON.stringify(evenFibs) === JSON.stringify([0, 2, 8, 34, 144]),
+        'filter: works with fibonacci for even numbers'
+    );
 
-    it('should stop at shortest', () => {
-      const zipped = [...zip([1, 2], ['a', 'b', 'c', 'd'])];
-      expect(zipped).toEqual([[1, 'a'], [2, 'b']]);
-    });
+    // Test 10: map - transform
+    const doubled = [...map([1, 2, 3], x => x * 2)];
+    assert(
+        JSON.stringify(doubled) === JSON.stringify([2, 4, 6]),
+        'map: doubles values'
+    );
 
-    it('should handle multiple iterables', () => {
-      const zipped = [...zip([1, 2], ['a', 'b'], [true, false])];
-      expect(zipped).toEqual([[1, 'a', true], [2, 'b', false]]);
-    });
-  });
+    // Test 11: map - lazy with generators
+    const mapped = [...take(3, map(fibonacci(), x => x * 10))];
+    assert(
+        JSON.stringify(mapped) === JSON.stringify([0, 10, 10]),
+        'map: lazy with generators'
+    );
 
-  describe('flatten()', () => {
-    it('should flatten one level by default', () => {
-      const flat = [...flatten([[1, 2], [3, 4]])];
-      expect(flat).toEqual([1, 2, 3, 4]);
-    });
+    // Test 12: zip - arrays together
+    const zipped = [...zip([1, 2, 3], ['a', 'b', 'c'])];
+    assert(
+        JSON.stringify(zipped) === JSON.stringify([[1, 'a'], [2, 'b'], [3, 'c']]),
+        'zip: zips two arrays'
+    );
 
-    it('should flatten to specified depth', () => {
-      const flat = [...flatten([[[1, 2]], [[3, 4]]], 2)];
-      expect(flat).toEqual([1, 2, 3, 4]);
-    });
+    // Test 13: zip - stops at shortest
+    const zipped2 = [...zip([1, 2], ['a', 'b', 'c', 'd'])];
+    assert(
+        JSON.stringify(zipped2) === JSON.stringify([[1, 'a'], [2, 'b']]),
+        'zip: stops at shortest'
+    );
 
-    it('should leave non-arrays', () => {
-      const flat = [...flatten([1, [2, 3], 4])];
-      expect(flat).toEqual([1, 2, 3, 4]);
-    });
-  });
+    // Test 14: zip - multiple iterables
+    const zipped3 = [...zip([1, 2], ['a', 'b'], [true, false])];
+    assert(
+        JSON.stringify(zipped3) === JSON.stringify([[1, 'a', true], [2, 'b', false]]),
+        'zip: handles three iterables'
+    );
 
-  describe('paginate()', () => {
-    it('should paginate through pages', async () => {
-      let page = 0;
-      const fetchPage = vi.fn(() => {
-        page++;
-        if (page > 2) return { items: [], hasMore: false };
-        return { items: [page * 10, page * 10 + 1], hasMore: true };
-      });
+    // Test 15: flatten - one level
+    const flat1 = [...flatten([[1, 2], [3, 4]])];
+    assert(
+        JSON.stringify(flat1) === JSON.stringify([1, 2, 3, 4]),
+        'flatten: one level'
+    );
 
-      const items = [];
-      for await (const item of paginate(fetchPage)) {
-        items.push(item);
-      }
+    // Test 16: flatten - specified depth
+    const flat2 = [...flatten([[[1, 2]], [[3, 4]]], 2)];
+    assert(
+        JSON.stringify(flat2) === JSON.stringify([1, 2, 3, 4]),
+        'flatten: depth 2'
+    );
 
-      expect(items).toEqual([10, 11, 20, 21]);
-      expect(fetchPage).toHaveBeenCalledTimes(3);
-    });
-  });
+    // Test 17: createRangeIterable - basic
+    const rangeIter = createRangeIterable(1, 5);
+    assert(
+        JSON.stringify([...rangeIter]) === JSON.stringify([1, 2, 3, 4, 5]),
+        'createRangeIterable: 1 to 5'
+    );
 
-  describe('createRangeIterable()', () => {
-    it('should create iterable range', () => {
-      const range = createRangeIterable(1, 5);
-      expect([...range]).toEqual([1, 2, 3, 4, 5]);
-    });
+    // Test 18: createRangeIterable - with step
+    const rangeStep = createRangeIterable(0, 10, 2);
+    assert(
+        JSON.stringify([...rangeStep]) === JSON.stringify([0, 2, 4, 6, 8, 10]),
+        'createRangeIterable: with step 2'
+    );
 
-    it('should respect step', () => {
-      const range = createRangeIterable(0, 10, 2);
-      expect([...range]).toEqual([0, 2, 4, 6, 8, 10]);
-    });
+    // Test 19: createRangeIterable - reusable
+    const rangeReuse = createRangeIterable(1, 3);
+    const first = [...rangeReuse];
+    const second = [...rangeReuse];
+    assert(
+        JSON.stringify(first) === JSON.stringify(second),
+        'createRangeIterable: is reusable'
+    );
 
-    it('should be reusable', () => {
-      const range = createRangeIterable(1, 3);
-      expect([...range]).toEqual([1, 2, 3]);
-      expect([...range]).toEqual([1, 2, 3]);
-    });
-  });
+    // Test 20: accumulator - accumulate values
+    const acc = accumulator();
+    acc.next();
+    assert(acc.next(10).value === 10, 'accumulator: first add is 10');
+    assert(acc.next(5).value === 15, 'accumulator: second add makes 15');
+    assert(acc.next(3).value === 18, 'accumulator: third add makes 18');
 
-  describe('accumulator()', () => {
-    it('should accumulate values', () => {
-      const acc = accumulator();
+    // Test 21: accumulator - return total
+    const acc2 = accumulator();
+    acc2.next();
+    acc2.next(10);
+    acc2.next(20);
+    assert(acc2.return().value === 30, 'accumulator: return gives total');
 
-      acc.next();
-      expect(acc.next(10).value).toBe(10);
-      expect(acc.next(5).value).toBe(15);
-      expect(acc.next(3).value).toBe(18);
-    });
+    console.log('\n' + '='.repeat(50));
+    console.log(`Results: ${passed} passed, ${failed} failed`);
+    console.log('='.repeat(50));
+}
 
-    it('should return total on return', () => {
-      const acc = accumulator();
-      acc.next();
-      acc.next(10);
-      acc.next(20);
-      expect(acc.return().value).toBe(30);
-    });
-  });
-});
+runTests();

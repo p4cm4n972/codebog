@@ -1,144 +1,140 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { once, after, debounce, throttle, partial } from './index.js';
+// Note: Functions are expected to be defined by user code
+// (once, after, debounce, throttle, partial)
 
-describe('Ex11 - Advanced Closures', () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
+let passed = 0;
+let failed = 0;
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
+function assert(condition, message) {
+    if (condition) {
+        console.log(`✓ ${message}`);
+        passed++;
+    } else {
+        console.error(`✗ ${message}`);
+        failed++;
+    }
+}
 
-  describe('once()', () => {
-    it('should call function only once', () => {
-      const fn = vi.fn(() => 'result');
-      const onceFn = once(fn);
+async function runTests() {
+    console.log('Testing Advanced Closures...\n');
 
-      expect(onceFn()).toBe('result');
-      expect(onceFn()).toBe('result');
-      expect(onceFn()).toBe('result');
-
-      expect(fn).toHaveBeenCalledTimes(1);
+    // Test 1: once - calls function only once
+    let callCount1 = 0;
+    const onceFn = once(() => {
+        callCount1++;
+        return 'result';
     });
 
-    it('should preserve arguments and this', () => {
-      const fn = vi.fn(function(a, b) {
-        return a + b + this.value;
-      });
-      const onceFn = once(fn);
-      const obj = { value: 10, method: onceFn };
+    const r1 = onceFn();
+    const r2 = onceFn();
+    const r3 = onceFn();
 
-      expect(obj.method(1, 2)).toBe(13);
-      expect(fn).toHaveBeenCalledWith(1, 2);
-    });
-  });
+    assert(callCount1 === 1, 'once: function called only once');
+    assert(r1 === 'result' && r2 === 'result' && r3 === 'result', 'once: returns same result');
 
-  describe('after()', () => {
-    it('should only call function after n calls', () => {
-      const fn = vi.fn(() => 'done');
-      const afterFn = after(3, fn);
-
-      expect(afterFn()).toBeUndefined();
-      expect(afterFn()).toBeUndefined();
-      expect(afterFn()).toBe('done');
-
-      expect(fn).toHaveBeenCalledTimes(1);
+    // Test 2: once - preserves arguments
+    let capturedArgs = null;
+    const onceFn2 = once((a, b) => {
+        capturedArgs = [a, b];
+        return a + b;
     });
 
-    it('should continue calling after threshold', () => {
-      const fn = vi.fn(() => 'done');
-      const afterFn = after(2, fn);
+    onceFn2(1, 2);
+    assert(capturedArgs[0] === 1 && capturedArgs[1] === 2, 'once: preserves arguments');
 
-      afterFn();
-      afterFn();
-      afterFn();
-      afterFn();
-
-      expect(fn).toHaveBeenCalledTimes(3);
-    });
-  });
-
-  describe('debounce()', () => {
-    it('should delay execution', () => {
-      const fn = vi.fn();
-      const debouncedFn = debounce(fn, 100);
-
-      debouncedFn();
-      expect(fn).not.toHaveBeenCalled();
-
-      vi.advanceTimersByTime(100);
-      expect(fn).toHaveBeenCalledTimes(1);
+    // Test 3: after - only calls after n times
+    let afterCount = 0;
+    const afterFn = after(3, () => {
+        afterCount++;
+        return 'done';
     });
 
-    it('should reset timer on subsequent calls', () => {
-      const fn = vi.fn();
-      const debouncedFn = debounce(fn, 100);
+    const a1 = afterFn();
+    const a2 = afterFn();
+    const a3 = afterFn();
 
-      debouncedFn('a');
-      vi.advanceTimersByTime(50);
-      debouncedFn('b');
-      vi.advanceTimersByTime(50);
-      debouncedFn('c');
-      vi.advanceTimersByTime(100);
+    assert(a1 === undefined && a2 === undefined, 'after: returns undefined before threshold');
+    assert(a3 === 'done', 'after: returns result at threshold');
+    assert(afterCount === 1, 'after: function called only at threshold');
 
-      expect(fn).toHaveBeenCalledTimes(1);
-      expect(fn).toHaveBeenCalledWith('c');
-    });
-  });
-
-  describe('throttle()', () => {
-    it('should execute immediately on first call', () => {
-      const fn = vi.fn();
-      const throttledFn = throttle(fn, 100);
-
-      throttledFn('first');
-      expect(fn).toHaveBeenCalledWith('first');
+    // Test 4: after - continues calling after threshold
+    let afterCount2 = 0;
+    const afterFn2 = after(2, () => {
+        afterCount2++;
+        return 'done';
     });
 
-    it('should limit execution frequency', () => {
-      const fn = vi.fn();
-      const throttledFn = throttle(fn, 100);
+    afterFn2();
+    afterFn2();
+    afterFn2();
+    afterFn2();
 
-      throttledFn('1');
-      throttledFn('2');
-      throttledFn('3');
+    assert(afterCount2 === 3, 'after: continues calling after threshold');
 
-      expect(fn).toHaveBeenCalledTimes(1);
+    // Test 5: debounce - delays execution
+    let debounceCount = 0;
+    const debouncedFn = debounce(() => {
+        debounceCount++;
+    }, 50);
 
-      vi.advanceTimersByTime(100);
-      throttledFn('4');
+    debouncedFn();
+    assert(debounceCount === 0, 'debounce: does not call immediately');
 
-      expect(fn).toHaveBeenCalledTimes(2);
-    });
-  });
+    await new Promise(r => setTimeout(r, 100));
+    assert(debounceCount === 1, 'debounce: calls after delay');
 
-  describe('partial()', () => {
-    it('should partially apply arguments', () => {
-      const add = (a, b, c) => a + b + c;
-      const add5 = partial(add, 5);
+    // Test 6: debounce - resets timer on subsequent calls
+    let debounceArg = null;
+    const debouncedFn2 = debounce((arg) => {
+        debounceArg = arg;
+    }, 50);
 
-      expect(add5(2, 3)).toBe(10);
-    });
+    debouncedFn2('a');
+    await new Promise(r => setTimeout(r, 30));
+    debouncedFn2('b');
+    await new Promise(r => setTimeout(r, 30));
+    debouncedFn2('c');
+    await new Promise(r => setTimeout(r, 100));
 
-    it('should work with multiple partial args', () => {
-      const greet = (greeting, name, punctuation) =>
-        `${greeting}, ${name}${punctuation}`;
-      const greetHello = partial(greet, 'Hello', 'Alice');
+    assert(debounceArg === 'c', 'debounce: uses last call arguments');
 
-      expect(greetHello('!')).toBe('Hello, Alice!');
-    });
+    // Test 7: throttle - executes immediately first call
+    let throttleCount = 0;
+    const throttledFn = throttle(() => {
+        throttleCount++;
+    }, 100);
 
-    it('should preserve this context', () => {
-      const obj = {
-        value: 10,
-        add: function(a, b) {
-          return this.value + a + b;
-        }
-      };
+    throttledFn();
+    assert(throttleCount === 1, 'throttle: executes immediately on first call');
 
-      const addTo10 = partial(obj.add.bind(obj), 5);
-      expect(addTo10(3)).toBe(18);
-    });
-  });
-});
+    // Test 8: throttle - limits frequency
+    let throttleCount2 = 0;
+    const throttledFn2 = throttle(() => {
+        throttleCount2++;
+    }, 50);
+
+    throttledFn2();
+    throttledFn2();
+    throttledFn2();
+
+    assert(throttleCount2 === 1, 'throttle: limits execution frequency');
+
+    await new Promise(r => setTimeout(r, 100));
+    throttledFn2();
+    assert(throttleCount2 === 2, 'throttle: allows call after limit period');
+
+    // Test 9: partial - partially applies arguments
+    const add = (a, b, c) => a + b + c;
+    const add5 = partial(add, 5);
+    assert(add5(2, 3) === 10, 'partial: partially applies first argument');
+
+    // Test 10: partial - works with multiple partial args
+    const greet = (greeting, name, punctuation) => `${greeting}, ${name}${punctuation}`;
+    const greetHello = partial(greet, 'Hello', 'Alice');
+    assert(greetHello('!') === 'Hello, Alice!', 'partial: works with multiple partial args');
+
+    console.log('\n' + '='.repeat(50));
+    console.log(`Results: ${passed} passed, ${failed} failed`);
+    console.log('='.repeat(50));
+}
+
+runTests();

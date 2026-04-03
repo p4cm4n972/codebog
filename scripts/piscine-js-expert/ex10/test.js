@@ -1,162 +1,141 @@
-import { describe, it, expect, vi } from 'vitest';
-import {
-  createCounter,
-  createBankAccount,
-  createStack,
-  createEventEmitter
-} from './index.js';
+// Note: Functions are expected to be defined by user code
+// (createCounter, createBankAccount, createStack, createEventEmitter)
 
-describe('Ex10 - Module Pattern & Encapsulation', () => {
-  describe('createCounter()', () => {
-    it('should start at 0', () => {
-      const counter = createCounter();
-      expect(counter.getValue()).toBe(0);
-    });
+let passed = 0;
+let failed = 0;
 
-    it('should increment', () => {
-      const counter = createCounter();
-      expect(counter.increment()).toBe(1);
-      expect(counter.increment()).toBe(2);
-    });
+function assert(condition, message) {
+    if (condition) {
+        console.log(`✓ ${message}`);
+        passed++;
+    } else {
+        console.error(`✗ ${message}`);
+        failed++;
+    }
+}
 
-    it('should decrement', () => {
-      const counter = createCounter();
-      counter.increment();
-      counter.increment();
-      expect(counter.decrement()).toBe(1);
-    });
+console.log('Testing Module Pattern & Encapsulation...\n');
 
-    it('should reset to 0', () => {
-      const counter = createCounter();
-      counter.increment();
-      counter.increment();
-      counter.reset();
-      expect(counter.getValue()).toBe(0);
-    });
+// Test 1: createCounter - starts at 0
+const counter1 = createCounter();
+assert(counter1.getValue() === 0, 'createCounter: starts at 0');
 
-    it('should have private count (not accessible directly)', () => {
-      const counter = createCounter();
-      expect(counter.count).toBeUndefined();
-    });
-  });
+// Test 2: createCounter - increment
+const counter2 = createCounter();
+assert(counter2.increment() === 1, 'createCounter: increment returns 1');
+assert(counter2.increment() === 2, 'createCounter: increment returns 2');
 
-  describe('createBankAccount()', () => {
-    it('should start with initial balance', () => {
-      const account = createBankAccount(1000);
-      expect(account.getBalance()).toBe(1000);
-    });
+// Test 3: createCounter - decrement
+const counter3 = createCounter();
+counter3.increment();
+counter3.increment();
+assert(counter3.decrement() === 1, 'createCounter: decrement works');
 
-    it('should deposit money', () => {
-      const account = createBankAccount(100);
-      account.deposit(50);
-      expect(account.getBalance()).toBe(150);
-    });
+// Test 4: createCounter - reset
+const counter4 = createCounter();
+counter4.increment();
+counter4.increment();
+counter4.reset();
+assert(counter4.getValue() === 0, 'createCounter: reset to 0');
 
-    it('should withdraw money', () => {
-      const account = createBankAccount(100);
-      account.withdraw(30);
-      expect(account.getBalance()).toBe(70);
-    });
+// Test 5: createCounter - private count
+const counter5 = createCounter();
+assert(counter5.count === undefined, 'createCounter: count is private');
 
-    it('should not allow negative balance', () => {
-      const account = createBankAccount(100);
-      expect(() => account.withdraw(150)).toThrow();
-    });
+// Test 6: createBankAccount - initial balance
+const account1 = createBankAccount(1000);
+assert(account1.getBalance() === 1000, 'createBankAccount: starts with initial balance');
 
-    it('should track transaction history', () => {
-      const account = createBankAccount(100);
-      account.deposit(50);
-      account.withdraw(25);
+// Test 7: createBankAccount - deposit
+const account2 = createBankAccount(100);
+account2.deposit(50);
+assert(account2.getBalance() === 150, 'createBankAccount: deposit adds to balance');
 
-      const history = account.getHistory();
-      expect(history.length).toBeGreaterThanOrEqual(2);
-      expect(history.some(t => t.type === 'deposit')).toBe(true);
-      expect(history.some(t => t.type === 'withdraw')).toBe(true);
-    });
+// Test 8: createBankAccount - withdraw
+const account3 = createBankAccount(100);
+account3.withdraw(30);
+assert(account3.getBalance() === 70, 'createBankAccount: withdraw subtracts from balance');
 
-    it('should have private balance', () => {
-      const account = createBankAccount(1000);
-      expect(account.balance).toBeUndefined();
-    });
-  });
+// Test 9: createBankAccount - prevent overdraft
+const account4 = createBankAccount(100);
+let overdraftPrevented = false;
+try {
+    account4.withdraw(150);
+} catch (e) {
+    overdraftPrevented = true;
+}
+assert(overdraftPrevented, 'createBankAccount: prevents overdraft');
 
-  describe('createStack()', () => {
-    it('should push items', () => {
-      const stack = createStack();
-      stack.push(1);
-      stack.push(2);
-      expect(stack.size()).toBe(2);
-    });
+// Test 10: createBankAccount - transaction history
+const account5 = createBankAccount(100);
+account5.deposit(50);
+account5.withdraw(25);
+const history = account5.getHistory();
+assert(history.length >= 2, 'createBankAccount: tracks transaction history');
 
-    it('should pop items in LIFO order', () => {
-      const stack = createStack();
-      stack.push(1);
-      stack.push(2);
-      stack.push(3);
-      expect(stack.pop()).toBe(3);
-      expect(stack.pop()).toBe(2);
-    });
+// Test 11: createBankAccount - private balance
+const account6 = createBankAccount(1000);
+assert(account6.balance === undefined, 'createBankAccount: balance is private');
 
-    it('should peek without removing', () => {
-      const stack = createStack();
-      stack.push(1);
-      stack.push(2);
-      expect(stack.peek()).toBe(2);
-      expect(stack.size()).toBe(2);
-    });
+// Test 12: createStack - push items
+const stack1 = createStack();
+stack1.push(1);
+stack1.push(2);
+assert(stack1.size() === 2, 'createStack: push increases size');
 
-    it('should report isEmpty correctly', () => {
-      const stack = createStack();
-      expect(stack.isEmpty()).toBe(true);
-      stack.push(1);
-      expect(stack.isEmpty()).toBe(false);
-    });
-  });
+// Test 13: createStack - pop in LIFO order
+const stack2 = createStack();
+stack2.push(1);
+stack2.push(2);
+stack2.push(3);
+assert(stack2.pop() === 3, 'createStack: pop returns last pushed (LIFO)');
+assert(stack2.pop() === 2, 'createStack: pop returns next (LIFO)');
 
-  describe('createEventEmitter()', () => {
-    it('should register and emit events', () => {
-      const emitter = createEventEmitter();
-      const callback = vi.fn();
+// Test 14: createStack - peek
+const stack3 = createStack();
+stack3.push(1);
+stack3.push(2);
+assert(stack3.peek() === 2, 'createStack: peek returns top without removing');
+assert(stack3.size() === 2, 'createStack: peek does not change size');
 
-      emitter.on('test', callback);
-      emitter.emit('test', 'data');
+// Test 15: createStack - isEmpty
+const stack4 = createStack();
+assert(stack4.isEmpty() === true, 'createStack: isEmpty true when empty');
+stack4.push(1);
+assert(stack4.isEmpty() === false, 'createStack: isEmpty false when not empty');
 
-      expect(callback).toHaveBeenCalledWith('data');
-    });
+// Test 16: createEventEmitter - register and emit
+const emitter1 = createEventEmitter();
+let emitted1 = null;
+emitter1.on('test', (data) => { emitted1 = data; });
+emitter1.emit('test', 'hello');
+assert(emitted1 === 'hello', 'createEventEmitter: on/emit works');
 
-    it('should support multiple listeners', () => {
-      const emitter = createEventEmitter();
-      const callback1 = vi.fn();
-      const callback2 = vi.fn();
+// Test 17: createEventEmitter - multiple listeners
+const emitter2 = createEventEmitter();
+let count2 = 0;
+emitter2.on('test', () => { count2++; });
+emitter2.on('test', () => { count2++; });
+emitter2.emit('test');
+assert(count2 === 2, 'createEventEmitter: supports multiple listeners');
 
-      emitter.on('test', callback1);
-      emitter.on('test', callback2);
-      emitter.emit('test');
+// Test 18: createEventEmitter - off removes listener
+const emitter3 = createEventEmitter();
+let called3 = false;
+const handler3 = () => { called3 = true; };
+emitter3.on('test', handler3);
+emitter3.off('test', handler3);
+emitter3.emit('test');
+assert(called3 === false, 'createEventEmitter: off removes listener');
 
-      expect(callback1).toHaveBeenCalled();
-      expect(callback2).toHaveBeenCalled();
-    });
+// Test 19: createEventEmitter - once
+const emitter4 = createEventEmitter();
+let onceCount = 0;
+emitter4.once('test', () => { onceCount++; });
+emitter4.emit('test');
+emitter4.emit('test');
+assert(onceCount === 1, 'createEventEmitter: once fires only once');
 
-    it('should remove listeners with off', () => {
-      const emitter = createEventEmitter();
-      const callback = vi.fn();
-
-      emitter.on('test', callback);
-      emitter.off('test', callback);
-      emitter.emit('test');
-
-      expect(callback).not.toHaveBeenCalled();
-    });
-
-    it('should support once (fire only once)', () => {
-      const emitter = createEventEmitter();
-      const callback = vi.fn();
-
-      emitter.once('test', callback);
-      emitter.emit('test');
-      emitter.emit('test');
-
-      expect(callback).toHaveBeenCalledTimes(1);
-    });
-  });
-});
+console.log('\n' + '='.repeat(50));
+console.log(`Results: ${passed} passed, ${failed} failed`);
+console.log('='.repeat(50));

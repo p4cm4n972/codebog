@@ -1,0 +1,137 @@
+{
+  "timestamp": "2026-02-08T10:16:26.777Z",
+  "model": "flux-schnell",
+  "style": "mixed (pixel art icons + digital art banners)",
+  "results": [
+    {
+      "id": "expert-mod-fundamentals",
+      "success": true,
+      "path": "/home/itmade/Documents/ITMADE-STUDIO/codebog/codebog-web/public/images/curriculum/icons/expert-mod-fundamentals.png"
+    },
+    {
+      "id": "expert-mod-structures",
+      "success": true,
+      "path": "/home/itmade/Documents/ITMADE-STUDIO/codebog/codebog-web/public/images/curriculum/icons/expert-mod-structures.png"
+    },
+    {
+      "id": "expert-mod-async",
+      "success": true,
+      "path": "/home/itmade/Documents/ITMADE-STUDIO/codebog/codebog-web/public/images/curriculum/icons/expert-mod-async.png"
+    },
+    {
+      "id": "expert-mod-patterns",
+      "success": true,
+      "path": "/home/itmade/Documents/ITMADE-STUDIO/codebog/codebog-web/public/images/curriculum/icons/expert-mod-patterns.png"
+    },
+    {
+      "id": "ydkjs-mod-welcome",
+      "success": true,
+      "path": "/home/itmade/Documents/ITMADE-STUDIO/codebog/codebog-web/public/images/curriculum/icons/ydkjs-mod-welcome.png"
+    },
+    {
+      "id": "ydkjs-mod-primitives",
+      "success": true,
+      "path": "/home/itmade/Documents/ITMADE-STUDIO/codebog/codebog-web/public/images/curriculum/icons/ydkjs-mod-primitives.png"
+    },
+    {
+      "id": "ydkjs-mod-scope",
+      "success": true,
+      "path": "/home/itmade/Documents/ITMADE-STUDIO/codebog/codebog-web/public/images/curriculum/icons/ydkjs-mod-scope.png"
+    },
+    {
+      "id": "ydkjs-mod-closures",
+      "success": true,
+      "path": "/home/itmade/Documents/ITMADE-STUDIO/codebog/codebog-web/public/images/curriculum/icons/ydkjs-mod-closures.png"
+    },
+    {
+      "id": "ydkjs-mod-this",
+      "success": true,
+      "path": "/home/itmade/Documents/ITMADE-STUDIO/codebog/codebog-web/public/images/curriculum/icons/ydkjs-mod-this.png"
+    },
+    {
+      "id": "ydkjs-mod-prototype",
+      "success": true,
+      "path": "/home/itmade/Documents/ITMADE-STUDIO/codebog/codebog-web/public/images/curriculum/icons/ydkjs-mod-prototype.png"
+    },
+    {
+      "id": "ydkjs-mod-async-river",
+      "success": true,
+      "path": "/home/itmade/Documents/ITMADE-STUDIO/codebog/codebog-web/public/images/curriculum/icons/ydkjs-mod-async-river.png"
+    },
+    {
+      "id": "ydkjs-mod-esnext",
+      "success": true,
+      "path": "/home/itmade/Documents/ITMADE-STUDIO/codebog/codebog-web/public/images/curriculum/icons/ydkjs-mod-esnext.png"
+    },
+    {
+      "id": "goodparts-mod-syntax",
+      "success": true,
+      "path": "/home/itmade/Documents/ITMADE-STUDIO/codebog/codebog-web/public/images/curriculum/icons/goodparts-mod-syntax.png"
+    },
+    {
+      "id": "goodparts-mod-objects",
+      "success": true,
+      "path": "/home/itmade/Documents/ITMADE-STUDIO/codebog/codebog-web/public/images/curriculum/icons/goodparts-mod-objects.png"
+    },
+    {
+      "id": "goodparts-mod-functions",
+      "success": true,
+      "path": "/home/itmade/Documents/ITMADE-STUDIO/codebog/codebog-web/public/images/curriculum/icons/goodparts-mod-functions.png"
+    },
+    {
+      "id": "goodparts-mod-inheritance",
+      "success": true,
+      "path": "/home/itmade/Documents/ITMADE-STUDIO/codebog/codebog-web/public/images/curriculum/icons/goodparts-mod-inheritance.png"
+    },
+    {
+      "id": "goodparts-mod-arrays",
+      "success": true,
+      "path": "/home/itmade/Documents/ITMADE-STUDIO/codebog/codebog-web/public/images/curriculum/icons/goodparts-mod-arrays.png"
+    },
+    {
+      "id": "goodparts-mod-regex",
+      "success": true,
+      "path": "/home/itmade/Documents/ITMADE-STUDIO/codebog/codebog-web/public/images/curriculum/icons/goodparts-mod-regex.png"
+    },
+    {
+      "id": "goodparts-mod-style",
+      "success": true,
+      "path": "/home/itmade/Documents/ITMADE-STUDIO/codebog/codebog-web/public/images/curriculum/icons/goodparts-mod-style.png"
+    },
+    {
+      "id": "browser-mod-dombasics",
+      "success": true,
+      "path": "/home/itmade/Documents/ITMADE-STUDIO/codebog/codebog-web/public/images/curriculum/icons/browser-mod-dombasics.png"
+    },
+    {
+      "id": "browser-mod-events",
+      "success": true,
+      "path": "/home/itmade/Documents/ITMADE-STUDIO/codebog/codebog-web/public/images/curriculum/icons/browser-mod-events.png"
+    },
+    {
+      "id": "browser-mod-forms",
+      "success": true,
+      "path": "/home/itmade/Documents/ITMADE-STUDIO/codebog/codebog-web/public/images/curriculum/icons/browser-mod-forms.png"
+    },
+    {
+      "id": "browser-mod-async",
+      "success": true,
+      "path": "/home/itmade/Documents/ITMADE-STUDIO/codebog/codebog-web/public/images/curriculum/icons/browser-mod-async.png"
+    },
+    {
+      "id": "browser-mod-storage",
+      "success": true,
+      "path": "/home/itmade/Documents/ITMADE-STUDIO/codebog/codebog-web/public/images/curriculum/icons/browser-mod-storage.png"
+    },
+    {
+      "id": "browser-mod-canvas",
+      "success": true,
+      "path": "/home/itmade/Documents/ITMADE-STUDIO/codebog/codebog-web/public/images/curriculum/icons/browser-mod-canvas.png"
+    },
+    {
+      "id": "browser-mod-projects",
+      "success": true,
+      "path": "/home/itmade/Documents/ITMADE-STUDIO/codebog/codebog-web/public/images/curriculum/icons/browser-mod-projects.png"
+    }
+  ]
+}

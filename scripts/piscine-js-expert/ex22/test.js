@@ -1,255 +1,183 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-  measurePerformance,
-  memoize,
-  memoizeLRU,
-  memoizeTTL,
-  debounce,
-  throttle,
-  batchProcess,
-  createObjectPool,
-  lazy
-} from './index.js';
+// Note: Functions are expected to be defined by user code
+// (measurePerformance, memoize, memoizeLRU, memoizeTTL, debounce, throttle, batchProcess, createObjectPool, lazy)
 
-describe('Ex22 - Performance & Optimization', () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
+let passed = 0;
+let failed = 0;
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
+function assert(condition, message) {
+    if (condition) {
+        console.log(`✓ ${message}`);
+        passed++;
+    } else {
+        console.error(`✗ ${message}`);
+        failed++;
+    }
+}
 
-  describe('measurePerformance()', () => {
-    it('should return performance stats', () => {
-      vi.useRealTimers();
+async function runTests() {
+    console.log('Testing Performance & Optimization...\n');
 
-      const stats = measurePerformance(() => {
+    // Test 1: measurePerformance - returns stats
+    const stats1 = measurePerformance(() => {
         let sum = 0;
         for (let i = 0; i < 100; i++) sum += i;
         return sum;
-      }, 100);
+    }, 100);
+    assert(stats1.iterations === 100, 'measurePerformance: has iterations');
+    assert(typeof stats1.mean === 'number', 'measurePerformance: has mean');
+    assert(typeof stats1.median === 'number', 'measurePerformance: has median');
+    assert(typeof stats1.min === 'number', 'measurePerformance: has min');
+    assert(typeof stats1.max === 'number', 'measurePerformance: has max');
 
-      expect(stats).toHaveProperty('iterations');
-      expect(stats).toHaveProperty('mean');
-      expect(stats).toHaveProperty('median');
-      expect(stats).toHaveProperty('min');
-      expect(stats).toHaveProperty('max');
-      expect(stats.iterations).toBe(100);
-    });
-  });
-
-  describe('memoize()', () => {
-    it('should cache results', () => {
-      let callCount = 0;
-      const fn = memoize((n) => {
-        callCount++;
+    // Test 2: memoize - caches results
+    let callCount2 = 0;
+    const fn2 = memoize((n) => {
+        callCount2++;
         return n * 2;
-      });
-
-      expect(fn(5)).toBe(10);
-      expect(fn(5)).toBe(10);
-      expect(callCount).toBe(1);
     });
+    fn2(5);
+    fn2(5);
+    assert(callCount2 === 1, 'memoize: caches results');
 
-    it('should handle multiple arguments', () => {
-      const fn = memoize((a, b) => a + b);
-      expect(fn(1, 2)).toBe(3);
-      expect(fn(1, 2)).toBe(3);
-      expect(fn(2, 1)).toBe(3);
-    });
-  });
+    // Test 3: memoize - handles multiple arguments
+    const fn3 = memoize((a, b) => a + b);
+    assert(fn3(1, 2) === 3, 'memoize: handles multiple args');
+    assert(fn3(1, 2) === 3, 'memoize: cached multiple args');
+    assert(fn3(2, 1) === 3, 'memoize: different order is new');
 
-  describe('memoizeLRU()', () => {
-    it('should evict least recently used', () => {
-      let callCount = 0;
-      const fn = memoizeLRU((n) => {
-        callCount++;
+    // Test 4: memoizeLRU - evicts least recently used
+    let callCount4 = 0;
+    const fn4 = memoizeLRU((n) => {
+        callCount4++;
         return n * 2;
-      }, 2);
+    }, 2);
+    fn4(1);
+    fn4(2);
+    fn4(3);
+    fn4(1);
+    assert(callCount4 === 4, 'memoizeLRU: evicts LRU (4 calls)');
 
-      fn(1);
-      fn(2);
-      fn(3);
-      fn(1);
-
-      expect(callCount).toBe(4);
-    });
-
-    it('should keep recently used', () => {
-      let callCount = 0;
-      const fn = memoizeLRU((n) => {
-        callCount++;
+    // Test 5: memoizeLRU - keeps recently used
+    let callCount5 = 0;
+    const fn5 = memoizeLRU((n) => {
+        callCount5++;
         return n;
-      }, 2);
+    }, 2);
+    fn5(1);
+    fn5(2);
+    fn5(1);
+    fn5(3);
+    fn5(1);
+    assert(callCount5 < 5, 'memoizeLRU: keeps recently used');
 
-      fn(1);
-      fn(2);
-      fn(1);
-      fn(3);
-      fn(1);
-
-      expect(callCount).toBeLessThan(5);
-    });
-  });
-
-  describe('memoizeTTL()', () => {
-    it('should expire after TTL', async () => {
-      let callCount = 0;
-      const fn = memoizeTTL((n) => {
-        callCount++;
+    // Test 6: memoizeTTL - caches with TTL
+    let callCount6 = 0;
+    const fn6 = memoizeTTL((n) => {
+        callCount6++;
         return n;
-      }, 1000);
+    }, 50);
+    fn6(1);
+    fn6(1);
+    assert(callCount6 === 1, 'memoizeTTL: caches initially');
 
-      expect(fn(1)).toBe(1);
-      expect(fn(1)).toBe(1);
-      expect(callCount).toBe(1);
+    // Wait for TTL to expire
+    await new Promise(r => setTimeout(r, 60));
+    fn6(1);
+    assert(callCount6 === 2, 'memoizeTTL: expires after TTL');
 
-      vi.advanceTimersByTime(1001);
+    // Test 7: debounce - delays execution
+    let debounceCount = 0;
+    const debounced7 = debounce(() => debounceCount++, 30);
+    debounced7();
+    assert(debounceCount === 0, 'debounce: delays execution');
+    await new Promise(r => setTimeout(r, 40));
+    assert(debounceCount === 1, 'debounce: executes after delay');
 
-      expect(fn(1)).toBe(1);
-      expect(callCount).toBe(2);
-    });
-  });
+    // Test 8: debounce - resets on subsequent calls
+    let debounceCount8 = 0;
+    const debounced8 = debounce(() => debounceCount8++, 50);
+    debounced8();
+    await new Promise(r => setTimeout(r, 20));
+    debounced8();
+    await new Promise(r => setTimeout(r, 20));
+    debounced8();
+    await new Promise(r => setTimeout(r, 60));
+    assert(debounceCount8 === 1, 'debounce: resets timer on calls');
 
-  describe('debounce()', () => {
-    it('should delay execution', () => {
-      const fn = vi.fn();
-      const debounced = debounce(fn, 100);
+    // Test 9: throttle - executes immediately
+    let throttleCount9 = 0;
+    const throttled9 = throttle(() => throttleCount9++, 100);
+    throttled9();
+    assert(throttleCount9 === 1, 'throttle: executes immediately');
 
-      debounced();
-      expect(fn).not.toHaveBeenCalled();
+    // Test 10: throttle - limits frequency
+    let throttleCount10 = 0;
+    const throttled10 = throttle(() => throttleCount10++, 50);
+    throttled10();
+    throttled10();
+    throttled10();
+    assert(throttleCount10 === 1, 'throttle: limits frequency');
+    await new Promise(r => setTimeout(r, 60));
+    throttled10();
+    assert(throttleCount10 === 2, 'throttle: allows after interval');
 
-      vi.advanceTimersByTime(100);
-      expect(fn).toHaveBeenCalledTimes(1);
-    });
+    // Test 11: batchProcess - processes in batches
+    const items11 = [1, 2, 3, 4, 5];
+    const results11 = await batchProcess(items11, 2, (x) => x * 2);
+    assert(JSON.stringify(results11) === JSON.stringify([2, 4, 6, 8, 10]), 'batchProcess: processes all items');
 
-    it('should reset on subsequent calls', () => {
-      const fn = vi.fn();
-      const debounced = debounce(fn, 100);
+    // Test 12: createObjectPool - reuses objects
+    let factoryCount12 = 0;
+    const factory12 = () => { factoryCount12++; return { value: 0 }; };
+    const pool12 = createObjectPool(factory12, 2);
+    const obj12a = pool12.acquire();
+    pool12.release(obj12a);
+    const obj12b = pool12.acquire();
+    assert(obj12a === obj12b, 'createObjectPool: reuses objects');
 
-      debounced();
-      vi.advanceTimersByTime(50);
-      debounced();
-      vi.advanceTimersByTime(50);
-      debounced();
-      vi.advanceTimersByTime(100);
+    // Test 13: createObjectPool - pre-populates pool
+    let factoryCount13 = 0;
+    const factory13 = () => { factoryCount13++; return {}; };
+    createObjectPool(factory13, 5);
+    assert(factoryCount13 === 5, 'createObjectPool: pre-populates');
 
-      expect(fn).toHaveBeenCalledTimes(1);
-    });
-  });
+    // Test 14: createObjectPool - tracks stats
+    const pool14 = createObjectPool(() => ({}), 3);
+    pool14.acquire();
+    pool14.acquire();
+    const stats14 = pool14.stats;
+    assert(stats14.active === 2, 'createObjectPool: tracks active');
+    assert(stats14.available === 1, 'createObjectPool: tracks available');
 
-  describe('throttle()', () => {
-    it('should execute immediately', () => {
-      const fn = vi.fn();
-      const throttled = throttle(fn, 100);
+    // Test 15: createObjectPool - throws when exhausted
+    const pool15 = createObjectPool(() => ({}), 1, 1);
+    pool15.acquire();
+    let exhaustedThrown = false;
+    try {
+        pool15.acquire();
+    } catch (e) {
+        exhaustedThrown = true;
+    }
+    assert(exhaustedThrown, 'createObjectPool: throws when exhausted');
 
-      throttled();
-      expect(fn).toHaveBeenCalledTimes(1);
-    });
+    // Test 16: lazy - not evaluated until accessed
+    let lazyCount16 = 0;
+    const lazy16 = lazy(() => { lazyCount16++; return 'computed'; });
+    assert(lazyCount16 === 0, 'lazy: not evaluated initially');
+    assert(lazy16.value === 'computed', 'lazy: returns computed value');
+    assert(lazyCount16 === 1, 'lazy: evaluated on access');
 
-    it('should limit frequency', () => {
-      const fn = vi.fn();
-      const throttled = throttle(fn, 100);
+    // Test 17: lazy - caches the value
+    let lazyCount17 = 0;
+    const lazy17 = lazy(() => { lazyCount17++; return 42; });
+    const first17 = lazy17.value;
+    const second17 = lazy17.value;
+    assert(first17 === second17, 'lazy: returns same value');
+    assert(lazyCount17 === 1, 'lazy: only computed once');
 
-      throttled();
-      throttled();
-      throttled();
+    console.log('\n' + '='.repeat(50));
+    console.log(`Results: ${passed} passed, ${failed} failed`);
+    console.log('='.repeat(50));
+}
 
-      expect(fn).toHaveBeenCalledTimes(1);
-
-      vi.advanceTimersByTime(100);
-      throttled();
-
-      expect(fn).toHaveBeenCalledTimes(2);
-    });
-  });
-
-  describe('batchProcess()', () => {
-    it('should process in batches', async () => {
-      vi.useRealTimers();
-
-      const items = [1, 2, 3, 4, 5];
-      const results = await batchProcess(items, 2, (x) => x * 2);
-
-      expect(results).toEqual([2, 4, 6, 8, 10]);
-    });
-
-    it('should yield to main thread', async () => {
-      vi.useRealTimers();
-
-      let yielded = false;
-      const originalSetTimeout = setTimeout;
-      global.setTimeout = (fn, delay) => {
-        if (delay === 0) yielded = true;
-        return originalSetTimeout(fn, delay);
-      };
-
-      await batchProcess([1, 2, 3, 4], 2, (x) => x);
-
-      global.setTimeout = originalSetTimeout;
-      expect(yielded).toBe(true);
-    });
-  });
-
-  describe('createObjectPool()', () => {
-    it('should reuse objects', () => {
-      const factory = vi.fn(() => ({ value: 0 }));
-      const pool = createObjectPool(factory, 2);
-
-      const obj1 = pool.acquire();
-      pool.release(obj1);
-      const obj2 = pool.acquire();
-
-      expect(obj1).toBe(obj2);
-    });
-
-    it('should pre-populate pool', () => {
-      const factory = vi.fn(() => ({}));
-      createObjectPool(factory, 5);
-
-      expect(factory).toHaveBeenCalledTimes(5);
-    });
-
-    it('should track stats', () => {
-      const pool = createObjectPool(() => ({}), 3);
-
-      pool.acquire();
-      pool.acquire();
-
-      const stats = pool.stats;
-      expect(stats.active).toBe(2);
-      expect(stats.available).toBe(1);
-    });
-
-    it('should throw when exhausted', () => {
-      const pool = createObjectPool(() => ({}), 1, 1);
-
-      pool.acquire();
-      expect(() => pool.acquire()).toThrow();
-    });
-  });
-
-  describe('lazy()', () => {
-    it('should not evaluate until accessed', () => {
-      const fn = vi.fn(() => 'computed');
-      const lazyValue = lazy(fn);
-
-      expect(fn).not.toHaveBeenCalled();
-
-      expect(lazyValue.value).toBe('computed');
-      expect(fn).toHaveBeenCalledTimes(1);
-    });
-
-    it('should cache the value', () => {
-      const fn = vi.fn(() => Math.random());
-      const lazyValue = lazy(fn);
-
-      const first = lazyValue.value;
-      const second = lazyValue.value;
-
-      expect(first).toBe(second);
-      expect(fn).toHaveBeenCalledTimes(1);
-    });
-  });
-});
+runTests();

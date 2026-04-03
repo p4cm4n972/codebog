@@ -198,6 +198,7 @@ export default function PiscineExercisePage() {
           code: userCode,
           exerciseSlug: exercise.slug,
           testCode: exercise.testCode,
+          type: 'jsbog',
         }),
       });
 
@@ -253,6 +254,7 @@ export default function PiscineExercisePage() {
           code: userCode,
           exerciseSlug: exercise.slug,
           testCode: exercise.testCode,
+          type: 'jsbog',
         }),
       });
 

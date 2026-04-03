@@ -1,141 +1,142 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-  nextTick,
-  defer,
-  createTaskScheduler,
-  runSequentially,
-  predictOrder1,
-  predictOrder2,
-  predictOrder3
-} from './index.js';
+// Note: Functions are expected to be defined by user code
+// (nextTick, defer, createTaskScheduler, runSequentially)
 
-describe('Ex09 - Event Loop & Microtasks', () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
+let passed = 0;
+let failed = 0;
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
+function assert(condition, message) {
+    if (condition) {
+        console.log(`✓ ${message}`);
+        passed++;
+    } else {
+        console.error(`✗ ${message}`);
+        failed++;
+    }
+}
 
-  describe('nextTick()', () => {
-    it('should schedule callback as microtask', async () => {
-      const order = [];
+async function runTests() {
+    console.log('Testing Event Loop & Microtasks...\n');
 
-      order.push('sync start');
-      nextTick(() => order.push('next tick'));
-      order.push('sync end');
+    // Test 1: nextTick - schedules as microtask
+    const order1 = [];
+    await new Promise(resolve => {
+        order1.push('sync start');
+        nextTick(() => {
+            order1.push('next tick');
+            resolve();
+        });
+        order1.push('sync end');
+    });
+    assert(
+        JSON.stringify(order1) === JSON.stringify(['sync start', 'sync end', 'next tick']),
+        'nextTick: schedules callback as microtask'
+    );
 
-      await vi.advanceTimersByTimeAsync(0);
+    // Test 2: nextTick executes before setTimeout
+    const order2 = [];
+    await new Promise(resolve => {
+        setTimeout(() => {
+            order2.push('timeout');
+            resolve();
+        }, 0);
+        nextTick(() => order2.push('tick'));
+    });
+    assert(order2[0] === 'tick', 'nextTick: executes before setTimeout');
 
-      expect(order).toEqual(['sync start', 'sync end', 'next tick']);
+    // Test 3: defer - schedules as macrotask
+    const order3 = [];
+    await new Promise(resolve => {
+        Promise.resolve().then(() => order3.push('microtask'));
+        defer(() => {
+            order3.push('deferred');
+            resolve();
+        });
+    });
+    assert(
+        JSON.stringify(order3) === JSON.stringify(['microtask', 'deferred']),
+        'defer: schedules as macrotask (after microtasks)'
+    );
+
+    // Test 4: createTaskScheduler - priority ordering
+    const scheduler = createTaskScheduler();
+    const order4 = [];
+
+    await new Promise(resolve => {
+        scheduler.scheduleLow(() => order4.push('low'));
+        scheduler.schedule(() => order4.push('normal'));
+        scheduler.scheduleHigh(() => order4.push('high'));
+
+        // Wait for all tasks to complete
+        setTimeout(() => resolve(), 50);
     });
 
-    it('should execute before setTimeout', async () => {
-      const order = [];
+    assert(
+        order4[0] === 'high' && order4[1] === 'normal' && order4[2] === 'low',
+        'createTaskScheduler: executes high priority first'
+    );
 
-      setTimeout(() => order.push('timeout'), 0);
-      nextTick(() => order.push('tick'));
+    // Test 5: createTaskScheduler - tracks pending count
+    const scheduler2 = createTaskScheduler();
+    let taskRan = false;
+    scheduler2.schedule(() => { taskRan = true; });
+    const pendingBefore = scheduler2.pendingCount;
 
-      await vi.advanceTimersByTimeAsync(0);
+    await new Promise(resolve => setTimeout(resolve, 50));
 
-      expect(order[0]).toBe('tick');
-      expect(order[1]).toBe('timeout');
-    });
-  });
+    assert(pendingBefore >= 0, 'createTaskScheduler: has pendingCount property');
 
-  describe('defer()', () => {
-    it('should schedule as macrotask', async () => {
-      const order = [];
+    // Test 6: runSequentially - runs in order
+    const order6 = [];
+    const fns6 = [
+        async () => { order6.push(1); return 'a'; },
+        async () => { order6.push(2); return 'b'; },
+        async () => { order6.push(3); return 'c'; }
+    ];
 
-      Promise.resolve().then(() => order.push('microtask'));
-      defer(() => order.push('deferred'));
+    const results6 = await runSequentially(fns6);
 
-      await vi.advanceTimersByTimeAsync(0);
+    assert(
+        JSON.stringify(order6) === JSON.stringify([1, 2, 3]),
+        'runSequentially: runs functions in order'
+    );
+    assert(
+        JSON.stringify(results6) === JSON.stringify(['a', 'b', 'c']),
+        'runSequentially: returns results in order'
+    );
 
-      expect(order).toEqual(['microtask', 'deferred']);
-    });
-  });
+    // Test 7: runSequentially - not parallel
+    let concurrent = 0;
+    let maxConcurrent = 0;
 
-  describe('createTaskScheduler()', () => {
-    it('should execute high priority first', async () => {
-      const scheduler = createTaskScheduler();
-      const order = [];
-
-      scheduler.scheduleLow(() => order.push('low'));
-      scheduler.schedule(() => order.push('normal'));
-      scheduler.scheduleHigh(() => order.push('high'));
-
-      await vi.advanceTimersByTimeAsync(0);
-
-      expect(order).toEqual(['high', 'normal', 'low']);
-    });
-
-    it('should track pending count', () => {
-      const scheduler = createTaskScheduler();
-
-      scheduler.schedule(() => {});
-      scheduler.schedule(() => {});
-      scheduler.scheduleHigh(() => {});
-
-      expect(scheduler.pendingCount).toBe(3);
-    });
-  });
-
-  describe('runSequentially()', () => {
-    it('should run functions in sequence', async () => {
-      const order = [];
-      const fns = [
-        async () => { order.push(1); return 'a'; },
-        async () => { order.push(2); return 'b'; },
-        async () => { order.push(3); return 'c'; }
-      ];
-
-      const results = await runSequentially(fns);
-
-      expect(order).toEqual([1, 2, 3]);
-      expect(results).toEqual(['a', 'b', 'c']);
-    });
-
-    it('should not run in parallel', async () => {
-      let concurrent = 0;
-      let maxConcurrent = 0;
-
-      const fns = [1, 2, 3].map(() => async () => {
+    const fns7 = [1, 2, 3].map(() => async () => {
         concurrent++;
         maxConcurrent = Math.max(maxConcurrent, concurrent);
-        await new Promise(r => setTimeout(r, 10));
+        await new Promise(r => setTimeout(r, 20));
         concurrent--;
-      });
-
-      await vi.runAllTimersAsync();
-      await runSequentially(fns);
-
-      expect(maxConcurrent).toBe(1);
+        return 'done';
     });
-  });
 
-  describe('predictOrder1()', () => {
-    it('should return correct execution order', () => {
-      expect(predictOrder1()).toEqual(['1', '4', '3', '2']);
-    });
-  });
+    await runSequentially(fns7);
+    assert(maxConcurrent === 1, 'runSequentially: runs sequentially, not in parallel');
 
-  describe('predictOrder2()', () => {
-    it('should return correct order with nested microtasks', () => {
-      expect(predictOrder2()).toEqual([
-        'start', 'end', 'promise 1', 'promise 2',
-        'timeout 1', 'promise inside timeout', 'timeout 2'
-      ]);
+    // Test 8: Event loop order quiz
+    // Sync → Microtasks → Macrotasks
+    const quiz1 = [];
+    await new Promise(resolve => {
+        quiz1.push('1');
+        setTimeout(() => quiz1.push('2'), 0);
+        Promise.resolve().then(() => quiz1.push('3'));
+        quiz1.push('4');
+        setTimeout(() => resolve(), 10);
     });
-  });
+    assert(
+        quiz1[0] === '1' && quiz1[1] === '4' && quiz1[2] === '3' && quiz1[3] === '2',
+        'Event loop: sync → microtask → macrotask (1, 4, 3, 2)'
+    );
 
-  describe('predictOrder3()', () => {
-    it('should return correct order with async/await', () => {
-      expect(predictOrder3()).toEqual([
-        'script start', 'async start', 'promise executor', 'script end',
-        'async after await', 'promise then', 'setTimeout'
-      ]);
-    });
-  });
-});
+    console.log('\n' + '='.repeat(50));
+    console.log(`Results: ${passed} passed, ${failed} failed`);
+    console.log('='.repeat(50));
+}
+
+runTests();

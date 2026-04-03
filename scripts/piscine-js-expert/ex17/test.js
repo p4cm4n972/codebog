@@ -1,168 +1,121 @@
-import { describe, it, expect } from 'vitest';
-import {
-  mixin,
-  canFly,
-  canSwim,
-  withPosition,
-  withHealth,
-  withInventory,
-  createPlayer,
-  createEntity,
-  compose,
-  createMixinFactory
-} from './index.js';
+// Note: Functions are expected to be defined by user code
+// (mixin, canFly, canSwim, withPosition, withHealth, withInventory, createPlayer, createEntity, compose, createMixinFactory)
 
-describe('Ex17 - Mixins & Composition', () => {
-  describe('mixin()', () => {
-    it('should copy methods from source to target', () => {
-      const target = {};
-      mixin(target, { method1: () => 'one' });
-      expect(target.method1()).toBe('one');
-    });
+let passed = 0;
+let failed = 0;
 
-    it('should copy from multiple sources', () => {
-      const target = {};
-      mixin(target, { a: 1 }, { b: 2 }, { c: 3 });
-      expect(target).toEqual({ a: 1, b: 2, c: 3 });
-    });
+function assert(condition, message) {
+    if (condition) {
+        console.log(`✓ ${message}`);
+        passed++;
+    } else {
+        console.error(`✗ ${message}`);
+        failed++;
+    }
+}
 
-    it('should work with prototypes', () => {
-      function Duck(name) { this.name = name; }
-      mixin(Duck.prototype, canFly, canSwim);
+console.log('Testing Mixins & Composition...\n');
 
-      const donald = new Duck('Donald');
-      expect(donald.fly()).toBe('Donald is flying');
-      expect(donald.swim()).toBe('Donald is swimming');
-    });
-  });
+// Test 1: mixin - copy methods from source to target
+const target1 = {};
+mixin(target1, { method1: () => 'one' });
+assert(target1.method1() === 'one', 'mixin: copies method1');
 
-  describe('canFly mixin', () => {
-    it('should add fly and land methods', () => {
-      const bird = { name: 'Eagle' };
-      mixin(bird, canFly);
+// Test 2: mixin - copy from multiple sources
+const target2 = {};
+mixin(target2, { a: 1 }, { b: 2 }, { c: 3 });
+assert(target2.a === 1 && target2.b === 2 && target2.c === 3, 'mixin: copies from multiple sources');
 
-      expect(bird.fly()).toBe('Eagle is flying');
-      expect(bird.land()).toBe('Eagle landed');
-    });
-  });
+// Test 3: mixin - works with prototypes
+function Duck(name) { this.name = name; }
+mixin(Duck.prototype, canFly, canSwim);
+const donald = new Duck('Donald');
+assert(donald.fly() === 'Donald is flying', 'mixin: fly works on prototype');
+assert(donald.swim() === 'Donald is swimming', 'mixin: swim works on prototype');
 
-  describe('canSwim mixin', () => {
-    it('should add swim and dive methods', () => {
-      const fish = { name: 'Nemo' };
-      mixin(fish, canSwim);
+// Test 4: canFly - adds fly and land methods
+const bird = { name: 'Eagle' };
+mixin(bird, canFly);
+assert(bird.fly() === 'Eagle is flying', 'canFly: fly method works');
+assert(bird.land() === 'Eagle landed', 'canFly: land method works');
 
-      expect(fish.swim()).toBe('Nemo is swimming');
-      expect(fish.dive()).toBe('Nemo dived');
-    });
-  });
+// Test 5: canSwim - adds swim and dive methods
+const fish = { name: 'Nemo' };
+mixin(fish, canSwim);
+assert(fish.swim() === 'Nemo is swimming', 'canSwim: swim method works');
+assert(fish.dive() === 'Nemo dived', 'canSwim: dive method works');
 
-  describe('withPosition()', () => {
-    it('should provide position methods', () => {
-      const state = { x: 0, y: 0 };
-      const pos = withPosition(state);
+// Test 6: withPosition - getPosition and setPosition
+const state6 = { x: 0, y: 0 };
+const pos6 = withPosition(state6);
+assert(JSON.stringify(pos6.getPosition()) === JSON.stringify({ x: 0, y: 0 }), 'withPosition: getPosition works');
+pos6.setPosition(10, 20);
+assert(JSON.stringify(pos6.getPosition()) === JSON.stringify({ x: 10, y: 20 }), 'withPosition: setPosition works');
 
-      expect(pos.getPosition()).toEqual({ x: 0, y: 0 });
+// Test 7: withHealth - health methods
+const state7 = { health: 100 };
+const health7 = withHealth(state7);
+assert(health7.getHealth() === 100, 'withHealth: getHealth returns 100');
+health7.damage(25);
+assert(health7.getHealth() === 75, 'withHealth: damage reduces health');
+health7.heal(10);
+assert(health7.getHealth() === 85, 'withHealth: heal increases health');
 
-      pos.setPosition(10, 20);
-      expect(pos.getPosition()).toEqual({ x: 10, y: 20 });
-    });
-  });
+// Test 8: withInventory - inventory methods
+const state8 = { inventory: [] };
+const inv8 = withInventory(state8);
+inv8.addItem('sword');
+inv8.addItem('shield');
+assert(JSON.stringify(inv8.getInventory()) === JSON.stringify(['sword', 'shield']), 'withInventory: addItem works');
+inv8.removeItem('sword');
+assert(JSON.stringify(inv8.getInventory()) === JSON.stringify(['shield']), 'withInventory: removeItem works');
 
-  describe('withHealth()', () => {
-    it('should provide health methods', () => {
-      const state = { health: 100 };
-      const health = withHealth(state);
+// Test 9: createPlayer - create with all behaviors
+const player9 = createPlayer('Hero');
+assert(player9.name === 'Hero', 'createPlayer: has name');
+assert(typeof player9.getPosition === 'function', 'createPlayer: has getPosition');
+assert(player9.getHealth() === 100, 'createPlayer: health is 100');
+assert(JSON.stringify(player9.getInventory()) === JSON.stringify([]), 'createPlayer: inventory is empty');
 
-      expect(health.getHealth()).toBe(100);
+// Test 10: createPlayer - use all methods
+const player10 = createPlayer('Hero');
+player10.setPosition(5, 10);
+player10.damage(20);
+player10.addItem('potion');
+assert(JSON.stringify(player10.getPosition()) === JSON.stringify({ x: 5, y: 10 }), 'createPlayer: setPosition works');
+assert(player10.getHealth() === 80, 'createPlayer: damage works');
+assert(player10.getInventory().includes('potion'), 'createPlayer: addItem works');
 
-      health.damage(25);
-      expect(health.getHealth()).toBe(75);
+// Test 11: createEntity - player with inventory
+const entityPlayer = createEntity('player', 'Hero');
+assert(typeof entityPlayer.getInventory === 'function', 'createEntity: player has inventory');
 
-      health.heal(10);
-      expect(health.getHealth()).toBe(85);
-    });
-  });
+// Test 12: createEntity - enemy with attack
+const enemy = createEntity('enemy', 'Goblin');
+assert(typeof enemy.attack === 'function', 'createEntity: enemy has attack');
 
-  describe('withInventory()', () => {
-    it('should provide inventory methods', () => {
-      const state = { inventory: [] };
-      const inv = withInventory(state);
+// Test 13: createEntity - npc with talk
+const npc = createEntity('npc', 'Bob');
+assert(npc.talk().includes('Bob'), 'createEntity: npc talk contains name');
 
-      inv.addItem('sword');
-      inv.addItem('shield');
-      expect(inv.getInventory()).toEqual(['sword', 'shield']);
+// Test 14: compose - multiple behaviors
+const state14 = { x: 0, y: 0, health: 100 };
+const composed14 = compose(withPosition, withHealth);
+const entity14 = composed14(state14);
+assert(typeof entity14.getPosition === 'function', 'compose: has getPosition');
+assert(typeof entity14.getHealth === 'function', 'compose: has getHealth');
 
-      inv.removeItem('sword');
-      expect(inv.getInventory()).toEqual(['shield']);
-    });
-  });
-
-  describe('createPlayer()', () => {
-    it('should create player with all behaviors', () => {
-      const player = createPlayer('Hero');
-
-      expect(player.name).toBe('Hero');
-      expect(player.getPosition()).toBeDefined();
-      expect(player.getHealth()).toBe(100);
-      expect(player.getInventory()).toEqual([]);
-    });
-
-    it('should allow using all methods', () => {
-      const player = createPlayer('Hero');
-
-      player.setPosition(5, 10);
-      player.damage(20);
-      player.addItem('potion');
-
-      expect(player.getPosition()).toEqual({ x: 5, y: 10 });
-      expect(player.getHealth()).toBe(80);
-      expect(player.getInventory()).toContain('potion');
-    });
-  });
-
-  describe('createEntity()', () => {
-    it('should create player with inventory', () => {
-      const player = createEntity('player', 'Hero');
-      expect(player.getInventory).toBeDefined();
-    });
-
-    it('should create enemy with attack', () => {
-      const enemy = createEntity('enemy', 'Goblin');
-      expect(enemy.attack).toBeDefined();
-    });
-
-    it('should create npc with talk', () => {
-      const npc = createEntity('npc', 'Bob');
-      expect(npc.talk()).toContain('Bob');
-    });
-  });
-
-  describe('compose()', () => {
-    it('should compose multiple behaviors', () => {
-      const state = { x: 0, y: 0, health: 100 };
-      const composed = compose(withPosition, withHealth);
-      const entity = composed(state);
-
-      expect(entity.getPosition).toBeDefined();
-      expect(entity.getHealth).toBeDefined();
-    });
-  });
-
-  describe('createMixinFactory()', () => {
-    it('should create entities with selected mixins', () => {
-      const factory = createMixinFactory({
-        position: withPosition,
-        health: withHealth,
-        inventory: withInventory
-      });
-
-      const entity = factory(['position', 'health'], {
-        x: 0, y: 0, health: 100
-      });
-
-      expect(entity.getPosition).toBeDefined();
-      expect(entity.getHealth).toBeDefined();
-      expect(entity.getInventory).toBeUndefined();
-    });
-  });
+// Test 15: createMixinFactory - create with selected mixins
+const factory15 = createMixinFactory({
+    position: withPosition,
+    health: withHealth,
+    inventory: withInventory
 });
+const entity15 = factory15(['position', 'health'], { x: 0, y: 0, health: 100 });
+assert(typeof entity15.getPosition === 'function', 'createMixinFactory: has position');
+assert(typeof entity15.getHealth === 'function', 'createMixinFactory: has health');
+assert(entity15.getInventory === undefined, 'createMixinFactory: no inventory');
+
+console.log('\n' + '='.repeat(50));
+console.log(`Results: ${passed} passed, ${failed} failed`);
+console.log('='.repeat(50));

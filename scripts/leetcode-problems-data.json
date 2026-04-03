@@ -1,0 +1,374 @@
+{
+  "1": {
+    "description": "Étant donné un tableau d'entiers et un entier cible, retournez les indices des deux nombres dont la somme est égale à la cible. Chaque entrée a exactement une solution, et vous ne pouvez pas utiliser le même élément deux fois.",
+    "examples": [
+      {"input": "nums = [2, 7, 11, 15], target = 9", "output": "[0, 1]", "explanation": "nums[0] + nums[1] = 2 + 7 = 9"},
+      {"input": "nums = [3, 2, 4], target = 6", "output": "[1, 2]", "explanation": "nums[1] + nums[2] = 2 + 4 = 6"},
+      {"input": "nums = [3, 3], target = 6", "output": "[0, 1]", "explanation": "nums[0] + nums[1] = 3 + 3 = 6"}
+    ],
+    "constraints": ["2 ≤ nums.length ≤ 10⁴", "-10⁹ ≤ nums[i] ≤ 10⁹", "-10⁹ ≤ target ≤ 10⁹", "Exactement une solution existe"]
+  },
+  "11": {
+    "description": "Étant donné n lignes verticales de hauteurs données, trouvez deux lignes qui, avec l'axe x, forment un conteneur contenant le plus d'eau possible.",
+    "examples": [
+      {"input": "height = [1, 8, 6, 2, 5, 4, 8, 3, 7]", "output": "49", "explanation": "Les lignes aux indices 1 et 8 (hauteurs 8 et 7) forment le plus grand conteneur"},
+      {"input": "height = [1, 1]", "output": "1", "explanation": "Un seul choix possible"}
+    ],
+    "constraints": ["2 ≤ n ≤ 10⁵", "0 ≤ height[i] ≤ 10⁴"]
+  },
+  "13": {
+    "description": "Convertissez un nombre romain en entier. Les symboles romains sont I(1), V(5), X(10), L(50), C(100), D(500), M(1000). Quand un symbole plus petit précède un plus grand, on soustrait.",
+    "examples": [
+      {"input": "s = \"III\"", "output": "3", "explanation": "III = 3"},
+      {"input": "s = \"LVIII\"", "output": "58", "explanation": "L = 50, V = 5, III = 3 → 58"},
+      {"input": "s = \"MCMXCIV\"", "output": "1994", "explanation": "M=1000, CM=900, XC=90, IV=4 → 1994"}
+    ],
+    "constraints": ["1 ≤ s.length ≤ 15", "s contient uniquement I, V, X, L, C, D, M", "1 ≤ résultat ≤ 3999"]
+  },
+  "14": {
+    "description": "Trouvez le plus long préfixe commun parmi un tableau de chaînes. Si aucun préfixe commun n'existe, retournez une chaîne vide.",
+    "examples": [
+      {"input": "strs = [\"flower\", \"flow\", \"flight\"]", "output": "\"fl\"", "explanation": "Le préfixe commun le plus long est \"fl\""},
+      {"input": "strs = [\"dog\", \"racecar\", \"car\"]", "output": "\"\"", "explanation": "Aucun préfixe commun"}
+    ],
+    "constraints": ["1 ≤ strs.length ≤ 200", "0 ≤ strs[i].length ≤ 200", "strs[i] contient uniquement des lettres minuscules"]
+  },
+  "15": {
+    "description": "Trouvez tous les triplets uniques dans le tableau dont la somme est égale à zéro.",
+    "examples": [
+      {"input": "nums = [-1, 0, 1, 2, -1, -4]", "output": "[[-1, -1, 2], [-1, 0, 1]]", "explanation": "Deux triplets dont la somme = 0"},
+      {"input": "nums = [0, 1, 1]", "output": "[]", "explanation": "Aucun triplet valide"},
+      {"input": "nums = [0, 0, 0]", "output": "[[0, 0, 0]]", "explanation": "Seul triplet possible"}
+    ],
+    "constraints": ["3 ≤ nums.length ≤ 3000", "-10⁵ ≤ nums[i] ≤ 10⁵"]
+  },
+  "20": {
+    "description": "Déterminez si une chaîne de parenthèses est valide. Chaque parenthèse ouvrante doit avoir sa correspondante fermante dans le bon ordre.",
+    "examples": [
+      {"input": "s = \"()\"", "output": "true", "explanation": "Parenthèses correctement fermées"},
+      {"input": "s = \"()[]{}\"", "output": "true", "explanation": "Trois paires correctes"},
+      {"input": "s = \"(]\"", "output": "false", "explanation": "Mauvaise correspondance"}
+    ],
+    "constraints": ["1 ≤ s.length ≤ 10⁴", "s contient uniquement ()[]{}"]
+  },
+  "21": {
+    "description": "Fusionnez deux listes chaînées triées en une seule liste triée.",
+    "examples": [
+      {"input": "list1 = [1, 2, 4], list2 = [1, 3, 4]", "output": "[1, 1, 2, 3, 4, 4]", "explanation": "Fusion triée des deux listes"},
+      {"input": "list1 = [], list2 = []", "output": "[]", "explanation": "Deux listes vides"},
+      {"input": "list1 = [], list2 = [0]", "output": "[0]", "explanation": "Une liste vide"}
+    ],
+    "constraints": ["0 ≤ longueur ≤ 50", "-100 ≤ Node.val ≤ 100", "Les deux listes sont triées"]
+  },
+  "26": {
+    "description": "Supprimez les doublons d'un tableau trié en place et retournez le nombre d'éléments uniques. L'ordre relatif doit être conservé.",
+    "examples": [
+      {"input": "nums = [1, 1, 2]", "output": "2, nums = [1, 2, _]", "explanation": "2 éléments uniques"},
+      {"input": "nums = [0, 0, 1, 1, 1, 2, 2, 3, 3, 4]", "output": "5, nums = [0, 1, 2, 3, 4, ...]", "explanation": "5 éléments uniques"}
+    ],
+    "constraints": ["1 ≤ nums.length ≤ 3 × 10⁴", "-100 ≤ nums[i] ≤ 100", "Le tableau est trié", "Modifier en place avec O(1) mémoire"]
+  },
+  "27": {
+    "description": "Supprimez toutes les occurrences d'une valeur dans un tableau en place et retournez le nouveau nombre d'éléments.",
+    "examples": [
+      {"input": "nums = [3, 2, 2, 3], val = 3", "output": "2, nums = [2, 2, ...]", "explanation": "Les deux 3 sont supprimés"},
+      {"input": "nums = [0, 1, 2, 2, 3, 0, 4, 2], val = 2", "output": "5, nums = [0, 1, 3, 0, 4, ...]", "explanation": "Les trois 2 sont supprimés"}
+    ],
+    "constraints": ["0 ≤ nums.length ≤ 100", "0 ≤ nums[i] ≤ 50", "0 ≤ val ≤ 100"]
+  },
+  "28": {
+    "description": "Trouvez la première occurrence d'une sous-chaîne dans une chaîne. Retournez -1 si non trouvée.",
+    "examples": [
+      {"input": "haystack = \"sadbutsad\", needle = \"sad\"", "output": "0", "explanation": "\"sad\" commence à l'indice 0"},
+      {"input": "haystack = \"leetcode\", needle = \"leeto\"", "output": "-1", "explanation": "\"leeto\" n'est pas dans la chaîne"}
+    ],
+    "constraints": ["1 ≤ haystack.length, needle.length ≤ 10⁴", "Caractères minuscules anglais uniquement"]
+  },
+  "35": {
+    "description": "Trouvez la position d'insertion d'une valeur cible dans un tableau trié. Si la valeur existe, retournez son indice.",
+    "examples": [
+      {"input": "nums = [1, 3, 5, 6], target = 5", "output": "2", "explanation": "5 est à l'indice 2"},
+      {"input": "nums = [1, 3, 5, 6], target = 2", "output": "1", "explanation": "2 s'insère à l'indice 1"},
+      {"input": "nums = [1, 3, 5, 6], target = 7", "output": "4", "explanation": "7 s'insère à la fin"}
+    ],
+    "constraints": ["1 ≤ nums.length ≤ 10⁴", "-10⁴ ≤ nums[i] ≤ 10⁴", "Tableau trié sans doublons", "Complexité O(log n)"]
+  },
+  "36": {
+    "description": "Déterminez si une grille 9x9 de Sudoku est valide. Seules les cellules remplies doivent être vérifiées.",
+    "examples": [
+      {"input": "board = [[\"5\",\"3\",...], ...]", "output": "true", "explanation": "Grille valide : pas de doublons dans les lignes, colonnes et sous-grilles"},
+      {"input": "board (avec doublon dans colonne)", "output": "false", "explanation": "Un chiffre est répété dans une colonne"}
+    ],
+    "constraints": ["board.length == 9", "board[i].length == 9", "board[i][j] est un chiffre 1-9 ou '.'"]
+  },
+  "49": {
+    "description": "Regroupez les anagrammes ensemble. Un anagramme est un mot formé en réarrangeant les lettres d'un autre mot.",
+    "examples": [
+      {"input": "strs = [\"eat\", \"tea\", \"tan\", \"ate\", \"nat\", \"bat\"]", "output": "[[\"bat\"], [\"nat\", \"tan\"], [\"ate\", \"eat\", \"tea\"]]", "explanation": "Les anagrammes sont regroupés"},
+      {"input": "strs = [\"\"]", "output": "[[\"\"]]", "explanation": "Chaîne vide seule"},
+      {"input": "strs = [\"a\"]", "output": "[[\"a\"]]", "explanation": "Un seul mot"}
+    ],
+    "constraints": ["1 ≤ strs.length ≤ 10⁴", "0 ≤ strs[i].length ≤ 100", "Lettres minuscules anglaises"]
+  },
+  "53": {
+    "description": "Trouvez le sous-tableau contigu avec la plus grande somme.",
+    "examples": [
+      {"input": "nums = [-2, 1, -3, 4, -1, 2, 1, -5, 4]", "output": "6", "explanation": "[4, -1, 2, 1] a la somme maximale 6"},
+      {"input": "nums = [1]", "output": "1", "explanation": "Un seul élément"},
+      {"input": "nums = [5, 4, -1, 7, 8]", "output": "23", "explanation": "Tout le tableau = 23"}
+    ],
+    "constraints": ["1 ≤ nums.length ≤ 10⁵", "-10⁴ ≤ nums[i] ≤ 10⁴", "Algorithme de Kadane recommandé O(n)"]
+  },
+  "66": {
+    "description": "Incrémentez de 1 un grand entier représenté sous forme de tableau de chiffres.",
+    "examples": [
+      {"input": "digits = [1, 2, 3]", "output": "[1, 2, 4]", "explanation": "123 + 1 = 124"},
+      {"input": "digits = [4, 3, 2, 1]", "output": "[4, 3, 2, 2]", "explanation": "4321 + 1 = 4322"},
+      {"input": "digits = [9]", "output": "[1, 0]", "explanation": "9 + 1 = 10, retenue propagée"}
+    ],
+    "constraints": ["1 ≤ digits.length ≤ 100", "0 ≤ digits[i] ≤ 9", "Pas de zéro en tête"]
+  },
+  "67": {
+    "description": "Additionnez deux nombres binaires donnés sous forme de chaînes et retournez le résultat en binaire.",
+    "examples": [
+      {"input": "a = \"11\", b = \"1\"", "output": "\"100\"", "explanation": "3 + 1 = 4 en binaire = 100"},
+      {"input": "a = \"1010\", b = \"1011\"", "output": "\"10101\"", "explanation": "10 + 11 = 21 en binaire"}
+    ],
+    "constraints": ["1 ≤ a.length, b.length ≤ 10⁴", "a et b contiennent uniquement '0' et '1'", "Pas de zéro en tête"]
+  },
+  "70": {
+    "description": "Combien de façons différentes pouvez-vous monter n marches si vous pouvez monter 1 ou 2 marches à la fois ?",
+    "examples": [
+      {"input": "n = 2", "output": "2", "explanation": "2 façons : (1+1) ou (2)"},
+      {"input": "n = 3", "output": "3", "explanation": "3 façons : (1+1+1), (1+2), (2+1)"}
+    ],
+    "constraints": ["1 ≤ n ≤ 45", "Relation avec la suite de Fibonacci"]
+  },
+  "75": {
+    "description": "Triez un tableau contenant uniquement les valeurs 0, 1 et 2 (rouge, blanc, bleu) en place.",
+    "examples": [
+      {"input": "nums = [2, 0, 2, 1, 1, 0]", "output": "[0, 0, 1, 1, 2, 2]", "explanation": "Trié par couleur"},
+      {"input": "nums = [2, 0, 1]", "output": "[0, 1, 2]", "explanation": "Chaque couleur une fois"}
+    ],
+    "constraints": ["n == nums.length", "1 ≤ n ≤ 300", "nums[i] est 0, 1 ou 2", "Algorithme Dutch National Flag"]
+  },
+  "88": {
+    "description": "Fusionnez deux tableaux triés nums1 et nums2 dans nums1 en place. nums1 a suffisamment d'espace (m + n) pour contenir les éléments des deux tableaux.",
+    "examples": [
+      {"input": "nums1 = [1, 2, 3, 0, 0, 0], m = 3, nums2 = [2, 5, 6], n = 3", "output": "[1, 2, 2, 3, 5, 6]", "explanation": "Les tableaux [1,2,3] et [2,5,6] sont fusionnés"},
+      {"input": "nums1 = [1], m = 1, nums2 = [], n = 0", "output": "[1]", "explanation": "nums2 est vide"},
+      {"input": "nums1 = [0], m = 0, nums2 = [1], n = 1", "output": "[1]", "explanation": "nums1 est vide"}
+    ],
+    "constraints": ["nums1.length == m + n", "nums2.length == n", "0 ≤ m, n ≤ 200", "Fusionner en partant de la fin pour O(m+n)"]
+  },
+  "118": {
+    "description": "Générez les n premières lignes du triangle de Pascal.",
+    "examples": [
+      {"input": "numRows = 5", "output": "[[1], [1,1], [1,2,1], [1,3,3,1], [1,4,6,4,1]]", "explanation": "Chaque nombre est la somme des deux nombres au-dessus"},
+      {"input": "numRows = 1", "output": "[[1]]", "explanation": "Première ligne uniquement"}
+    ],
+    "constraints": ["1 ≤ numRows ≤ 30"]
+  },
+  "121": {
+    "description": "Trouvez le profit maximum en achetant puis vendant une action. Vous ne pouvez effectuer qu'une seule transaction.",
+    "examples": [
+      {"input": "prices = [7, 1, 5, 3, 6, 4]", "output": "5", "explanation": "Acheter jour 2 (prix=1), vendre jour 5 (prix=6), profit=5"},
+      {"input": "prices = [7, 6, 4, 3, 1]", "output": "0", "explanation": "Prix décroissants, aucun profit possible"}
+    ],
+    "constraints": ["1 ≤ prices.length ≤ 10⁵", "0 ≤ prices[i] ≤ 10⁴"]
+  },
+  "125": {
+    "description": "Déterminez si une chaîne est un palindrome en ignorant les caractères non alphanumériques et la casse.",
+    "examples": [
+      {"input": "s = \"A man, a plan, a canal: Panama\"", "output": "true", "explanation": "\"amanaplanacanalpanama\" est un palindrome"},
+      {"input": "s = \"race a car\"", "output": "false", "explanation": "\"raceacar\" n'est pas un palindrome"},
+      {"input": "s = \" \"", "output": "true", "explanation": "Chaîne vide après nettoyage = palindrome"}
+    ],
+    "constraints": ["1 ≤ s.length ≤ 2 × 10⁵", "Caractères ASCII imprimables"]
+  },
+  "128": {
+    "description": "Trouvez la longueur de la plus longue séquence consécutive d'entiers dans un tableau non trié. L'algorithme doit être en O(n).",
+    "examples": [
+      {"input": "nums = [100, 4, 200, 1, 3, 2]", "output": "4", "explanation": "La séquence [1, 2, 3, 4] est la plus longue"},
+      {"input": "nums = [0, 3, 7, 2, 5, 8, 4, 6, 0, 1]", "output": "9", "explanation": "Séquence [0, 1, 2, 3, 4, 5, 6, 7, 8]"}
+    ],
+    "constraints": ["0 ≤ nums.length ≤ 10⁵", "-10⁹ ≤ nums[i] ≤ 10⁹", "Complexité O(n) requise"]
+  },
+  "136": {
+    "description": "Trouvez l'élément unique dans un tableau où chaque élément apparaît exactement deux fois sauf un.",
+    "examples": [
+      {"input": "nums = [2, 2, 1]", "output": "1", "explanation": "1 n'apparaît qu'une fois"},
+      {"input": "nums = [4, 1, 2, 1, 2]", "output": "4", "explanation": "4 n'apparaît qu'une fois"},
+      {"input": "nums = [1]", "output": "1", "explanation": "Un seul élément"}
+    ],
+    "constraints": ["1 ≤ nums.length ≤ 3 × 10⁴", "-3 × 10⁴ ≤ nums[i] ≤ 3 × 10⁴", "Utiliser XOR pour O(1) mémoire"]
+  },
+  "141": {
+    "description": "Déterminez si une liste chaînée contient un cycle.",
+    "examples": [
+      {"input": "head = [3, 2, 0, -4], pos = 1", "output": "true", "explanation": "Le dernier nœud pointe vers le nœud d'indice 1"},
+      {"input": "head = [1, 2], pos = 0", "output": "true", "explanation": "Le nœud 2 pointe vers le nœud 1"},
+      {"input": "head = [1], pos = -1", "output": "false", "explanation": "Pas de cycle"}
+    ],
+    "constraints": ["0 ≤ nombre de nœuds ≤ 10⁴", "Utiliser Floyd (tortue et lièvre) pour O(1) mémoire"]
+  },
+  "146": {
+    "description": "Implémentez un cache LRU (Least Recently Used) avec les opérations get et put en O(1).",
+    "examples": [
+      {"input": "LRUCache(2), put(1,1), put(2,2), get(1)", "output": "1", "explanation": "La clé 1 existe, retourne 1"},
+      {"input": "put(3,3), get(2)", "output": "-1", "explanation": "La clé 2 a été évincée (LRU)"}
+    ],
+    "constraints": ["1 ≤ capacity ≤ 3000", "0 ≤ key ≤ 10⁴", "0 ≤ value ≤ 10⁵", "O(1) pour get et put"]
+  },
+  "169": {
+    "description": "Trouvez l'élément majoritaire (apparaît plus de n/2 fois) dans un tableau.",
+    "examples": [
+      {"input": "nums = [3, 2, 3]", "output": "3", "explanation": "3 apparaît 2 fois sur 3"},
+      {"input": "nums = [2, 2, 1, 1, 1, 2, 2]", "output": "2", "explanation": "2 apparaît 4 fois sur 7"}
+    ],
+    "constraints": ["n == nums.length", "1 ≤ n ≤ 5 × 10⁴", "L'élément majoritaire existe toujours", "Algorithme de Boyer-Moore recommandé"]
+  },
+  "189": {
+    "description": "Effectuez une rotation du tableau de k positions vers la droite.",
+    "examples": [
+      {"input": "nums = [1, 2, 3, 4, 5, 6, 7], k = 3", "output": "[5, 6, 7, 1, 2, 3, 4]", "explanation": "Rotation de 3 : les 3 derniers viennent au début"},
+      {"input": "nums = [-1, -100, 3, 99], k = 2", "output": "[3, 99, -1, -100]", "explanation": "Rotation de 2 positions"}
+    ],
+    "constraints": ["1 ≤ nums.length ≤ 10⁵", "-2³¹ ≤ nums[i] ≤ 2³¹ - 1", "0 ≤ k ≤ 10⁵", "Technique des 3 inversions recommandée"]
+  },
+  "202": {
+    "description": "Déterminez si un nombre est un nombre heureux. Un nombre heureux atteint 1 en remplaçant répétitivement le nombre par la somme des carrés de ses chiffres.",
+    "examples": [
+      {"input": "n = 19", "output": "true", "explanation": "1² + 9² = 82 → 8² + 2² = 68 → ... → 1"},
+      {"input": "n = 2", "output": "false", "explanation": "Boucle infinie sans atteindre 1"}
+    ],
+    "constraints": ["1 ≤ n ≤ 2³¹ - 1", "Détecter les cycles avec un Set ou Floyd"]
+  },
+  "206": {
+    "description": "Inversez une liste chaînée.",
+    "examples": [
+      {"input": "head = [1, 2, 3, 4, 5]", "output": "[5, 4, 3, 2, 1]", "explanation": "Liste inversée"},
+      {"input": "head = [1, 2]", "output": "[2, 1]", "explanation": "Deux nœuds inversés"},
+      {"input": "head = []", "output": "[]", "explanation": "Liste vide"}
+    ],
+    "constraints": ["0 ≤ nombre de nœuds ≤ 5000", "-5000 ≤ Node.val ≤ 5000", "Itératif O(n) temps, O(1) espace"]
+  },
+  "217": {
+    "description": "Déterminez si le tableau contient des doublons. Retournez true si une valeur apparaît au moins deux fois.",
+    "examples": [
+      {"input": "nums = [1, 2, 3, 1]", "output": "true", "explanation": "1 apparaît deux fois"},
+      {"input": "nums = [1, 2, 3, 4]", "output": "false", "explanation": "Tous distincts"},
+      {"input": "nums = [1, 1, 1, 3, 3, 4, 3, 2, 4, 2]", "output": "true", "explanation": "Plusieurs doublons"}
+    ],
+    "constraints": ["1 ≤ nums.length ≤ 10⁵", "-10⁹ ≤ nums[i] ≤ 10⁹"]
+  },
+  "226": {
+    "description": "Inversez un arbre binaire (miroir).",
+    "examples": [
+      {"input": "root = [4, 2, 7, 1, 3, 6, 9]", "output": "[4, 7, 2, 9, 6, 3, 1]", "explanation": "Chaque sous-arbre gauche/droit est échangé"},
+      {"input": "root = [2, 1, 3]", "output": "[2, 3, 1]", "explanation": "Enfants échangés"},
+      {"input": "root = []", "output": "[]", "explanation": "Arbre vide"}
+    ],
+    "constraints": ["0 ≤ nombre de nœuds ≤ 100", "-100 ≤ Node.val ≤ 100"]
+  },
+  "242": {
+    "description": "Déterminez si deux chaînes sont des anagrammes l'une de l'autre (mêmes lettres, même fréquence).",
+    "examples": [
+      {"input": "s = \"anagram\", t = \"nagaram\"", "output": "true", "explanation": "Mêmes lettres réarrangées"},
+      {"input": "s = \"rat\", t = \"car\"", "output": "false", "explanation": "Lettres différentes"}
+    ],
+    "constraints": ["1 ≤ s.length, t.length ≤ 5 × 10⁴", "Lettres minuscules anglaises", "Compter les fréquences"]
+  },
+  "268": {
+    "description": "Trouvez le nombre manquant dans un tableau contenant n nombres distincts de 0 à n.",
+    "examples": [
+      {"input": "nums = [3, 0, 1]", "output": "2", "explanation": "Le nombre 2 manque dans [0, 1, 3]"},
+      {"input": "nums = [0, 1]", "output": "2", "explanation": "2 manque"},
+      {"input": "nums = [9, 6, 4, 2, 3, 5, 7, 0, 1]", "output": "8", "explanation": "8 manque"}
+    ],
+    "constraints": ["n == nums.length", "1 ≤ n ≤ 10⁴", "0 ≤ nums[i] ≤ n", "Tous les nombres sont uniques", "Utiliser XOR ou somme de Gauss"]
+  },
+  "283": {
+    "description": "Déplacez tous les zéros à la fin du tableau en maintenant l'ordre relatif des éléments non nuls.",
+    "examples": [
+      {"input": "nums = [0, 1, 0, 3, 12]", "output": "[1, 3, 12, 0, 0]", "explanation": "Les zéros sont à la fin"},
+      {"input": "nums = [0]", "output": "[0]", "explanation": "Un seul zéro"}
+    ],
+    "constraints": ["1 ≤ nums.length ≤ 10⁴", "-2³¹ ≤ nums[i] ≤ 2³¹ - 1", "Modifier en place", "Minimiser les opérations"]
+  },
+  "344": {
+    "description": "Inversez une chaîne de caractères en place (tableau de caractères).",
+    "examples": [
+      {"input": "s = [\"h\", \"e\", \"l\", \"l\", \"o\"]", "output": "[\"o\", \"l\", \"l\", \"e\", \"h\"]", "explanation": "Chaîne inversée"},
+      {"input": "s = [\"H\", \"a\", \"n\", \"n\", \"a\", \"h\"]", "output": "[\"h\", \"a\", \"n\", \"n\", \"a\", \"H\"]", "explanation": "Palindrome inversé"}
+    ],
+    "constraints": ["1 ≤ s.length ≤ 10⁵", "Modifier en place avec O(1) mémoire", "Deux pointeurs"]
+  },
+  "347": {
+    "description": "Trouvez les k éléments les plus fréquents dans un tableau.",
+    "examples": [
+      {"input": "nums = [1, 1, 1, 2, 2, 3], k = 2", "output": "[1, 2]", "explanation": "1 apparaît 3x, 2 apparaît 2x"},
+      {"input": "nums = [1], k = 1", "output": "[1]", "explanation": "Un seul élément"}
+    ],
+    "constraints": ["1 ≤ nums.length ≤ 10⁵", "-10⁴ ≤ nums[i] ≤ 10⁴", "1 ≤ k ≤ nombre d'éléments distincts", "Bucket sort ou heap pour O(n)"]
+  },
+  "383": {
+    "description": "Déterminez si une lettre de rançon peut être construite à partir des lettres d'un magazine.",
+    "examples": [
+      {"input": "ransomNote = \"a\", magazine = \"b\"", "output": "false", "explanation": "'a' n'est pas dans le magazine"},
+      {"input": "ransomNote = \"aa\", magazine = \"ab\"", "output": "false", "explanation": "Pas assez de 'a'"},
+      {"input": "ransomNote = \"aa\", magazine = \"aab\"", "output": "true", "explanation": "Le magazine contient 2 'a'"}
+    ],
+    "constraints": ["1 ≤ ransomNote.length, magazine.length ≤ 10⁵", "Lettres minuscules anglaises"]
+  },
+  "412": {
+    "description": "Pour les nombres de 1 à n : si divisible par 3 → 'Fizz', par 5 → 'Buzz', par les deux → 'FizzBuzz', sinon le nombre en string.",
+    "examples": [
+      {"input": "n = 3", "output": "[\"1\", \"2\", \"Fizz\"]", "explanation": "3 est divisible par 3"},
+      {"input": "n = 5", "output": "[\"1\", \"2\", \"Fizz\", \"4\", \"Buzz\"]", "explanation": "5 est divisible par 5"},
+      {"input": "n = 15", "output": "[..., \"FizzBuzz\"]", "explanation": "15 est divisible par 3 et 5"}
+    ],
+    "constraints": ["1 ≤ n ≤ 10⁴"]
+  },
+  "509": {
+    "description": "Calculez le n-ième nombre de Fibonacci. F(0) = 0, F(1) = 1, F(n) = F(n-1) + F(n-2).",
+    "examples": [
+      {"input": "n = 2", "output": "1", "explanation": "F(2) = F(1) + F(0) = 1 + 0 = 1"},
+      {"input": "n = 3", "output": "2", "explanation": "F(3) = F(2) + F(1) = 1 + 1 = 2"},
+      {"input": "n = 4", "output": "3", "explanation": "F(4) = F(3) + F(2) = 2 + 1 = 3"}
+    ],
+    "constraints": ["0 ≤ n ≤ 30"]
+  },
+  "560": {
+    "description": "Comptez le nombre de sous-tableaux contigus dont la somme est égale à k.",
+    "examples": [
+      {"input": "nums = [1, 1, 1], k = 2", "output": "2", "explanation": "[1,1] aux positions 0-1 et 1-2"},
+      {"input": "nums = [1, 2, 3], k = 3", "output": "2", "explanation": "[1,2] et [3]"}
+    ],
+    "constraints": ["1 ≤ nums.length ≤ 2 × 10⁴", "-1000 ≤ nums[i] ≤ 1000", "-10⁷ ≤ k ≤ 10⁷", "Somme préfixe + HashMap pour O(n)"]
+  },
+  "704": {
+    "description": "Implémentez la recherche binaire. Retournez l'indice de la cible ou -1 si non trouvée.",
+    "examples": [
+      {"input": "nums = [-1, 0, 3, 5, 9, 12], target = 9", "output": "4", "explanation": "9 est à l'indice 4"},
+      {"input": "nums = [-1, 0, 3, 5, 9, 12], target = 2", "output": "-1", "explanation": "2 n'existe pas"}
+    ],
+    "constraints": ["1 ≤ nums.length ≤ 10⁴", "-10⁴ < nums[i], target < 10⁴", "Tableau trié sans doublons", "Complexité O(log n)"]
+  },
+  "746": {
+    "description": "Trouvez le coût minimum pour atteindre le sommet de l'escalier. Chaque marche a un coût, et vous pouvez monter 1 ou 2 marches.",
+    "examples": [
+      {"input": "cost = [10, 15, 20]", "output": "15", "explanation": "Commencer à la marche 1 (coût 15), monter 2 marches"},
+      {"input": "cost = [1, 100, 1, 1, 1, 100, 1, 1, 100, 1]", "output": "6", "explanation": "Prendre les marches de coût 1"}
+    ],
+    "constraints": ["2 ≤ cost.length ≤ 1000", "0 ≤ cost[i] ≤ 999", "Programmation dynamique"]
+  },
+  "977": {
+    "description": "Retournez les carrés de chaque nombre d'un tableau trié, le résultat devant être trié aussi.",
+    "examples": [
+      {"input": "nums = [-4, -1, 0, 3, 10]", "output": "[0, 1, 9, 16, 100]", "explanation": "Carrés triés"},
+      {"input": "nums = [-7, -3, 2, 3, 11]", "output": "[4, 9, 9, 49, 121]", "explanation": "Carrés triés"}
+    ],
+    "constraints": ["1 ≤ nums.length ≤ 10⁴", "-10⁴ ≤ nums[i] ≤ 10⁴", "Tableau trié par ordre croissant", "Deux pointeurs pour O(n)"]
+  }
+}

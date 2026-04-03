@@ -217,6 +217,7 @@ export default function ExerciseDetailPage() {
           code: userCode,
           exerciseSlug: exercise.slug,
           testCode: exercise.testCode,
+          type: 'jsbog',
         }),
       });
 

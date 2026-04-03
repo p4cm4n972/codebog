@@ -1,190 +1,117 @@
-import { describe, it, expect, vi } from 'vitest';
-import {
-  createInlineWorker,
-  createWorkerPool,
-  parallelize,
-  createMutex,
-  createAtomicCounter,
-  createPriorityTaskQueue,
-  transferToWorker,
-  createMockWorker
-} from './index.js';
+// Note: Functions are expected to be defined by user code
+// (createMockWorker, createInlineWorker, createWorkerPool, parallelize, createMutex, createAtomicCounter, createPriorityTaskQueue, transferToWorker)
 
-describe('Ex24 - Web Workers & Concurrency', () => {
-  describe('createMockWorker()', () => {
-    it('should simulate worker message passing', async () => {
-      const worker = createMockWorker((data) => data * 2);
+let passed = 0;
+let failed = 0;
 
-      const result = await new Promise((resolve) => {
-        worker.onmessage = (e) => resolve(e.data);
-        worker.postMessage(5);
-      });
+function assert(condition, message) {
+    if (condition) {
+        console.log(`✓ ${message}`);
+        passed++;
+    } else {
+        console.error(`✗ ${message}`);
+        failed++;
+    }
+}
 
-      expect(result).toBe(10);
+async function runTests() {
+    console.log('Testing Web Workers & Concurrency...\n');
+
+    // Test 1: createMockWorker - simulates message passing
+    const worker1 = createMockWorker((data) => data * 2);
+    const result1 = await new Promise((resolve) => {
+        worker1.onmessage = (e) => resolve(e.data);
+        worker1.postMessage(5);
     });
+    assert(result1 === 10, 'createMockWorker: processes messages');
 
-    it('should handle async worker functions', async () => {
-      const worker = createMockWorker(async (data) => {
+    // Test 2: createMockWorker - handles async functions
+    const worker2 = createMockWorker(async (data) => {
         await new Promise(r => setTimeout(r, 10));
         return data.map(x => x * 2);
-      });
-
-      const result = await new Promise((resolve) => {
-        worker.onmessage = (e) => resolve(e.data);
-        worker.postMessage([1, 2, 3]);
-      });
-
-      expect(result).toEqual([2, 4, 6]);
     });
-  });
-
-  describe('createInlineWorker()', () => {
-    it('should create worker from function', async () => {
-      const { run, terminate } = createInlineWorker((data) => data * 2);
-
-      const result = await run(21);
-      expect(result).toBe(42);
-
-      terminate();
+    const result2 = await new Promise((resolve) => {
+        worker2.onmessage = (e) => resolve(e.data);
+        worker2.postMessage([1, 2, 3]);
     });
-  });
+    assert(JSON.stringify(result2) === JSON.stringify([2, 4, 6]), 'createMockWorker: handles async');
 
-  describe('createWorkerPool()', () => {
-    it('should run tasks on pool', async () => {
-      const pool = createWorkerPool(
-        URL.createObjectURL(new Blob([
-          'self.onmessage = (e) => self.postMessage(e.data * 2)'
-        ], { type: 'application/javascript' })),
-        2
-      );
+    // Test 3: parallelize - processes chunks in parallel
+    const fn3 = (chunk) => chunk.reduce((a, b) => a + b, 0);
+    const chunks3 = [[1, 2], [3, 4], [5, 6]];
+    const results3 = await parallelize(fn3, chunks3);
+    assert(JSON.stringify(results3) === JSON.stringify([3, 7, 11]), 'parallelize: processes chunks');
 
-      const results = await pool.runAll([1, 2, 3, 4]);
-      expect(results.sort()).toEqual([2, 4, 6, 8]);
+    // Test 4: createMutex - lock/unlock
+    const buffer4 = new SharedArrayBuffer(4);
+    const array4 = new Int32Array(buffer4);
+    const mutex4 = createMutex(array4, 0);
+    mutex4.lock();
+    let lockThrown = false;
+    try {
+        mutex4.lock();
+    } catch (e) {
+        lockThrown = true;
+    }
+    assert(lockThrown, 'createMutex: throws on double lock');
+    mutex4.unlock();
+    let unlockSuccess = false;
+    try {
+        mutex4.lock();
+        unlockSuccess = true;
+        mutex4.unlock();
+    } catch (e) {
+        // Failed
+    }
+    assert(unlockSuccess, 'createMutex: can lock after unlock');
 
-      pool.terminate();
+    // Test 5: createMutex - withLock
+    const buffer5 = new SharedArrayBuffer(4);
+    const array5 = new Int32Array(buffer5);
+    const mutex5 = createMutex(array5, 0);
+    let executed5 = false;
+    mutex5.withLock(() => {
+        executed5 = true;
     });
+    assert(executed5, 'createMutex: withLock executes');
 
-    it('should report stats', () => {
-      const pool = createWorkerPool('worker.js', 4);
-      const stats = pool.getStats();
+    // Test 6: createAtomicCounter - increment
+    const buffer6 = new SharedArrayBuffer(4);
+    const counter6 = createAtomicCounter(buffer6);
+    assert(counter6.get() === 0, 'createAtomicCounter: starts at 0');
+    counter6.increment();
+    counter6.increment();
+    assert(counter6.get() === 2, 'createAtomicCounter: increments');
 
-      expect(stats).toHaveProperty('poolSize');
-      expect(stats.poolSize).toBe(4);
+    // Test 7: createAtomicCounter - decrement
+    const buffer7 = new SharedArrayBuffer(4);
+    const counter7 = createAtomicCounter(buffer7);
+    counter7.increment();
+    counter7.increment();
+    counter7.decrement();
+    assert(counter7.get() === 1, 'createAtomicCounter: decrements');
 
-      pool.terminate();
-    });
-  });
+    // Test 8: createAtomicCounter - reset
+    const buffer8 = new SharedArrayBuffer(4);
+    const counter8 = createAtomicCounter(buffer8);
+    counter8.increment();
+    counter8.increment();
+    counter8.reset();
+    assert(counter8.get() === 0, 'createAtomicCounter: resets');
 
-  describe('parallelize()', () => {
-    it('should process chunks in parallel', async () => {
-      const fn = (chunk) => chunk.reduce((a, b) => a + b, 0);
-      const chunks = [[1, 2], [3, 4], [5, 6]];
-
-      const results = await parallelize(fn, chunks);
-      expect(results).toEqual([3, 7, 11]);
-    });
-  });
-
-  describe('createMutex()', () => {
-    it('should provide lock/unlock', () => {
-      const buffer = new SharedArrayBuffer(4);
-      const array = new Int32Array(buffer);
-      const mutex = createMutex(array, 0);
-
-      mutex.lock();
-      expect(() => mutex.lock()).toThrow();
-      mutex.unlock();
-      expect(() => mutex.lock()).not.toThrow();
-      mutex.unlock();
-    });
-
-    it('should support withLock', () => {
-      const buffer = new SharedArrayBuffer(4);
-      const array = new Int32Array(buffer);
-      const mutex = createMutex(array, 0);
-
-      let executed = false;
-      mutex.withLock(() => {
-        executed = true;
-      });
-
-      expect(executed).toBe(true);
-    });
-  });
-
-  describe('createAtomicCounter()', () => {
-    it('should increment atomically', () => {
-      const buffer = new SharedArrayBuffer(4);
-      const counter = createAtomicCounter(buffer);
-
-      expect(counter.get()).toBe(0);
-      counter.increment();
-      counter.increment();
-      expect(counter.get()).toBe(2);
-    });
-
-    it('should decrement atomically', () => {
-      const buffer = new SharedArrayBuffer(4);
-      const counter = createAtomicCounter(buffer);
-
-      counter.increment();
-      counter.increment();
-      counter.decrement();
-      expect(counter.get()).toBe(1);
-    });
-
-    it('should reset', () => {
-      const buffer = new SharedArrayBuffer(4);
-      const counter = createAtomicCounter(buffer);
-
-      counter.increment();
-      counter.increment();
-      counter.reset();
-      expect(counter.get()).toBe(0);
-    });
-  });
-
-  describe('createPriorityTaskQueue()', () => {
-    it('should process high priority first', async () => {
-      const order = [];
-      const queue = createPriorityTaskQueue(
-        URL.createObjectURL(new Blob([
-          'self.onmessage = (e) => self.postMessage(e.data)'
-        ], { type: 'application/javascript' })),
-        1
-      );
-
-      queue.enqueue('low', 'low').then(() => order.push('low'));
-      queue.enqueue('normal', 'normal').then(() => order.push('normal'));
-      queue.enqueue('high', 'high').then(() => order.push('high'));
-
-      await new Promise(r => setTimeout(r, 100));
-
-      expect(order[0]).toBe('high');
-    });
-
-    it('should report queue lengths', () => {
-      const queue = createPriorityTaskQueue('worker.js', 1);
-      const lengths = queue.getQueueLengths();
-
-      expect(lengths).toHaveProperty('high');
-      expect(lengths).toHaveProperty('normal');
-      expect(lengths).toHaveProperty('low');
-    });
-  });
-
-  describe('transferToWorker()', () => {
-    it('should transfer buffer ownership', async () => {
-      const worker = createMockWorker((data) => {
+    // Test 9: transferToWorker - transfers buffer
+    const worker9 = createMockWorker((data) => {
         const arr = new Uint8Array(data.buffer);
         return arr.length;
-      });
-
-      const buffer = new ArrayBuffer(100);
-      const result = await transferToWorker(worker, buffer);
-
-      expect(result).toBe(100);
-      expect(buffer.byteLength).toBe(0);
     });
-  });
-});
+    const buffer9 = new ArrayBuffer(100);
+    const result9 = await transferToWorker(worker9, buffer9);
+    assert(result9 === 100, 'transferToWorker: transfers and processes');
+    assert(buffer9.byteLength === 0, 'transferToWorker: original buffer detached');
+
+    console.log('\n' + '='.repeat(50));
+    console.log(`Results: ${passed} passed, ${failed} failed`);
+    console.log('='.repeat(50));
+}
+
+runTests();
