@@ -184,7 +184,7 @@ export async function POST(request: NextRequest) {
         const exercise = exerciseResponse.documents[0];
         const testCode = exercise.testCode as string | undefined;
         const expectedOutput = exercise.expectedOutput as string | undefined;
-        const hasHarness = !!(testCode?.includes('int main'));
+        const hasHarness = /\bint\s+main\b/.test(testCode ?? '');
 
         // ── Execute via Judge0 ────────────────────────────────────────────────
         const sourceCode = buildSource(code, testCode);

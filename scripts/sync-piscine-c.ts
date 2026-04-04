@@ -3,6 +3,8 @@ import simpleGit from 'simple-git';
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import * as dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
 
 // Correction pour __dirname en ES Modules
 const __filename = fileURLToPath(import.meta.url);
@@ -81,6 +83,63 @@ function extractTitle(content: string, slug: string): string {
 }
 
 /**
+ * Extrait l'énoncé depuis le premier bloc /* ... * / (format single-star)
+ * Utilisé en fallback pour les fichiers Semaine3+ qui n'ont pas de marqueur ÉNONCÉ.
+ */
+function extractSingleStarStatement(content: string): string {
+    const lines = content.split('\n');
+    let inBlock = false;
+    const result: string[] = [];
+
+    for (const line of lines) {
+        // Commentaire ouvert sur une seule ligne : /* ... */ → extrait le titre inline
+        if (!inBlock && line.trim().match(/^\/\*.*\*\/\s*$/)) {
+            const inlineContent = line.replace(/^\/\*+\s*/, '').replace(/\s*\*+\/\s*$/, '').trim();
+            // "challenge_ft_btree.c - Arbre binaire basique" → prendre la partie après " - "
+            const dashPart = inlineContent.split(' - ')[1];
+            if (dashPart) result.push(`## Objectif\n\n${dashPart}`);
+            else if (inlineContent && !inlineContent.match(/^\w+\.c$/)) result.push(`## Objectif\n\n${inlineContent}`);
+            break; // une seule ligne, terminé
+        }
+
+        if (!inBlock && line.trim().startsWith('/*')) {
+            inBlock = true;
+            // Titre éventuel sur la ligne d'ouverture : /* challenge.c - description */
+            const inlineTitle = line.replace(/^\/\*+\s*/, '').trim();
+            if (inlineTitle && !inlineTitle.match(/^\w+\.c\s*(-\s*.+)?$/)) {
+                result.push(`## Objectif\n\n${inlineTitle}`);
+            } else {
+                const dashPart = inlineTitle.split(' - ')[1];
+                if (dashPart) result.push(`## Objectif\n\n${dashPart}`);
+            }
+            continue;
+        }
+
+        if (inBlock) {
+            // Fin du bloc
+            if (line.trim() === '*/') break;
+            // Arrêt sur première ligne de code réel
+            if (line.match(/^#include/) || line.match(/^(int|void|char|typedef|struct)\s+/)) break;
+            // Retire " * " au début
+            const clean = line.replace(/^\s*\*\s?/, '').replace(/\s*\*\/\s*$/, '').trim();
+            // Saute la ligne du nom de fichier seul
+            if (clean.match(/^\w+\.c$/)) continue;
+            if (clean) {
+                if (clean.match(/^(Objectif|Règles?|Contraintes?|Exemples?|Prototype|PROBLÈME)\s*:/i)) {
+                    result.push(`\n## ${clean.replace(/:.*/, '')}\n`);
+                    const rest = clean.replace(/^[^:]+:\s*/, '');
+                    if (rest) result.push(rest);
+                } else {
+                    result.push(clean);
+                }
+            }
+        }
+    }
+
+    return result.join('\n').trim();
+}
+
+/**
  * Extrait l'énoncé (statement) depuis les commentaires
  */
 function extractStatement(content: string): string {
@@ -150,7 +209,10 @@ function extractStatement(content: string): string {
         }
     }
 
-    return statement.join('\n').trim();
+    const result = statement.join('\n').trim();
+    // Fallback : format single-star /* * */ (Semaine3+)
+    if (!result) return extractSingleStarStatement(content);
+    return result;
 }
 
 /**
@@ -177,7 +239,42 @@ function extractStarterCode(content: string): string {
 }
 
 /**
- * Extrait le code de test depuis les commentaires
+ * Extrait la fonction int main() directement depuis le source C.
+ * Utilisé en fallback quand aucun bloc TESTS n'est présent dans les commentaires.
+ * Retourne une chaîne vide si :
+ *   - pas de main() trouvé
+ *   - main() prend des arguments (int ac, char **av) → test CLI, pas standalone
+ *   - le fichier a des includes locaux (ft_list.h, etc.) → dépendances externes
+ */
+function extractMainFunction(content: string): string {
+    // Refuse les fichiers avec des includes locaux (non-système)
+    if (/"[^.]+\.h"/.test(content)) return '';
+
+    const lines = content.split('\n');
+    let inMain = false;
+    let braceCount = 0;
+    const mainLines: string[] = [];
+
+    for (const line of lines) {
+        if (!inMain && line.match(/^int\s+main\s*\(\s*void\s*\)/)) {
+            inMain = true;
+            mainLines.push(line);
+            continue;
+        }
+        if (inMain) {
+            mainLines.push(line);
+            braceCount += (line.match(/{/g) || []).length;
+            braceCount -= (line.match(/}/g) || []).length;
+            if (braceCount === 0 && line.includes('}')) break;
+        }
+    }
+
+    return mainLines.join('\n').trim();
+}
+
+/**
+ * Extrait le code de test depuis les commentaires.
+ * Fallback : extrait int main(void) directement du source si pas de bloc TESTS.
  */
 function extractTestCode(content: string): string {
     const lines = content.split('\n');
@@ -211,7 +308,17 @@ function extractTestCode(content: string): string {
         }
     }
 
-    return testCode.join('\n').trim();
+    const fromComments = testCode.join('\n').trim();
+
+    // Si le bloc TESTS des commentaires ne contient pas de vrai code C (int main),
+    // on extrait directement le int main(void) du source.
+    // Utilise un regex pour gérer int\tmain (tabulation) vs int main (espace).
+    if (!/\bint\s+main\b/.test(fromComments)) {
+        const mainFn = extractMainFunction(content);
+        if (mainFn) return mainFn;
+    }
+
+    return fromComments;
 }
 
 /**
