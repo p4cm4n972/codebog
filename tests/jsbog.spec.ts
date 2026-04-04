@@ -5,15 +5,24 @@ const PASSWORD = 'password123';
 // Premier exercice piscine-js-expert (slug = nom du répertoire)
 const EXERCISE_URL = 'http://localhost:3000/jsbog/exercises/ex00';
 
-// Solution correcte pour ex00 — compose & pipe
-// compose: droite → gauche ; pipe: gauche → droite
+// Solution correcte pour ex00 — Types & Variables
 const EX00_SOLUTION = `
-function compose(...fns) {
-  return (x) => fns.reduceRight((v, f) => f(v), x);
+function getType(value) {
+  if (value === null) return 'null';
+  if (Array.isArray(value)) return 'array';
+  return typeof value;
 }
 
-function pipe(...fns) {
-  return (x) => fns.reduce((v, f) => f(v), x);
+function convertToNumber(value) {
+  return Number(value);
+}
+
+function isStrictEqual(a, b) {
+  return a === b;
+}
+
+function isLooseEqual(a, b) {
+  return a == b;
 }
 `.trim();
 

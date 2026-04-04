@@ -147,7 +147,10 @@ test.describe('ALGOBOG — smoke tests (isolated-vm)', () => {
             resp => resp.url().includes('/api/execute') && resp.request().method() === 'POST',
             { timeout: 30_000 }
         );
-        await page.locator('button:has-text("TESTER")').click({ force: true });
+        await page.evaluate(() => {
+            const btn = [...document.querySelectorAll('button')].find(b => b.textContent?.includes('TESTER'));
+            if (btn) btn.click();
+        });
         const testResponse = await testResponsePromise;
         const testData = await testResponse.json();
 

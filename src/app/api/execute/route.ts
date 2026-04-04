@@ -20,6 +20,13 @@ import { executeInSandbox } from '@/lib/sandbox';
 const ALGOBOG_SLUG_PATTERN = /^[a-z][a-z0-9-]*-\d+$/;
 
 /**
+ * Detect piscine exercise slugs (format: exNN)
+ * e.g. "ex00", "ex01", "ex25"
+ * These are always accessible to authenticated users (no progression lock).
+ */
+const PISCINE_SLUG_PATTERN = /^ex\d+$/;
+
+/**
  * Verify authentication via Appwrite session cookie
  */
 async function verifySession(): Promise<{ userId: string; unlockAll: boolean } | null> {
@@ -88,9 +95,15 @@ export async function POST(request: NextRequest) {
         // Explicit `type` param is preferred; regex fallback for backward compatibility.
         // CBOG (C exercises) uses /api/submissions/c — not this endpoint.
         const isAlgobog = type === 'algobog' || (!type && ALGOBOG_SLUG_PATTERN.test(exerciseSlug));
+        const isPiscine = PISCINE_SLUG_PATTERN.test(exerciseSlug);
+
+        // Piscine exercises (ex00..exNN) are in the `exercises` collection with no
+        // progression lock — any authenticated user can submit them.
         const access = isAlgobog
             ? await isProblemUnlocked(userInfo.userId, exerciseSlug, userInfo.unlockAll)
-            : await isJsLevelUnlocked(userInfo.userId, exerciseSlug, userInfo.unlockAll);
+            : isPiscine
+                ? { hasAccess: true }
+                : await isJsLevelUnlocked(userInfo.userId, exerciseSlug, userInfo.unlockAll);
 
         if (!access.hasAccess) {
             return NextResponse.json(

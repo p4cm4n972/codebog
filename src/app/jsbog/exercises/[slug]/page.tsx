@@ -118,7 +118,7 @@ function extractInstructions(statement: string): string {
 }
 
 export default function ExerciseDetailPage() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, getJWT } = useAuth();
   const router = useRouter();
   const params = useParams();
   const slug = params.slug as string;
@@ -210,9 +210,13 @@ export default function ExerciseDetailPage() {
 
     try {
       // Execute code and run tests
+      const jwt = await getJWT();
       const executeResponse = await fetch('/api/execute', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(jwt ? { 'Authorization': `Bearer ${jwt}` } : {}),
+        },
         body: JSON.stringify({
           code: userCode,
           exerciseSlug: exercise.slug,
