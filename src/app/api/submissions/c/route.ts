@@ -67,13 +67,23 @@ function normalizeOutput(output: string): string {
 
 /**
  * Build the complete C source.
- * If testCode provides its own main(), use it; otherwise add a minimal main.
+ *
+ * Normal mode (no marker):
+ *   userCode + testCode  (testCode provides int main)
+ *
+ * Preamble mode (testCode contains CBOG_PREAMBLE marker):
+ *   preamble + userCode + rest
+ *   Used when testCode must define types/structs that the user's code
+ *   references (e.g. t_list for linked-list exercises).
+ *
+ * Fallback (no int main in testCode):
+ *   Wrap userCode in a minimal main that only checks compilation.
  */
+const PREAMBLE_MARKER = '/* CBOG_PREAMBLE */';
+
 function buildSource(userCode: string, testCode: string | undefined): string {
-    if (testCode?.includes('int main')) {
-        return `${userCode}\n\n${testCode}`;
-    }
-    return `
+    if (!testCode?.includes('int main')) {
+        return `
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -85,6 +95,12 @@ int main(void) {
     return 0;
 }
 `;
+    }
+    if (testCode.includes(PREAMBLE_MARKER)) {
+        const [preamble, rest] = testCode.split(PREAMBLE_MARKER);
+        return `${preamble}\n${userCode}\n${rest}`;
+    }
+    return `${userCode}\n\n${testCode}`;
 }
 
 /**
