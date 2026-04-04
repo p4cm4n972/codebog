@@ -107,9 +107,6 @@ export default function Navbar() {
                         className="hover:scale-105 transition-transform"
                     />
                 </Link>
-                <span className="text-[10px] px-1.5 py-0.5 bg-yellow-400 text-black font-bold rounded">
-                    BÊTA
-                </span>
             </div>
 
             {/* Center Navigation Links - Desktop */}
