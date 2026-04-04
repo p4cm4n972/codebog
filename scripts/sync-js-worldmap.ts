@@ -2,6 +2,8 @@ import { Client, Databases, ID, Query } from 'node-appwrite';
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
+import * as dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
