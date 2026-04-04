@@ -110,12 +110,15 @@ const JS_SOLUTION_PATTERNS = [
 ];
 
 // Patterns de solution dans statement (bloc de code avec implémentation non-triviale)
-// Detect a markdown code block that contains function body logic
+// On cherche des DÉCLARATIONS de fonctions avec corps réel — exclure les stubs /* ... */
+// Note: les blocs HINT_START/END sont strippés avant l'analyse (voir ci-dessous)
+// Detect named function/class WITH real implementation body (not stubs like /* ... */)
+// All patterns use [^`] to stay strictly within ONE code block (no fence crossing)
 const STATEMENT_SOLUTION_PATTERNS = [
-    // Code fence with a return statement containing logic (not just a stub)
-    /```(?:js|javascript)[\s\S]{0,200}return\s+.{30,}[\s\S]{0,200}```/,
-    // Code fence with multiple statements (if, for, while, etc.) indicating full implementation
-    /```(?:js|javascript)[\s\S]{0,100}(?:for|while|if)\s*\([^)]+\)[\s\S]{0,300}```/,
+    // Named function with actual body: has const/let/var assignment OR loop — not a stub
+    /```(?:js|javascript)[^`]*\n(?:async\s+)?function\s+\w+\s*\([^)]*\)\s*\{(?![^`]{0,30}\/\*\s*[^*]*\*\/\s*\})[^`]{50,}(?:(?:const|let|var)\s+\w+\s*=|(?:for|while)\s*\()[^`]*```/,
+    // Class with real method bodies (not just method stubs)
+    /```(?:js|javascript)[^`]*\nclass\s+\w+[^`]{0,3000}(?:(?:const|let|var)\s+\w+\s*=|(?:for|while)\s*\()[^`]*```/,
 ];
 
 // ============================================================================
@@ -241,8 +244,10 @@ function analyzeStatement(statement: string | undefined): ExerciseIssue[] {
     }
 
     // Vérifier si statement contient une solution complète dans un bloc de code
+    // Ignorer le contenu dans les blocs HINT_START/END (hints cachés, non visibles)
+    const statementWithoutHints = statement.replace(/<!--\s*HINT_START\s*-->[\s\S]*?<!--\s*HINT_END\s*-->/g, '');
     for (const pattern of STATEMENT_SOLUTION_PATTERNS) {
-        if (pattern.test(statement)) {
+        if (pattern.test(statementWithoutHints)) {
             issues.push({
                 message: 'statement contient un bloc de code avec implémentation complète (solution exposée)',
                 severity: 'critical'
