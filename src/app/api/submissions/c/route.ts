@@ -142,12 +142,16 @@ function detectCheat(code: string, expectedOutput: string): { cheating: boolean;
 }
 
 async function executeWithJudge0(sourceCode: string): Promise<Judge0Response> {
-    const response = await fetch(`${JUDGE0_API}/submissions?base64_encoded=false&wait=true`, {
+    // Encoder en base64 pour éviter les erreurs UTF-8 sur les starter codes
+    // avec des caractères spéciaux (espaces insécables, quotes typographiques, etc.)
+    const encoded = Buffer.from(sourceCode, 'utf-8').toString('base64');
+
+    const response = await fetch(`${JUDGE0_API}/submissions?base64_encoded=true&wait=true`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             language_id: JUDGE0_LANG_C,
-            source_code: sourceCode,
+            source_code: encoded,
             compile_timeout: 10,
             run_timeout: 5,
         }),
@@ -158,7 +162,12 @@ async function executeWithJudge0(sourceCode: string): Promise<Judge0Response> {
         throw new Error(`Judge0 API ${response.status}: ${errorText}`);
     }
 
-    return response.json();
+    // Les champs stdout/stderr/compile_output sont aussi encodés en base64
+    const result = await response.json() as Judge0Response & Record<string, string | null>;
+    if (result.stdout) result.stdout = Buffer.from(result.stdout, 'base64').toString('utf-8');
+    if (result.stderr) result.stderr = Buffer.from(result.stderr, 'base64').toString('utf-8');
+    if (result.compile_output) result.compile_output = Buffer.from(result.compile_output, 'base64').toString('utf-8');
+    return result;
 }
 
 export async function POST(request: NextRequest) {

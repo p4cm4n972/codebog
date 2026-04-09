@@ -27,9 +27,11 @@
     "validate:algobog": "npx tsx scripts/validate-all-exercises.ts --platform algobog"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.66",
     "@monaco-editor/react": "^4.7.0",
     "@types/react-syntax-highlighter": "^15.5.13",
     "@wasmer/sdk": "^0.10.0",
+    "ai": "^6.0.146",
     "appwrite": "^21.5.0",
     "isolated-vm": "^5.0.1",
     "next": "16.1.1",
@@ -41,6 +43,7 @@
     "stripe": "^20.2.0"
   },
   "devDependencies": {
+    "@anthropic-ai/sdk": "^0.82.0",
     "@playwright/test": "^1.57.0",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",

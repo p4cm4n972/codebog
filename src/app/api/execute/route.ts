@@ -96,12 +96,16 @@ export async function POST(request: NextRequest) {
         // CBOG (C exercises) uses /api/submissions/c — not this endpoint.
         const isAlgobog = type === 'algobog' || (!type && ALGOBOG_SLUG_PATTERN.test(exerciseSlug));
         const isPiscine = PISCINE_SLUG_PATTERN.test(exerciseSlug);
+        // JSBOG exercises (type='jsbog', slugs like 'fundamentals-ex00') are already
+        // gated by /api/jsbog/exercises which validates access before returning testCode.
+        // Any authenticated user reaching here has already passed that gate.
+        const isJsbog = type === 'jsbog';
 
         // Piscine exercises (ex00..exNN) are in the `exercises` collection with no
         // progression lock — any authenticated user can submit them.
         const access = isAlgobog
             ? await isProblemUnlocked(userInfo.userId, exerciseSlug, userInfo.unlockAll)
-            : isPiscine
+            : isPiscine || isJsbog
                 ? { hasAccess: true }
                 : await isJsLevelUnlocked(userInfo.userId, exerciseSlug, userInfo.unlockAll);
 

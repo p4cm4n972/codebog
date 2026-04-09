@@ -4,9 +4,9 @@
 function test(name, fn) {
     try {
         fn();
-        console.log(`✅ ${name}`);
+        console.log(`✓ ${name}`);
     } catch (error) {
-        console.log(`❌ ${name}`);
+        console.log(`✗ ${name}`);
         console.error(error.message);
     }
 }

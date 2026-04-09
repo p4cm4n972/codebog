@@ -7,7 +7,7 @@ import { isExerciseUnlocked, isValidSlug } from '@/lib/jsbog/access-control';
 /**
  * Vérifie l'authentification via le cookie de session Appwrite
  */
-async function verifySession(): Promise<{ userId: string } | null> {
+async function verifySession(): Promise<{ userId: string; unlockAll: boolean } | null> {
   try {
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get('a_session_' + process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID);
@@ -23,8 +23,9 @@ async function verifySession(): Promise<{ userId: string } | null> {
 
     const account = new Account(client);
     const user = await account.get();
+    const labels = user.labels || [];
 
-    return { userId: user.$id };
+    return { userId: user.$id, unlockAll: labels.includes('admin') || labels.includes('moderator') };
   } catch {
     return null;
   }
@@ -33,7 +34,7 @@ async function verifySession(): Promise<{ userId: string } | null> {
 /**
  * Vérifie l'authentification via JWT (pour cross-domain)
  */
-async function verifyJWT(jwt: string): Promise<{ userId: string } | null> {
+async function verifyJWT(jwt: string): Promise<{ userId: string; unlockAll: boolean } | null> {
   try {
     const client = new Client()
       .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!)
@@ -42,8 +43,9 @@ async function verifyJWT(jwt: string): Promise<{ userId: string } | null> {
 
     const account = new Account(client);
     const user = await account.get();
+    const labels = user.labels || [];
 
-    return { userId: user.$id };
+    return { userId: user.$id, unlockAll: labels.includes('admin') || labels.includes('moderator') };
   } catch {
     return null;
   }
@@ -52,7 +54,7 @@ async function verifyJWT(jwt: string): Promise<{ userId: string } | null> {
 /**
  * Authentifie l'utilisateur via cookie ou JWT
  */
-async function authenticate(request: NextRequest): Promise<{ userId: string } | null> {
+async function authenticate(request: NextRequest): Promise<{ userId: string; unlockAll: boolean } | null> {
   // 1. Essayer le cookie de session
   let userInfo = await verifySession();
   if (userInfo) return userInfo;

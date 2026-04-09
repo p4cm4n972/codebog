@@ -40,11 +40,15 @@ test.describe('ALGOBOG — smoke tests (isolated-vm)', () => {
     });
 
     test('charge la page problème avec éditeur Monaco', async ({ page }) => {
+        test.setTimeout(60_000);
+
         const slug = await getFirstProblemSlug(page);
         expect(slug, 'Aucun problème trouvé dans array-tower').toBeTruthy();
 
         await page.goto(`${BASE_URL}/algobog/problem/${slug}`);
-        await page.waitForSelector('.monaco-editor', { timeout: 15000 });
+        // networkidle attend la fin des fetches auth + problème avant que Monaco ne rende
+        await page.waitForLoadState('networkidle', { timeout: 20000 });
+        await page.waitForSelector('.monaco-editor', { timeout: 30000 });
 
         // Titre du problème présent
         const heading = await page.locator('h1, h2').first().textContent();

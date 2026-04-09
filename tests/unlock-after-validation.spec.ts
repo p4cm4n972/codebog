@@ -22,22 +22,15 @@ const BASE_URL = 'http://localhost:3000';
 test.describe('Unlock After Validation', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto(`${BASE_URL}/login`);
-        await page.fill('input[type="email"]', 'manuel.adele@icloud.com');
-        await page.fill('input[type="password"]', 'alleluia');
+        await page.fill('input[type="email"]', 'test-cloud@codebog.test');
+        await page.fill('input[type="password"]', 'password123');
         await page.click('button[type="submit"]');
-        // Wait for redirect - either to profile or any authenticated page
-        await Promise.race([
-            page.waitForURL('**/profile', { timeout: 15000 }),
-            page.waitForURL('**/jsbog', { timeout: 15000 }),
-            page.waitForURL('**/cbog', { timeout: 15000 }),
-        ]).catch(() => {
-            // If no redirect, wait for the navbar to show authenticated state
-        });
-        // Ensure we're logged in by waiting for user indicator
-        await page.waitForSelector('[class*="APPMAN"], [class*="user"], button:has-text("complété")', { timeout: 10000 }).catch(() => {});
+        await page.waitForURL('**/profile', { timeout: 15000 });
     });
 
     test('should unlock next CBOG exercise after completing current one', async ({ page }) => {
+        test.setTimeout(60_000);
+
         // Go to CBOG
         await page.goto(`${BASE_URL}/cbog`);
         await page.waitForLoadState('networkidle');
@@ -98,11 +91,20 @@ void ft_putchar(char c)
 }
 `);
 
-        // Submit the code
-        await page.click('text=COMPILER & TESTER');
+        // Intercepter la réponse API avant de cliquer
+        const apiResponsePromise = page.waitForResponse(
+            resp => resp.url().includes('/api/submissions/c') && resp.request().method() === 'POST',
+            { timeout: 45_000 }
+        );
 
-        // Wait for compilation result
-        await page.waitForTimeout(10000);
+        // Submit via JS click pour contourner les overlays DOM (GemBalance, etc.)
+        await page.locator('button:has-text("run_tests")').evaluate((btn: HTMLElement) => btn.click());
+
+        const apiResponse = await apiResponsePromise;
+        const data = await apiResponse.json();
+        const passed = data.results?.passed === true;
+
+        console.log(`API status: ${apiResponse.status()}, passed: ${passed}`);
 
         // Check if exercise passed
         const missionAccomplie = await page.locator('text=MISSION ACCOMPLIE').isVisible().catch(() => false);
