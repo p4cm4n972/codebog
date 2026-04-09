@@ -2,7 +2,7 @@
  * Isolated VM runner for safe JavaScript code execution
  */
 
-import * as ivm from 'isolated-vm';
+import type * as IVM from 'isolated-vm';
 import type { ExecutionResult, TestResults, SandboxConfig, TestTracker } from './types';
 import { DEFAULT_SANDBOX_CONFIG } from './types';
 import {
@@ -20,9 +20,10 @@ export async function executeInSandbox(
     testCode?: string,
     config: SandboxConfig = DEFAULT_SANDBOX_CONFIG
 ): Promise<ExecutionResult> {
-    let isolate: ivm.Isolate | undefined;
+    let isolate: IVM.Isolate | undefined;
 
     try {
+        const ivm = await import('isolated-vm');
         const tracker = createTestTracker();
 
         // Create isolated VM
@@ -60,9 +61,9 @@ export async function executeInSandbox(
  * Set up the sandbox environment with console and assertions
  */
 async function setupSandboxEnvironment(
-    isolate: ivm.Isolate,
-    context: ivm.Context,
-    jail: ivm.Reference<Record<string | number | symbol, unknown>>,
+    isolate: IVM.Isolate,
+    context: IVM.Context,
+    jail: IVM.Reference<Record<string | number | symbol, unknown>>,
     tracker: TestTracker
 ): Promise<void> {
     // Set 'global' reference
@@ -85,8 +86,8 @@ async function setupSandboxEnvironment(
  * Run user code and optional test code
  */
 async function runCodeWithTests(
-    isolate: ivm.Isolate,
-    context: ivm.Context,
+    isolate: IVM.Isolate,
+    context: IVM.Context,
     userCode: string,
     testCode: string | undefined,
     tracker: TestTracker,
@@ -117,8 +118,8 @@ async function runCodeWithTests(
  * Run test code and parse results
  */
 async function runTestCode(
-    isolate: ivm.Isolate,
-    context: ivm.Context,
+    isolate: IVM.Isolate,
+    context: IVM.Context,
     testCode: string,
     tracker: TestTracker,
     timeout: number

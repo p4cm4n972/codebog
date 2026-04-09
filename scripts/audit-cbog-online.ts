@@ -13,7 +13,7 @@ const __dirname = path.dirname(__filename);
 const APPWRITE_ENDPOINT = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT;
 const APPWRITE_PROJECT_ID = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID;
 const APPWRITE_API_KEY = process.env.NEXT_APPWRITE_KEY;
-const APPWRITE_DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID;
+const APPWRITE_DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID as string;
 const C_EXERCISES_COLLECTION_ID = 'c-exercises';
 
 // --- Validation des variables d'environnement ---
@@ -125,7 +125,7 @@ async function auditExercises(): Promise<void> {
 
                 if (!isNonEmpty(exercise.testCode)) {
                     issues.push('testCode manquant ou vide');
-                } else if (!hasValidTestOutput(exercise.testCode)) {
+                } else if (!hasValidTestOutput(exercise.testCode!)) {
                     issues.push('testCode sans sortie attendue exploitable');
                 }
 
