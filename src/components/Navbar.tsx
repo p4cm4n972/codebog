@@ -104,6 +104,7 @@ export default function Navbar() {
                         alt="CODEBOG"
                         width={80}
                         height={80}
+                        priority
                         className="hover:scale-105 transition-transform"
                     />
                 </Link>

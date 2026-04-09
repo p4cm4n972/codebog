@@ -10,11 +10,13 @@ import CookieConsent from "@/components/CookieConsent";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  preload: false, // non utilisé sur la homepage, chargé à la demande
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  preload: false, // non utilisé sur la homepage, chargé à la demande
 });
 
 const pressStart2P = Press_Start_2P({
