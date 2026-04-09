@@ -1,13 +1,29 @@
 "use client";
 
-import { createContext, useState, useEffect, useContext, ReactNode } from 'react';
+import { createContext, useState, useEffect, useContext, startTransition, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { account } from '@/lib/appwrite/client';
 import { Models } from 'appwrite';
 import { UserRole, UserPreferences } from '@/lib/appwrite/types';
 
-// Fallback admin email (for initial setup before roles are assigned)
 const FALLBACK_ADMIN_EMAIL = 'manuel.adele@gmail.com';
+const AUTH_CACHE_KEY = 'codebog_auth_user';
+
+function readUserCache(): Models.User<UserPreferences> | null {
+    try {
+        const raw = localStorage.getItem(AUTH_CACHE_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch {
+        return null;
+    }
+}
+
+function writeUserCache(u: Models.User<UserPreferences> | null) {
+    try {
+        if (u) localStorage.setItem(AUTH_CACHE_KEY, JSON.stringify(u));
+        else localStorage.removeItem(AUTH_CACHE_KEY);
+    } catch { /* SSR / private mode */ }
+}
 
 interface AuthContextType {
     user: Models.User<UserPreferences> | null;
@@ -25,17 +41,18 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-    const [user, setUser] = useState<Models.User<UserPreferences> | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+    // Initialisation synchrone depuis le cache → pas de flash "loading" pour les users connus
+    const [user, setUser] = useState<Models.User<UserPreferences> | null>(() => {
+        if (typeof window === 'undefined') return null;
+        return readUserCache();
+    });
+    const isLoading = false;
     const [error, setError] = useState('');
     const router = useRouter();
 
-    // Get user role from preferences, with fallback for initial admin
     const getUserRole = (u: Models.User<UserPreferences> | null): UserRole => {
         if (!u) return 'user';
-        // Check prefs.role first
         if (u.prefs?.role) return u.prefs.role;
-        // Fallback: check if user is the initial admin
         if (u.email === FALLBACK_ADMIN_EMAIL) return 'admin';
         return 'user';
     };
@@ -45,15 +62,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const isModerator = role === 'moderator' || role === 'admin';
 
     useEffect(() => {
+        // Validation en arrière-plan — startTransition = mise à jour non-urgente,
+        // React ne bloque pas le thread principal pour ce re-render
         const checkUser = async () => {
             try {
                 const currentUser = await account.get() as Models.User<UserPreferences>;
-                setUser(currentUser);
-            } catch (error) {
-                console.error('Failed to fetch user:', error);
-                setUser(null);
-            } finally {
-                setIsLoading(false);
+                startTransition(() => {
+                    setUser(currentUser);
+                    writeUserCache(currentUser);
+                });
+            } catch {
+                startTransition(() => {
+                    setUser(null);
+                    writeUserCache(null);
+                });
             }
         };
         checkUser();
@@ -62,20 +84,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const login = async (email: string, password: string) => {
         try {
             setError('');
-
-            // Client-side validation
             if (password.length < 8) {
                 setError('Password must be at least 8 characters long.');
                 return;
             }
-
             await account.createEmailPasswordSession(email, password);
             const currentUser = await account.get() as Models.User<UserPreferences>;
+            writeUserCache(currentUser);
             setUser(currentUser);
             router.push('/profile');
         } catch (err) {
             console.error('Login failed:', err);
-
             if (err instanceof Error) {
                 if (err.message?.includes('password')) {
                     setError('Password must be between 8 and 256 characters long.');
@@ -93,6 +112,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const logout = async () => {
         try {
             await account.deleteSession('current');
+            writeUserCache(null);
             setUser(null);
             router.push('/');
         } catch (error) {
