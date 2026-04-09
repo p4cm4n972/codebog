@@ -48,7 +48,7 @@ export default function Footer() {
         <div className="hidden md:grid md:grid-cols-3 w-full">
           <div></div>
           <p className="text-gray-400 text-xs text-center">
-            Développé par <a href="https://itmade.studio" target="_blank" rel="noopener noreferrer" className="text-yellow-400 hover:text-yellow-300 transition-colors">ITMade Studio</a>
+            Développé par <a href="https://itmade.studio" target="_blank" rel="noopener noreferrer" className="text-yellow-400 underline hover:no-underline hover:text-yellow-300 transition-colors">ITMade Studio</a>
           </p>
           <div></div>
         </div>
@@ -76,7 +76,7 @@ export default function Footer() {
             </Link>
           </div>
           <p className="text-gray-400 text-xs">
-            Développé par <a href="https://itmade.studio" target="_blank" rel="noopener noreferrer" className="text-yellow-400 hover:text-yellow-300 transition-colors">ITMade Studio</a>
+            Développé par <a href="https://itmade.studio" target="_blank" rel="noopener noreferrer" className="text-yellow-400 underline hover:no-underline hover:text-yellow-300 transition-colors">ITMade Studio</a>
           </p>
           <a
             href="https://ko-fi.com/codebog"

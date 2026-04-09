@@ -43,7 +43,7 @@ export default function CookieConsent() {
                         <p className="text-sm text-gray-300">
                             CODEBOG utilise des cookies essentiels pour le fonctionnement du site
                             (authentification, session). Aucun cookie publicitaire n'est utilisé.{' '}
-                            <Link href="/politique-confidentialite" className="text-green-400 hover:underline">
+                            <Link href="/politique-confidentialite" className="text-green-400 underline hover:no-underline">
                                 En savoir plus
                             </Link>
                         </p>

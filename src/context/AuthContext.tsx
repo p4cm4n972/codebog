@@ -62,6 +62,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const isModerator = role === 'moderator' || role === 'admin';
 
     useEffect(() => {
+        // Si aucun cache → l'utilisateur n'est pas connecté, on évite le 401 Appwrite
+        if (!readUserCache()) return;
+
         // Validation en arrière-plan — startTransition = mise à jour non-urgente,
         // React ne bloque pas le thread principal pour ce re-render
         const checkUser = async () => {
@@ -72,6 +75,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     writeUserCache(currentUser);
                 });
             } catch {
+                // Session expirée côté serveur
                 startTransition(() => {
                     setUser(null);
                     writeUserCache(null);
