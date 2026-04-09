@@ -4,7 +4,7 @@ export default function LandingPage() {
   const yellowButtonClasses = "px-10 py-5 bg-[#ffcc00] text-black text-2xl md:text-3xl font-bold uppercase border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:brightness-110 active:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] transition-all duration-150 rounded-none";
   const greenButtonClasses = "px-10 py-5 bg-[#2ecc71] text-black text-2xl md:text-3xl font-bold uppercase border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:brightness-110 active:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] transition-all duration-150 rounded-none";
   const purpleButtonClasses = "px-10 py-5 bg-[#9b59b6] text-white text-2xl md:text-3xl font-bold uppercase border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:brightness-125 active:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] transition-all duration-150 rounded-none";
-  const comingSoonButtonClasses = "relative px-10 py-5 bg-gray-600 text-gray-400 text-2xl md:text-3xl font-bold uppercase border-4 border-gray-700 shadow-[8px_8px_0px_0px_rgba(0,0,0,0.5)] rounded-none cursor-not-allowed opacity-75";
+  const comingSoonButtonClasses = "relative px-10 py-5 bg-gray-800 text-gray-500 text-2xl md:text-3xl font-bold uppercase border-4 border-gray-700 shadow-[8px_8px_0px_0px_rgba(0,0,0,0.5)] rounded-none cursor-not-allowed";
 
   return (
     <>
@@ -49,7 +49,7 @@ export default function LandingPage() {
                 ALGOBOG
               </Link>
               <div className={comingSoonButtonClasses}>
-                <span className="absolute -top-3 -right-3 px-2 py-1 bg-[#3498db] text-white text-xs font-bold border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                <span className="absolute -top-3 -right-3 px-2 py-1 bg-[#1d4ed8] text-white text-xs font-bold border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                   BIENTÔT
                 </span>
                 PYBOG

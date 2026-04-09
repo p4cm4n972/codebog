@@ -38,7 +38,7 @@ export default function CookieConsent() {
                     <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                             <span className="text-2xl">🍪</span>
-                            <h3 className="text-lg font-bold text-green-400">Cookies</h3>
+                            <p className="text-lg font-bold text-green-400">Cookies</p>
                         </div>
                         <p className="text-sm text-gray-300">
                             CODEBOG utilise des cookies essentiels pour le fonctionnement du site
