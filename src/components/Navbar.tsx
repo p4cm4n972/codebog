@@ -95,7 +95,7 @@ export default function Navbar() {
     ];
 
     return (
-        <nav className="z-10 flex items-center justify-between border-b-4 border-black bg-[#1a2e1a] px-4 py-1 font-mono text-white relative">
+        <nav className="z-50 flex items-center justify-between border-b-4 border-black bg-[#1a2e1a] px-4 py-1 font-mono text-white relative">
             {/* Logo */}
             <div className="flex items-center gap-2">
                 <Link href="/" className="flex items-center">

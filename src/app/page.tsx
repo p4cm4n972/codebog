@@ -1,10 +1,11 @@
 import Link from 'next/link';
 
 export default function LandingPage() {
-  const yellowButtonClasses = "px-10 py-5 bg-[#ffcc00] text-black text-2xl md:text-3xl font-bold uppercase border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:brightness-110 active:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] transition-all duration-150 rounded-none";
-  const greenButtonClasses = "px-10 py-5 bg-[#2ecc71] text-black text-2xl md:text-3xl font-bold uppercase border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:brightness-110 active:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] transition-all duration-150 rounded-none";
-  const purpleButtonClasses = "px-10 py-5 bg-[#9b59b6] text-white text-2xl md:text-3xl font-bold uppercase border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:brightness-125 active:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] transition-all duration-150 rounded-none";
-  const comingSoonButtonClasses = "relative px-10 py-5 bg-gray-800 text-gray-500 text-2xl md:text-3xl font-bold uppercase border-4 border-gray-700 shadow-[8px_8px_0px_0px_rgba(0,0,0,0.5)] rounded-none cursor-not-allowed";
+  const baseButtonClasses = "w-full px-3 py-4 sm:px-6 sm:py-5 md:px-10 text-base sm:text-xl md:text-2xl lg:text-3xl font-bold uppercase border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:brightness-110 active:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] transition-all duration-150 rounded-none";
+  const yellowButtonClasses = `${baseButtonClasses} bg-[#ffcc00] text-black`;
+  const greenButtonClasses = `${baseButtonClasses} bg-[#2ecc71] text-black`;
+  const purpleButtonClasses = `${baseButtonClasses} bg-[#9b59b6] text-white hover:brightness-125`;
+  const comingSoonButtonClasses = "relative w-full px-3 py-4 sm:px-6 sm:py-5 md:px-10 bg-gray-800 text-gray-500 text-base sm:text-xl md:text-2xl lg:text-3xl font-bold uppercase border-4 border-gray-700 shadow-[6px_6px_0px_0px_rgba(0,0,0,0.5)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.5)] rounded-none cursor-not-allowed";
 
   return (
     <>
