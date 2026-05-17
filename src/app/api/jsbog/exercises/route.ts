@@ -1,8 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Client, Account } from 'node-appwrite';
+import { Client, Account, Users } from 'node-appwrite';
 import { cookies } from 'next/headers';
 import { loadModuleExercises, loadExerciseBySlug } from '@/lib/piscine-exercises';
 import { isExerciseUnlocked, isValidSlug } from '@/lib/jsbog/access-control';
+import { getAdminClient } from '@/lib/appwrite-admin';
+
+/**
+ * Récupère les labels d'un utilisateur via l'Admin SDK.
+ * account.get() via JWT utilisateur ne retourne pas les labels —
+ * seule l'API Admin (clé API) y a accès de façon fiable.
+ */
+async function getUnlockAll(userId: string): Promise<boolean> {
+  try {
+    const users = new Users(getAdminClient());
+    const user = await users.get(userId);
+    const labels = user.labels || [];
+    return labels.includes('admin') || labels.includes('moderator');
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Vérifie l'authentification via le cookie de session Appwrite
@@ -12,9 +29,7 @@ async function verifySession(): Promise<{ userId: string; unlockAll: boolean } |
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get('a_session_' + process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID);
 
-    if (!sessionCookie) {
-      return null;
-    }
+    if (!sessionCookie) return null;
 
     const client = new Client()
       .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!)
@@ -23,9 +38,9 @@ async function verifySession(): Promise<{ userId: string; unlockAll: boolean } |
 
     const account = new Account(client);
     const user = await account.get();
-    const labels = user.labels || [];
+    const unlockAll = await getUnlockAll(user.$id);
 
-    return { userId: user.$id, unlockAll: labels.includes('admin') || labels.includes('moderator') };
+    return { userId: user.$id, unlockAll };
   } catch {
     return null;
   }
@@ -43,9 +58,9 @@ async function verifyJWT(jwt: string): Promise<{ userId: string; unlockAll: bool
 
     const account = new Account(client);
     const user = await account.get();
-    const labels = user.labels || [];
+    const unlockAll = await getUnlockAll(user.$id);
 
-    return { userId: user.$id, unlockAll: labels.includes('admin') || labels.includes('moderator') };
+    return { userId: user.$id, unlockAll };
   } catch {
     return null;
   }
