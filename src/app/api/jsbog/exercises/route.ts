@@ -141,7 +141,7 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      const exercise = loadExerciseBySlug(seasonSlug, moduleSlug, exerciseSlug);
+      const exercise = await loadExerciseBySlug(seasonSlug, moduleSlug, exerciseSlug);
       if (!exercise) {
         return NextResponse.json(
           { error: 'Exercise not found' },
@@ -152,7 +152,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Charger tous les exercices du module
-    const exercises = loadModuleExercises(seasonSlug, moduleSlug);
+    const exercises = await loadModuleExercises(seasonSlug, moduleSlug);
 
     // Retourner les exercices sans le code de test pour la liste
     const exerciseList = exercises.map(ex => ({
