@@ -126,7 +126,7 @@ export async function GET(request: NextRequest) {
         seasonSlug,
         moduleSlug,
         exerciseSlug,
-        false // pas de bypass admin
+        userInfo.unlockAll
       );
 
       if (!accessResult.hasAccess) {
