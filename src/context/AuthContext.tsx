@@ -6,7 +6,6 @@ import { account } from '@/lib/appwrite/client';
 import { Models } from 'appwrite';
 import { UserRole, UserPreferences } from '@/lib/appwrite/types';
 
-const FALLBACK_ADMIN_EMAIL = 'manuel.adele@gmail.com';
 const AUTH_CACHE_KEY = 'codebog_auth_user';
 
 function readUserCache(): Models.User<UserPreferences> | null {
@@ -52,8 +51,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const getUserRole = (u: Models.User<UserPreferences> | null): UserRole => {
         if (!u) return 'user';
+        if (u.labels?.includes('admin')) return 'admin';
+        if (u.labels?.includes('moderator')) return 'moderator';
         if (u.prefs?.role) return u.prefs.role;
-        if (u.email === FALLBACK_ADMIN_EMAIL) return 'admin';
         return 'user';
     };
 
