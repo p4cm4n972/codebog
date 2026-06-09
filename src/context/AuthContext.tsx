@@ -45,11 +45,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (typeof window === 'undefined') return null;
         return readUserCache();
     });
-    const [isLoading, setIsLoading] = useState(() => {
-        if (typeof window === 'undefined') return false;
-        // S'il y a un cache on attend la validation serveur, sinon pas de session connue
-        return readUserCache() !== null;
-    });
+    const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
     const router = useRouter();
 
@@ -66,11 +62,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const isModerator = role === 'moderator' || role === 'admin';
 
     useEffect(() => {
-        // Si aucun cache → l'utilisateur n'est pas connecté, on évite le 401 Appwrite
-        if (!readUserCache()) return;
-
-        // Validation en arrière-plan — startTransition = mise à jour non-urgente,
-        // React ne bloque pas le thread principal pour ce re-render
         const checkUser = async () => {
             try {
                 const currentUser = await account.get() as Models.User<UserPreferences>;
@@ -104,7 +95,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setUser(currentUser);
             router.push('/profile');
         } catch (err) {
-            console.error('Login failed:', err);
             // Session déjà active (cookie Appwrite encore valide) → récupérer l'user et rediriger
             if (err instanceof AppwriteException && err.type === 'user_session_already_exists') {
                 try {
@@ -121,6 +111,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 }
                 return;
             }
+            console.error('Login failed:', err);
             if (err instanceof Error) {
                 if (err.message?.includes('password')) {
                     setError('Password must be between 8 and 256 characters long.');
