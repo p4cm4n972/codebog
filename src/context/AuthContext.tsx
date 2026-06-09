@@ -3,7 +3,7 @@
 import { createContext, useState, useEffect, useContext, startTransition, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { account } from '@/lib/appwrite/client';
-import { Models } from 'appwrite';
+import { Models, AppwriteException } from 'appwrite';
 import { UserRole, UserPreferences } from '@/lib/appwrite/types';
 
 const AUTH_CACHE_KEY = 'codebog_auth_user';
@@ -45,7 +45,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (typeof window === 'undefined') return null;
         return readUserCache();
     });
-    const isLoading = false;
+    const [isLoading, setIsLoading] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        // S'il y a un cache on attend la validation serveur, sinon pas de session connue
+        return readUserCache() !== null;
+    });
     const [error, setError] = useState('');
     const router = useRouter();
 
@@ -73,12 +77,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 startTransition(() => {
                     setUser(currentUser);
                     writeUserCache(currentUser);
+                    setIsLoading(false);
                 });
             } catch {
                 // Session expirée côté serveur
                 startTransition(() => {
                     setUser(null);
                     writeUserCache(null);
+                    setIsLoading(false);
                 });
             }
         };
@@ -99,6 +105,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             router.push('/profile');
         } catch (err) {
             console.error('Login failed:', err);
+            // Session déjà active (cookie Appwrite encore valide) → récupérer l'user et rediriger
+            if (err instanceof AppwriteException && err.type === 'user_session_already_exists') {
+                try {
+                    const currentUser = await account.get() as Models.User<UserPreferences>;
+                    writeUserCache(currentUser);
+                    setUser(currentUser);
+                    router.push('/profile');
+                } catch {
+                    // Session corrompue, on la supprime pour laisser l'user recommencer
+                    await account.deleteSession('current').catch(() => null);
+                    writeUserCache(null);
+                    setUser(null);
+                    setError('Session expirée. Veuillez vous reconnecter.');
+                }
+                return;
+            }
             if (err instanceof Error) {
                 if (err.message?.includes('password')) {
                     setError('Password must be between 8 and 256 characters long.');

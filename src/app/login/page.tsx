@@ -8,7 +8,7 @@ export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const router = useRouter();
-    const { login, user, error, setError } = useAuth();
+    const { login, user, isLoading, error, setError } = useAuth();
 
     useEffect(() => {
         // Clear any previous errors when the component mounts
@@ -27,11 +27,11 @@ export default function LoginPage() {
         await login(email, password);
     };
 
-    // Prevent rendering the form if the user is already logged in
-    if (user) {
+    // Vérification de session en cours ou déjà connecté → ne pas afficher le formulaire
+    if (isLoading || user) {
         return (
             <main className="flex min-h-screen flex-col items-center justify-center bg-[#0a0f0a] font-mono text-white p-4">
-                <p className="text-[#2ecc71]">Already logged in. Redirecting to profile...</p>
+                <p className="text-[#2ecc71]">{user ? 'Already logged in. Redirecting...' : 'Checking session...'}</p>
             </main>
         );
     }
@@ -58,7 +58,8 @@ export default function LoginPage() {
                         <input
                             type="password"
                             id="password"
-                            name="password" // Added name attribute for Playwright selector
+                            name="password"
+                            autoComplete="current-password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
